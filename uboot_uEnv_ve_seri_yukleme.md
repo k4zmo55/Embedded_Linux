@@ -1,10 +1,11 @@
 # U-Boot `uEnv.txt`: Seri Porttan Yükleme ve Rootfs'i eMMC'ye Taşıma (BeagleBone Black)
 
-Bu dokümanda üç şey yapacağız:
+Bu dokümanda dört şey yapacağız:
 
 1. `uEnv.txt` dosyasının <b>satır satır ne yaptığını</b> anlayacağız.
 2. Bu dosyayı SD karta kopyalamadan, <b>seri port (UART) üzerinden</b> doğrudan U-Boot'a göndereceğiz.
 3. Challenge: Kernel ve DTB'yi <b>SD karttan</b> yükleyip rootfs'i <b>eMMC'den</b> bağlayacağız.
+4. <b>ROOTFS</b> bölümünde hangi klasör ve dosyaların olduğunu ve bunlara <b>hangi komutlarla</b> ulaşacağımızı göreceğiz.
 
 > [!NOTE]
 > Bu dokümandaki terminal görüntüleri, adımları göstermek için hazırlanmış <b>temsili</b> çıktılardır. Senin kartında U-Boot sürümü, dosya boyutları ve bölüm boyutları farklı görünebilir.
@@ -244,7 +245,176 @@ findmnt /           # rootfs'in kaynağı
 
 ---
 
-## 5. Hızlı Tekrar
+## 5. ROOTFS Bölümünde Neler Var?
+
+<b>Root filesystem (rootfs)</b>, Linux'un `/` (kök) dizinidir. Kernel açıldıktan sonra `root=` ile gösterilen bölümü `/` olarak bağlar ve bundan sonra çalışan <b>her program, her ayar dosyası ve her kütüphane</b> buradan okunur. Kernel tek başına bir işe yaramaz; kullanıcıya kabuk (shell), komutlar ve servisler rootfs ile gelir.
+
+Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Standard)</b> denen ortak bir standarda uyar. Bu yüzden Ubuntu'da, BeagleBone'daki Ångström'de veya eMMC'deki Debian'da aynı klasörleri görürüz.
+
+### 5.1 Klasörler ve Görevleri
+
+| Klasör | İçinde ne var? | BBB'de örnek | Bakmak için |
+|---|---|---|---|
+| <b>`/bin`</b> | Temel kullanıcı komutları (`ls`, `cp`, `cat`, `sh`...) | `bash`, `busybox` | `ls /bin` |
+| <b>`/sbin`</b> | Sistem yönetimi komutları (genelde root için) | `init`, `mount`, `ifconfig`, `reboot` | `ls /sbin` |
+| <b>`/boot`</b> | Kernel ve device tree dosyaları | `uImage`, `am335x-boneblack.dtb` | `ls -l /boot` |
+| <b>`/etc`</b> | Sistem <b>ayar</b> dosyaları (metin) | `hostname`, `fstab`, `passwd`, `os-release` | `cat /etc/hostname` |
+| <b>`/lib`</b> | Paylaşılan kütüphaneler (`.so`) ve kernel modülleri | `libc.so.6`, `modules/3.8.13/` | `ls /lib/modules` |
+| <b>`/usr`</b> | Ek programlar, kütüphaneler, belgeler (rootfs'in en büyük kısmı) | `/usr/bin`, `/usr/lib` | `du -sh /usr` |
+| <b>`/home`</b> | Kullanıcıların kişisel klasörleri | `/home/root` (Ångström'de root'un ev dizini) | `ls /home` |
+| <b>`/root`</b> | root kullanıcısının ev dizini (Debian/Ubuntu'da) | eMMC'deki Debian'da kullanılır | `ls /root` |
+| <b>`/var`</b> | Zamanla değişen veriler: loglar, kuyruklar, önbellek | `/var/log` | `ls /var/log` |
+| <b>`/tmp`</b> | Geçici dosyalar (açılışta temizlenir, genelde RAM'de) | | `ls /tmp` |
+| <b>`/media`, `/mnt`</b> | Harici diskleri (USB, SD) bağlama noktaları | `mount /dev/mmcblk1p1 /mnt` | `ls /mnt` |
+| <b>`/dev`</b> 🔸 | Donanım aygıt dosyaları | `mmcblk0p2`, `ttyO0` | `ls /dev` |
+| <b>`/proc`</b> 🔸 | Kernel ve süreç bilgileri | `cpuinfo`, `meminfo`, `cmdline` | `cat /proc/cpuinfo` |
+| <b>`/sys`</b> 🔸 | Aygıt ve sürücü ayarları (sysfs) | `/sys/class/leds/...` | `ls /sys/class` |
+| <b>`/run`</b> 🔸 | Çalışma anı bilgileri (PID dosyaları, soketler) | | `ls /run` |
+
+> [!IMPORTANT]
+> 🔸 işaretli klasörler <b>sanal (virtual)</b> dosya sistemleridir. Diskte gerçek dosya içermezler; kernel çalışırken içlerini <b>RAM'de</b> doldurur (`devtmpfs`, `proc`, `sysfs`, `tmpfs`). Bu yüzden SD kartı bilgisayara takıp baktığında bu klasörler <b>boş</b> görünür. Bu bir hata değildir.
+
+### 5.2 ROOTFS'e Üç Yerden Ulaşabiliriz
+
+```
+                  ┌─────────────────────────────────────────────────┐
+ a) Bilgisayar ──►│ SD kart takılı → /media/$USER/ROOTFS/...        │  (cd, ls, cat, file)
+ b) U-Boot     ──►│ ls mmc 0:2 /...   (sadece okur, Linux yok)      │  (ls, load)
+ c) BBB Linux  ──►│ Kart açık → /  (kök dizin)                      │  (cd, ls, cat, df, mount)
+                  └─────────────────────────────────────────────────┘
+```
+
+| Nereden? | Ne zaman? | Rootfs'in yolu |
+|---|---|---|
+| <b>a) Bilgisayar</b> | SD kart okuyucuya takılıyken, kartı açmadan dosya kopyalamak / düzeltmek için | `/media/$USER/ROOTFS` |
+| <b>b) U-Boot</b> | Linux açılmadan önce, dosya gerçekten orada mı diye bakmak için | `mmc 0:2` (SD) veya `mmc 1:2` (eMMC) |
+| <b>c) BBB Linux</b> | Kart açıldıktan sonra, seri konsol (Minicom) veya SSH üzerinden | `/` |
+
+### 5.3 a) Bilgisayardan Ulaşmak
+
+SD kartı bilgisayara tak. Ubuntu bölümleri <b>etiket (label)</b> adlarıyla otomatik bağlar. Önce kartın nereye bağlandığını bul, sonra klasöre gir:
+
+```bash
+lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT   # SD kart hangi aygıt, nereye bağlı?
+cd /media/$USER/ROOTFS                         # rootfs'in içine gir
+ls                                             # kök klasörleri listele
+ls boot/                                       # kernel ve dtb burada
+du -sh .                                       # rootfs'in toplam boyutu
+```
+
+![Bilgisayardan ROOTFS bölümüne girme](images/rootfs/01_host_rootfs.png)
+
+Burada iki şeyi gözlemle: sanal klasörler boş, programlar ise bilgisayarın değil <b>ARM</b> işlemcinin komut setiyle derlenmiş:
+
+```bash
+ls proc/ sys/ dev/      # boş görünür
+file bin/bash           # "ARM" yazısını gör
+cat etc/hostname        # BBB'nin hostname'i (başta / YOK)
+```
+
+![Sanal klasörler ve ARM programları](images/rootfs/02_host_sanal_ve_arm.png)
+
+> [!WARNING]
+> Bilgisayardayken yolun başına <b>`/` koyma</b>. `cat /etc/hostname` bilgisayarın <b>kendi</b> dosyasını okur; BBB'ninki `etc/hostname` (ROOTFS klasöründeyken) veya `/media/$USER/ROOTFS/etc/hostname` yolundadır. Bu karışıklıkla bilgisayarın `/etc/fstab` gibi dosyalarını yanlışlıkla bozmak mümkündür. Rootfs'e yazmak için `sudo` gerekir ve işin bitince kartı çıkarmadan önce `sync` + `umount` yap.
+>
+> `file bin/bash` çıktısında `ARM` yazdığı için bu programları bilgisayarda <b>çalıştıramazsın</b> (`./bin/bash` → `Exec format error`). Sadece okuyabilir/kopyalayabilirsin.
+
+### 5.4 b) U-Boot'tan Ulaşmak
+
+U-Boot dosya sistemini <b>okuyabilir</b> (ext2/3/4 ve FAT). Linux açılmadan önce kernel'in gerçekten orada olup olmadığını görmek için kullanışlıdır:
+
+```text
+U-Boot# ls mmc 0:2 /          # SD kartın 2. bölümü (ROOTFS) kökü
+U-Boot# ls mmc 0:2 /boot      # kernel ve dtb
+U-Boot# ls mmc 1:2 /          # eMMC'nin 2. bölümü (Debian rootfs)
+```
+
+![U-Boot'ta ls ile ROOTFS'i listeleme](images/rootfs/03_uboot_ls.png)
+
+| Komut | Anlamı |
+|---|---|
+| `ls mmc <aygıt>:<bölüm> <yol>` | Bölümdeki klasörü listeler |
+| `load mmc 0:2 0x82000000 /boot/uImage` | Dosyayı RAM'e yükler (bkz. [booting.md](booting.md)) |
+| `ext4ls` / `ext2ls` / `fatls` | Eski U-Boot sürümlerinde dosya sistemine özel `ls` komutları |
+
+> [!NOTE]
+> U-Boot'ta `cd` yoktur ve dosya içeriğini `cat` ile göremezsin; her komutta tam yolu yazarsın. U-Boot rootfs'e normalde <b>yazmaz</b>, sadece okur.
+
+### 5.5 c) BBB Linux'tan Ulaşmak
+
+Kart açılıp `root` olarak giriş yaptıktan sonra rootfs artık `/` dizinidir. Dolaşmak için temel komutlar:
+
+| Komut | Görevi |
+|---|---|
+| `pwd` | Şu an hangi klasördeyim? |
+| `cd /` · `cd /etc` · `cd ..` · `cd ~` | Kök dizine / bir klasöre / bir üste / ev dizinine git |
+| `ls` · `ls -l` · `ls -a` | Listele / ayrıntılı (izin, boyut, tarih) / gizli dosyalarla |
+| `cat <dosya>` · `head -n 5` · `less` | Metin dosyasını göster / ilk satırları / sayfa sayfa |
+| `which <komut>` | Bir komutun hangi dosya olduğunu bul |
+| `find / -name "*.dtb" 2>/dev/null` | Rootfs'te dosya ara |
+| `df -h /` · `du -sh <klasör>` | Rootfs'in doluluk oranı / klasör boyutu |
+| `mount` | Hangi bölüm nereye bağlı? |
+
+#### Kök dizin ve `/bin`
+
+```bash
+pwd                 # /home/root  (Ångström'de root'un ev dizini)
+cd /
+ls
+ls /bin | head -5
+which ls
+ls -l /bin/ls       # Ångström'de birçok komut busybox'a link
+```
+
+![BBB'de kök dizinde dolaşma](images/rootfs/04_bbb_ls.png)
+
+> [!TIP]
+> <b>BusyBox</b>, `ls`, `cp`, `mount` gibi yüzlerce komutu <b>tek bir küçük programda</b> toplayan araçtır. Gömülü sistemlerde yer kazanmak için yaygın kullanılır; `/bin/ls` gibi dosyalar aslında `busybox`'a giden <b>sembolik linklerdir</b>.
+
+#### `/etc` — ayar dosyaları
+
+```bash
+cat /etc/hostname      # kartın adı
+cat /etc/os-release    # hangi dağıtım, hangi sürüm
+cat /etc/fstab         # açılışta hangi bölüm nereye bağlanacak
+head -2 /etc/passwd    # kullanıcı listesi
+```
+
+![BBB'de /etc dosyaları](images/rootfs/05_bbb_etc.png)
+
+#### `/proc` ve `/sys` — kernel ile konuşmak
+
+```bash
+cat /proc/version                                   # kernel sürümü
+cat /proc/cmdline                                   # U-Boot'un verdiği bootargs
+grep -m2 -E 'model name|BogoMIPS' /proc/cpuinfo     # işlemci bilgisi
+head -2 /proc/meminfo                               # RAM bilgisi
+ls /sys/class/leds/                                 # kartın USR LED'leri
+echo none > /sys/class/leds/beaglebone:green:usr0/trigger
+echo 1    > /sys/class/leds/beaglebone:green:usr0/brightness   # LED'i yak (0 = söndür)
+```
+
+![BBB'de /proc ve /sys](images/rootfs/06_bbb_proc_sys.png)
+
+`/sys` altındaki dosyalara yazmak, sürücüye doğrudan komut vermek demektir. `trigger` dosyasını `none` yapmadan `brightness`'a yazarsan LED'in varsayılan görevi (ör. `heartbeat`) senin değerini hemen ezer.
+
+#### `/dev`, `/boot` ve disk kullanımı
+
+```bash
+ls /dev/mmcblk* /dev/ttyO*   # MMC bölümleri ve seri portlar
+ls -l /boot                  # kernel ve dtb
+df -h /                      # rootfs ne kadar dolu, hangi bölümden geliyor
+du -sh /usr /lib /etc        # en çok yer kaplayan klasörler
+mount | grep -E ' / | /proc | /sys | /dev '   # gerçek ve sanal bağlamalar
+```
+
+![BBB'de /dev, /boot ve disk kullanımı](images/rootfs/07_bbb_dev_boot.png)
+
+`mount` çıktısında `/` gerçek bir diskten (`/dev/mmcblk0p2`, `ext3`) gelirken `/dev`, `/proc` ve `/sys`'in tipi `devtmpfs`, `proc`, `sysfs` olarak görünür. Bu, [5.1](#51-klasörler-ve-görevleri)'deki sanal klasörlerin kanıtıdır. Rootfs'i eMMC'den açtıysan (Bölüm 4) `df -h /` satırında `/dev/mmcblk1p2` görürsün.
+
+---
+
+## 6. Hızlı Tekrar
 
 | Komut / Değişken | Görevi |
 |---|---|
@@ -260,3 +430,12 @@ findmnt /           # rootfs'in kaynağı
 | `root=/dev/mmcblk1p2` | Rootfs'in eMMC'nin 2. bölümünde olduğunu söyler |
 | `mmc list` / `mmc part` | U-Boot'un gördüğü MMC aygıtlarını ve bölümleri listeler |
 | `saveenv` | Aktif ortamı kalıcı olarak kaydeder (dikkatli kullan) |
+| `/media/$USER/ROOTFS` | SD kart bilgisayara takılıyken rootfs'in yolu |
+| `ls mmc 0:2 /boot` | U-Boot'tan rootfs'teki klasörü listeler |
+| `/bin`, `/sbin`, `/usr` | Programlar |
+| `/etc` | Ayar dosyaları (`hostname`, `fstab`, `passwd`) |
+| `/boot` | Kernel (`uImage`) ve device tree (`.dtb`) |
+| `/lib` | Kütüphaneler ve kernel modülleri |
+| `/dev`, `/proc`, `/sys` | Sanal klasörler; kernel çalışırken dolar |
+| `cat /proc/cmdline` | Kernel'e giden bootargs |
+| `df -h /` · `mount` | Rootfs hangi bölümden geliyor? |

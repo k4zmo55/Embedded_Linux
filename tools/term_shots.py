@@ -83,127 +83,132 @@ def render(name, title, lines, min_cols=72):
     print(path, img.size)
 
 
-MINICOM = "mehmet@ubuntu: ~/bbb — minicom -D /dev/ttyUSB0 -b 115200"
+def main():
+    MINICOM = "mehmet@ubuntu: ~/bbb — minicom -D /dev/ttyUSB0 -b 115200"
 
-# 1) Bilgisayarda uEnv.txt'yi hazırlama
-render("01_uenv_hazirla.png", "mehmet@ubuntu: ~/bbb", [
-    host("cat uEnv.txt"),
-    t("mypcip=setenv serverip 192.168.1.2", CYAN),
-    t("ipaddr=192.168.27.1", CYAN),
-    t("bootargs=console=ttyO0,115200 root=/dev/mmcblk0p2 rw", CYAN),
-    t('bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000', CYAN),
-    t("uImage;load mmc 0:1 0x88000000 am335x-boneblack.dtb;bootm 0x82000000 - 0x88000000", CYAN),
-    host("ls -l uEnv.txt"),
-    t("-rw-rw-r-- 1 mehmet mehmet 269 Eki 16 17:05 uEnv.txt"),
-    host("sudo minicom -D /dev/ttyUSB0 -b 115200"),
-])
+    # 1) Bilgisayarda uEnv.txt'yi hazırlama
+    render("01_uenv_hazirla.png", "mehmet@ubuntu: ~/bbb", [
+        host("cat uEnv.txt"),
+        t("mypcip=setenv serverip 192.168.1.2", CYAN),
+        t("ipaddr=192.168.27.1", CYAN),
+        t("bootargs=console=ttyO0,115200 root=/dev/mmcblk0p2 rw", CYAN),
+        t('bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000', CYAN),
+        t("uImage;load mmc 0:1 0x88000000 am335x-boneblack.dtb;bootm 0x82000000 - 0x88000000", CYAN),
+        host("ls -l uEnv.txt"),
+        t("-rw-rw-r-- 1 mehmet mehmet 269 Eki 16 17:05 uEnv.txt"),
+        host("sudo minicom -D /dev/ttyUSB0 -b 115200"),
+    ])
 
-# 2) U-Boot'u durdurma
-render("02_uboot_durdur.png", MINICOM, [
-    t("U-Boot SPL 2013.10 (Oct 16 2026 - 10:12:41)", DIM),
-    t("reading u-boot.img", DIM),
-    t(""),
-    t("U-Boot 2013.10 (Oct 16 2026 - 10:12:41)", FG),
-    t(""),
-    t("I2C:   ready"),
-    t("DRAM:  512 MiB"),
-    t("MMC:   OMAP SD/MMC: 0, OMAP SD/MMC: 1"),
-    t("Net:   cpsw, usb_ether"),
-    [("Hit any key to stop autoboot:  ", FG), ("0", ORANGE), ("    <-- herhangi bir tuşa bas", MAGENTA)],
-    ub(""),
-])
+    # 2) U-Boot'u durdurma
+    render("02_uboot_durdur.png", MINICOM, [
+        t("U-Boot SPL 2013.10 (Oct 16 2026 - 10:12:41)", DIM),
+        t("reading u-boot.img", DIM),
+        t(""),
+        t("U-Boot 2013.10 (Oct 16 2026 - 10:12:41)", FG),
+        t(""),
+        t("I2C:   ready"),
+        t("DRAM:  512 MiB"),
+        t("MMC:   OMAP SD/MMC: 0, OMAP SD/MMC: 1"),
+        t("Net:   cpsw, usb_ether"),
+        [("Hit any key to stop autoboot:  ", FG), ("0", ORANGE), ("    <-- herhangi bir tuşa bas", MAGENTA)],
+        ub(""),
+    ])
 
-# 3) loady ile YMODEM alımı
-render("03_loady.png", MINICOM, [
-    ub("loady 0x82000000"),
-    t("## Ready for binary (ymodem) download to 0x82000000 at 115200 bps..."),
-    t("C", DIM),
-    t("+-----------[ YMODEM upload - Press CTRL-C to quit ]-----------+", BLUE),
-    t("| Sending: uEnv.txt                                            |", BLUE),
-    t("| Bytes Sent:    269   BPS:189                                 |", BLUE),
-    t("| Sending:                                                     |", BLUE),
-    t("| Ymodem sectors/kbytes sent:   0/ 0k                          |", BLUE),
-    t("| Transfer complete                                            |", GREEN),
-    t("+--------------------------------------------------------------+", BLUE),
-    t("## Total Size      = 0x0000010D = 269 Bytes", YELLOW),
-    ub(""),
-])
+    # 3) loady ile YMODEM alımı
+    render("03_loady.png", MINICOM, [
+        ub("loady 0x82000000"),
+        t("## Ready for binary (ymodem) download to 0x82000000 at 115200 bps..."),
+        t("C", DIM),
+        t("+-----------[ YMODEM upload - Press CTRL-C to quit ]-----------+", BLUE),
+        t("| Sending: uEnv.txt                                            |", BLUE),
+        t("| Bytes Sent:    269   BPS:189                                 |", BLUE),
+        t("| Sending:                                                     |", BLUE),
+        t("| Ymodem sectors/kbytes sent:   0/ 0k                          |", BLUE),
+        t("| Transfer complete                                            |", GREEN),
+        t("+--------------------------------------------------------------+", BLUE),
+        t("## Total Size      = 0x0000010D = 269 Bytes", YELLOW),
+        ub(""),
+    ])
 
-# 4) env import ve kontrol
-render("04_env_import.png", MINICOM, [
-    ub("env import -t 0x82000000 ${filesize}"),
-    ub("printenv bootargs"),
-    t("bootargs=console=ttyO0,115200 root=/dev/mmcblk0p2 rw", CYAN),
-    ub("printenv bootcmd"),
-    t('bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000', CYAN),
-    t("uImage;load mmc 0:1 0x88000000 am335x-boneblack.dtb;bootm 0x82000000 - 0x88000000", CYAN),
-    ub("run mypcip"),
-    ub("printenv serverip"),
-    t("serverip=192.168.1.2", CYAN),
-    ub(""),
-])
+    # 4) env import ve kontrol
+    render("04_env_import.png", MINICOM, [
+        ub("env import -t 0x82000000 ${filesize}"),
+        ub("printenv bootargs"),
+        t("bootargs=console=ttyO0,115200 root=/dev/mmcblk0p2 rw", CYAN),
+        ub("printenv bootcmd"),
+        t('bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000', CYAN),
+        t("uImage;load mmc 0:1 0x88000000 am335x-boneblack.dtb;bootm 0x82000000 - 0x88000000", CYAN),
+        ub("run mypcip"),
+        ub("printenv serverip"),
+        t("serverip=192.168.1.2", CYAN),
+        ub(""),
+    ])
 
-# 5) boot
-render("05_boot.png", MINICOM, [
-    ub("boot"),
-    t("**********Booting from memory**********", ORANGE),
-    t("reading uImage"),
-    t("4380760 bytes read in 245 ms (17.1 MiB/s)"),
-    t("reading am335x-boneblack.dtb"),
-    t("24884 bytes read in 9 ms (2.6 MiB/s)"),
-    t("## Booting kernel from Legacy Image at 82000000 ..."),
-    t("   Image Name:   Linux-3.8.13"),
-    t("   Image Type:   ARM Linux Kernel Image (uncompressed)"),
-    t("## Flattened Device Tree blob at 88000000"),
-    t("   Loading Device Tree to 8fff6000, end 8ffff133 ... OK"),
-    t(""),
-    t("Starting kernel ...", GREEN),
-])
+    # 5) boot
+    render("05_boot.png", MINICOM, [
+        ub("boot"),
+        t("**********Booting from memory**********", ORANGE),
+        t("reading uImage"),
+        t("4380760 bytes read in 245 ms (17.1 MiB/s)"),
+        t("reading am335x-boneblack.dtb"),
+        t("24884 bytes read in 9 ms (2.6 MiB/s)"),
+        t("## Booting kernel from Legacy Image at 82000000 ..."),
+        t("   Image Name:   Linux-3.8.13"),
+        t("   Image Type:   ARM Linux Kernel Image (uncompressed)"),
+        t("## Flattened Device Tree blob at 88000000"),
+        t("   Loading Device Tree to 8fff6000, end 8ffff133 ... OK"),
+        t(""),
+        t("Starting kernel ...", GREEN),
+    ])
 
-# 6) MMC aygıtlarını doğrulama
-render("06_mmc_list.png", MINICOM, [
-    ub("mmc list"),
-    t("OMAP SD/MMC: 0       <-- mmc 0 : microSD kart", FG),
-    t("OMAP SD/MMC: 1       <-- mmc 1 : dahili eMMC", FG),
-    ub("mmc dev 1"),
-    t("mmc1(part 0) is current device"),
-    ub("mmc part"),
-    t(""),
-    t("Partition Map for MMC device 1  --   Partition Type: DOS"),
-    t(""),
-    t("Part    Start Sector    Num Sectors     UUID            Type", DIM),
-    t("  1     2048            196608          00000000-01     0c Boot"),
-    [("  2     198656          7266304         00000000-02     83", FG), ("   <-- rootfs", MAGENTA)],
-    ub(""),
-])
+    # 6) MMC aygıtlarını doğrulama
+    render("06_mmc_list.png", MINICOM, [
+        ub("mmc list"),
+        t("OMAP SD/MMC: 0       <-- mmc 0 : microSD kart", FG),
+        t("OMAP SD/MMC: 1       <-- mmc 1 : dahili eMMC", FG),
+        ub("mmc dev 1"),
+        t("mmc1(part 0) is current device"),
+        ub("mmc part"),
+        t(""),
+        t("Partition Map for MMC device 1  --   Partition Type: DOS"),
+        t(""),
+        t("Part    Start Sector    Num Sectors     UUID            Type", DIM),
+        t("  1     2048            196608          00000000-01     0c Boot"),
+        [("  2     198656          7266304         00000000-02     83", FG), ("   <-- rootfs", MAGENTA)],
+        ub(""),
+    ])
 
-# 7) bootargs'ı eMMC rootfs'e çevirme
-render("07_bootargs_emmc.png", MINICOM, [
-    ub("printenv bootargs"),
-    [("bootargs=console=ttyO0,115200 root=", CYAN), ("/dev/mmcblk0p2", RED), (" rw", CYAN)],
-    ub("setenv bootargs console=ttyO0,115200 root=/dev/mmcblk1p2 rw"),
-    ub("printenv bootargs"),
-    [("bootargs=console=ttyO0,115200 root=", CYAN), ("/dev/mmcblk1p2", GREEN), (" rw", CYAN)],
-    ub("boot"),
-    t("**********Booting from memory**********", ORANGE),
-    t("reading uImage"),
-    t("..."),
-    t("Starting kernel ...", GREEN),
-])
+    # 7) bootargs'ı eMMC rootfs'e çevirme
+    render("07_bootargs_emmc.png", MINICOM, [
+        ub("printenv bootargs"),
+        [("bootargs=console=ttyO0,115200 root=", CYAN), ("/dev/mmcblk0p2", RED), (" rw", CYAN)],
+        ub("setenv bootargs console=ttyO0,115200 root=/dev/mmcblk1p2 rw"),
+        ub("printenv bootargs"),
+        [("bootargs=console=ttyO0,115200 root=", CYAN), ("/dev/mmcblk1p2", GREEN), (" rw", CYAN)],
+        ub("boot"),
+        t("**********Booting from memory**********", ORANGE),
+        t("reading uImage"),
+        t("..."),
+        t("Starting kernel ...", GREEN),
+    ])
 
-# 8) Linux'ta doğrulama
-render("08_linux_dogrula.png", "root@beaglebone: ~ (seri konsol)", [
-    bbb("cat /proc/cmdline"),
-    t("console=ttyO0,115200 root=/dev/mmcblk1p2 rw"),
-    bbb("lsblk"),
-    t("NAME         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT", DIM),
-    t("mmcblk0      179:0    0  7.4G  0 disk"),
-    t("|-mmcblk0p1  179:1    0   96M  0 part"),
-    t("`-mmcblk0p2  179:2    0  7.3G  0 part"),
-    t("mmcblk1      179:8    0  3.6G  0 disk"),
-    t("|-mmcblk1p1  179:9    0   96M  0 part"),
-    [("`-mmcblk1p2  179:10   0  3.5G  0 part ", FG), ("/", GREEN), ("          <-- rootfs eMMC'de", MAGENTA)],
-    bbb("findmnt /"),
-    t("TARGET SOURCE         FSTYPE OPTIONS", DIM),
-    t("/      /dev/mmcblk1p2 ext4   rw,relatime"),
-])
+    # 8) Linux'ta doğrulama
+    render("08_linux_dogrula.png", "root@beaglebone: ~ (seri konsol)", [
+        bbb("cat /proc/cmdline"),
+        t("console=ttyO0,115200 root=/dev/mmcblk1p2 rw"),
+        bbb("lsblk"),
+        t("NAME         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT", DIM),
+        t("mmcblk0      179:0    0  7.4G  0 disk"),
+        t("|-mmcblk0p1  179:1    0   96M  0 part"),
+        t("`-mmcblk0p2  179:2    0  7.3G  0 part"),
+        t("mmcblk1      179:8    0  3.6G  0 disk"),
+        t("|-mmcblk1p1  179:9    0   96M  0 part"),
+        [("`-mmcblk1p2  179:10   0  3.5G  0 part ", FG), ("/", GREEN), ("          <-- rootfs eMMC'de", MAGENTA)],
+        bbb("findmnt /"),
+        t("TARGET SOURCE         FSTYPE OPTIONS", DIM),
+        t("/      /dev/mmcblk1p2 ext4   rw,relatime"),
+    ])
+
+
+if __name__ == "__main__":
+    main()
