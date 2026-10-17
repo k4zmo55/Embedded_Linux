@@ -266,13 +266,13 @@ Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Sta
 | <b>`/var`</b> | Zamanla değişen veriler: loglar, kuyruklar, önbellek | `/var/log` | `ls /var/log` |
 | <b>`/tmp`</b> | Geçici dosyalar (açılışta temizlenir, genelde RAM'de) | | `ls /tmp` |
 | <b>`/media`, `/mnt`</b> | Harici diskleri (USB, SD) bağlama noktaları | `mount /dev/mmcblk1p1 /mnt` | `ls /mnt` |
-| <b>`/dev`</b> 🔸 | Donanım aygıt dosyaları | `mmcblk0p2`, `ttyO0` | `ls /dev` |
-| <b>`/proc`</b> 🔸 | Kernel ve süreç bilgileri | `cpuinfo`, `meminfo`, `cmdline` | `cat /proc/cpuinfo` |
-| <b>`/sys`</b> 🔸 | Aygıt ve sürücü ayarları (sysfs) | `/sys/class/leds/...` | `ls /sys/class` |
-| <b>`/run`</b> 🔸 | Çalışma anı bilgileri (PID dosyaları, soketler) | | `ls /run` |
+| <b>`/dev`</b> <i>(sanal)</i> | Donanım aygıt dosyaları | `mmcblk0p2`, `ttyO0` | `ls /dev` |
+| <b>`/proc`</b> <i>(sanal)</i> | Kernel ve süreç bilgileri | `cpuinfo`, `meminfo`, `cmdline` | `cat /proc/cpuinfo` |
+| <b>`/sys`</b> <i>(sanal)</i> | Aygıt ve sürücü ayarları (sysfs) | `/sys/class/leds/...` | `ls /sys/class` |
+| <b>`/run`</b> <i>(sanal)</i> | Çalışma anı bilgileri (PID dosyaları, soketler) | | `ls /run` |
 
 > [!IMPORTANT]
-> 🔸 işaretli klasörler <b>sanal (virtual)</b> dosya sistemleridir. Diskte gerçek dosya içermezler; kernel çalışırken içlerini <b>RAM'de</b> doldurur (`devtmpfs`, `proc`, `sysfs`, `tmpfs`). Bu yüzden SD kartı bilgisayara takıp baktığında bu klasörler <b>boş</b> görünür. Bu bir hata değildir.
+> <i>(sanal)</i> işaretli klasörler <b>sanal (virtual)</b> dosya sistemleridir. Diskte gerçek dosya içermezler; kernel çalışırken içlerini <b>RAM'de</b> doldurur (`devtmpfs`, `proc`, `sysfs`, `tmpfs`). Bu yüzden SD kartı bilgisayara takıp baktığında bu klasörler <b>boş</b> görünür. Bu bir hata değildir.
 
 ### 5.2 ROOTFS'e Üç Yerden Ulaşabiliriz
 
