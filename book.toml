@@ -1,0 +1,79 @@
+# Embedded Linux kitabının ayar dosyası.
+#
+# - [book]  : kitabın adı ve bölüm sırası
+# - [vars]  : kursa bağlı değerler (kart, sürümler, IP'ler...). Bölümlerde
+#             {{grup.isim}} olarak yazılır, `python tools/book.py build`
+#             çalışınca gerçek değerle değiştirilir. Bir değeri burada
+#             değiştirip build alırsan bütün bölümler ve terminal
+#             görüntüleri güncellenir.
+#
+# Değerler başka değerlere {{...}} ile referans verebilir.
+
+[book]
+title = "Embedded Linux"
+subtitle = "BeagleBone Black ile Adım Adım"
+preface = "00_preface.md"
+
+[[book.parts]]
+title = "Başlarken"
+chapters = ["01_bbb_hardware.md", "02_serial_console.md"]
+
+[[book.parts]]
+title = "Boot Süreci"
+chapters = ["03_boot_process.md", "04_sd_card_boot.md", "05_emmc_boot.md"]
+
+[[book.parts]]
+title = "U-Boot ile Çalışmak"
+chapters = ["06_uboot_uenv.md", "07_uart_boot.md", "08_tftp_boot.md", "09_uboot_build.md"]
+
+[[book.parts]]
+title = "Linux Kernel"
+chapters = ["10_device_tree.md"]
+
+# ---------------------------------------------------------------------------
+
+[vars.course]
+repo = "https://github.com/niekiran/EmbeddedLinuxBBB"
+prebuilt_url = "{{course.repo}}/tree/master/pre-built-images/Angstrom_Demo"
+
+[vars.board]
+name = "BeagleBone Black"
+short = "BBB"
+soc = "AM3358"
+
+# Kursun hazır (prebuilt) imajları: SD kart, seri boot ve TFTP bölümleri
+[vars.prebuilt]
+uboot_version = "2013.04"
+mlo_file = "MLO-beaglebone-{{prebuilt.uboot_version}}"
+uboot_file = "u-boot-beaglebone-{{prebuilt.uboot_version}}-r0.img"
+rootfs_file = "Angstrom-systemd-image-eglibc-ipk-v2012.12-beagleboard.rootfs.tar.xz"
+kernel_version = "3.8.13"
+console = "ttyO0"
+debian_image = "bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz"
+
+# Kendi derlediğimiz U-Boot ve toolchain (U-Boot derleme bölümü)
+[vars.build]
+uboot_version = "2022.04"
+uboot_defconfig = "am335x_evm_defconfig"
+uboot_tarball = "u-boot-{{build.uboot_version}}.tar.bz2"
+uboot_dir = "u-boot-{{build.uboot_version}}"
+uboot_url = "https://ftp.denx.de/pub/u-boot/{{build.uboot_tarball}}"
+eth_device = "ethernet@4a100000"
+cross_compile = "arm-linux-gnueabihf-"
+gcc_version = "7.5.0"
+linaro_series = "7.5"
+linaro_date = "2019.12"
+linaro_release = "{{build.linaro_series}}-{{build.linaro_date}}"
+toolchain_dir = "gcc-linaro-{{build.gcc_version}}-{{build.linaro_date}}-x86_64_arm-linux-gnueabihf"
+toolchain_tarball = "{{build.toolchain_dir}}.tar.xz"
+toolchain_url = "https://releases.linaro.org/components/toolchain/binaries/{{build.linaro_release}}/arm-linux-gnueabihf/{{build.toolchain_tarball}}"
+
+[vars.network]
+host_ip = "192.168.27.1"
+board_ip = "192.168.27.2"
+netmask = "255.255.255.0"
+prefix = "24"
+subnet = "192.168.27.x"
+host_iface = "enp3s0"
+tftp_dir = "/var/lib/tftpboot"
+nfs_dir = "/srv/nfs/bbb"

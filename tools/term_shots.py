@@ -1,13 +1,35 @@
 """Linux terminal görünümlü PNG ekran görüntüleri üretir.
 
 Satır biçimi: her satır [(metin, renk), ...] listesidir.
+Sürüm, IP gibi değerler book.toml'den V("grup.isim") ile okunur.
+Çıktı klasörü: komut satırında verilirse o, verilmezse betiğin set_default_out() ile seçtiği klasör.
 """
 import os
 import sys
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-OUT = sys.argv[1]
-os.makedirs(OUT, exist_ok=True)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from book import ROOT, load_config  # noqa: E402
+
+OUT = sys.argv[1] if len(sys.argv) > 1 else None
+_VARS = load_config()[1]
+
+
+def V(key):
+    """book.toml'deki [vars] değeri, ör. V("network.host_ip")."""
+    return _VARS[key]
+
+
+PB_UBOOT = V("prebuilt.uboot_version")
+KVER = V("prebuilt.kernel_version")
+
+
+def set_default_out(path):
+    global OUT
+    if OUT is None:
+        OUT = str(ROOT / path)
+    os.makedirs(OUT, exist_ok=True)
 
 FONT = ImageFont.truetype(r"C:\Windows\Fonts\consola.ttf", 20)
 FONT_B = ImageFont.truetype(r"C:\Windows\Fonts\consolab.ttf", 20)
@@ -101,10 +123,10 @@ def main():
 
     # 2) U-Boot'u durdurma
     render("02_uboot_durdur.png", MINICOM, [
-        t("U-Boot SPL 2013.10 (Oct 16 2026 - 10:12:41)", DIM),
+        t(f"U-Boot SPL {PB_UBOOT} (Oct 16 2026 - 10:12:41)", DIM),
         t("reading u-boot.img", DIM),
         t(""),
-        t("U-Boot 2013.10 (Oct 16 2026 - 10:12:41)", FG),
+        t(f"U-Boot {PB_UBOOT} (Oct 16 2026 - 10:12:41)", FG),
         t(""),
         t("I2C:   ready"),
         t("DRAM:  512 MiB"),
@@ -153,7 +175,7 @@ def main():
         t("reading am335x-boneblack.dtb"),
         t("24884 bytes read in 9 ms (2.6 MiB/s)"),
         t("## Booting kernel from Legacy Image at 82000000 ..."),
-        t("   Image Name:   Linux-3.8.13"),
+        t(f"   Image Name:   Linux-{KVER}"),
         t("   Image Type:   ARM Linux Kernel Image (uncompressed)"),
         t("## Flattened Device Tree blob at 88000000"),
         t("   Loading Device Tree to 8fff6000, end 8ffff133 ... OK"),
@@ -211,4 +233,5 @@ def main():
 
 
 if __name__ == "__main__":
+    set_default_out("images/uenv")
     main()

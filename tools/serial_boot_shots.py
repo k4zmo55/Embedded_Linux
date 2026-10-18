@@ -4,6 +4,11 @@ Kullanım: python tools/serial_boot_shots.py images/serial_boot
 """
 from term_shots import (render, ub, host, t, FG, DIM, GREEN, BLUE, YELLOW,
                         CYAN, RED, MAGENTA, ORANGE)
+from term_shots import V, set_default_out
+
+PB_UBOOT = V("prebuilt.uboot_version")
+KVER = V("prebuilt.kernel_version")
+set_default_out("images/serial_boot")
 
 MINICOM = "mehmet@ubuntu: ~/bbb — minicom -D /dev/ttyUSB0 -b 115200"
 
@@ -26,7 +31,7 @@ render("01_host_dosyalar.png", "mehmet@ubuntu: ~/bbb", [
          "   <-- < 109 KB olmalı"),
     t("-rw-r--r-- 1 mehmet mehmet 4380760 Eki 17 10:01 uImage"),
     host("mkimage -l uImage"),
-    t("Image Name:   Linux-3.8.13", CYAN),
+    t(f"Image Name:   Linux-{KVER}", CYAN),
     t("Image Type:   ARM Linux Kernel Image (uncompressed)", CYAN),
     t("Data Size:    4380696 Bytes = 4278.02 KiB = 4.18 MiB", CYAN),
     t("Load Address: 80008000", CYAN),
@@ -84,7 +89,7 @@ render("04_rom_spl_xmodem.png", MINICOM, [
     t("|Transfer complete                                            |", GREEN),
     t("+-------------------------------------------------------------+", BLUE),
     t(""),
-    t("U-Boot SPL 2013.10 (Oct 17 2026 - 09:58:12)", FG),
+    t(f"U-Boot SPL {PB_UBOOT} (Oct 17 2026 - 09:58:12)", FG),
     note("CCCCCCCC", ORANGE, "      <-- şimdi SPL, u-boot.img'i Ymodem ile bekliyor"),
 ])
 
@@ -100,7 +105,7 @@ render("05_spl_uboot_ymodem.png", MINICOM, [
     t("+-------------------------------------------------------------+", BLUE),
     t("Loaded 403524 bytes", DIM),
     t(""),
-    t("U-Boot 2013.10 (Oct 17 2026 - 09:58:12)", FG),
+    t(f"U-Boot {PB_UBOOT} (Oct 17 2026 - 09:58:12)", FG),
     t(""),
     t("I2C:   ready"),
     t("DRAM:  512 MiB"),
@@ -152,7 +157,7 @@ render("08_iminfo_kontrol.png", MINICOM, [
     t(""),
     t("## Checking Image at 82000000 ..."),
     t("   Legacy image found"),
-    t("   Image Name:   Linux-3.8.13"),
+    t(f"   Image Name:   Linux-{KVER}"),
     t("   Image Type:   ARM Linux Kernel Image (uncompressed)"),
     t("   Data Size:    4380696 Bytes = 4.2 MiB"),
     note("   Verifying Checksum ... OK", GREEN, "        <-- kernel sağlam geldi"),
@@ -173,7 +178,7 @@ render("09_bootm.png", MINICOM, [
     ub("setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000"),
     ub("bootm 0x82000000 0x88080000 0x88000000"),
     t("## Booting kernel from Legacy Image at 82000000 ..."),
-    t("   Image Name:   Linux-3.8.13"),
+    t(f"   Image Name:   Linux-{KVER}"),
     t("   Verifying Checksum ... OK"),
     t("## Loading init Ramdisk from Legacy Image at 88080000 ..."),
     t("   Image Type:   ARM Linux RAMDisk Image (gzip compressed)"),
@@ -187,7 +192,7 @@ render("09_bootm.png", MINICOM, [
     t("Starting kernel ...", GREEN),
     t(""),
     t("[    0.000000] Booting Linux on physical CPU 0x0", DIM),
-    t("[    0.000000] Linux version 3.8.13 (mehmet@ubuntu) (gcc 4.9) #1 SMP", DIM),
+    t(f"[    0.000000] Linux version {KVER} (mehmet@ubuntu) (gcc 4.9) #1 SMP", DIM),
     note("[    0.000000] Kernel command line: console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000",
          DIM),
     note("[    1.732050] Trying to unpack rootfs image as initramfs...", DIM,
@@ -205,7 +210,7 @@ render("10_linux_shell.png", "BusyBox (initramfs) — seri konsol", [
     t("proc on /proc type proc (rw,relatime)"),
     t("sysfs on /sys type sysfs (rw,relatime)"),
     sh("uname -a"),
-    t("Linux (none) 3.8.13 #1 SMP Sat Oct 17 10:01:44 2026 armv7l GNU/Linux"),
+    t(f"Linux (none) {KVER} #1 SMP Sat Oct 17 10:01:44 2026 armv7l GNU/Linux"),
     sh("free -m"),
     t("             total       used       free     shared    buffers", DIM),
     t("Mem:           497         14        483          0          0"),

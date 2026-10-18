@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/book.py\" check --brief",
+            "timeout": 30,
+            "statusMessage": "Kitap kontrol ediliyor..."
+          }
+        ]
+      }
+    ]
+  }
+}

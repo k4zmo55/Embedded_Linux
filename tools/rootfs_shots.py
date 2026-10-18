@@ -4,6 +4,10 @@ Kullanım: python tools/rootfs_shots.py images/rootfs
 """
 from term_shots import (render, ub, bbb, t, FG, DIM, GREEN, BLUE, YELLOW,
                         CYAN, RED, MAGENTA, ORANGE)
+from term_shots import V, set_default_out
+
+KVER = V("prebuilt.kernel_version")
+set_default_out("images/rootfs")
 
 
 def host_at(path, cmd):
@@ -30,7 +34,7 @@ render("01_host_rootfs.png", "mehmet@ubuntu: /media/mehmet/ROOTFS", [
     t("bin   dev  home  media  proc  sbin  tmp  var", BLUE),
     t("boot  etc  lib   mnt    run   sys   usr", BLUE),
     host_at(R, "ls boot/"),
-    [("am335x-boneblack.dtb  ", FG), ("uImage", CYAN), ("  uImage-3.8.13", FG)],
+    [("am335x-boneblack.dtb  ", FG), ("uImage", CYAN), (f"  uImage-{KVER}", FG)],
     host_at(R, "du -sh ."),
     t("412M    ."),
 ])
@@ -116,7 +120,7 @@ render("05_bbb_etc.png", BBB, [
 # 6) BBB Linux: /proc ve /sys
 render("06_bbb_proc_sys.png", BBB, [
     bbb("cat /proc/version"),
-    t("Linux version 3.8.13 (gcc version 4.7.3) #1 SMP Wed Oct 16 2026"),
+    t(f"Linux version {KVER} (gcc version 4.7.3) #1 SMP Wed Oct 16 2026"),
     bbb("grep -m2 -E 'model name|BogoMIPS' /proc/cpuinfo"),
     t("model name      : ARMv7 Processor rev 2 (v7l)"),
     t("BogoMIPS        : 990.68"),
@@ -139,8 +143,8 @@ render("07_bbb_dev_boot.png", BBB, [
     t("/dev/mmcblk0p1  /dev/mmcblk1    /dev/mmcblk1p2", YELLOW),
     bbb("ls -l /boot"),
     t("-rw-r--r-- 1 root root   24884 Dec 13  2012 am335x-boneblack.dtb"),
-    t("lrwxrwxrwx 1 root root      14 Dec 13  2012 uImage -> uImage-3.8.13"),
-    t("-rw-r--r-- 1 root root 4380760 Dec 13  2012 uImage-3.8.13"),
+    t(f"lrwxrwxrwx 1 root root      14 Dec 13  2012 uImage -> uImage-{KVER}"),
+    t(f"-rw-r--r-- 1 root root 4380760 Dec 13  2012 uImage-{KVER}"),
     bbb("df -h /"),
     t("Filesystem      Size  Used Avail Use% Mounted on", DIM),
     t("/dev/mmcblk0p2  6.2G  412M  5.5G   7% /"),
