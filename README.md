@@ -40,6 +40,10 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 - [Bölüm 12 — BusyBox ile Minimal Root Filesystem](build/12_busybox_rootfs.md)
 - [Bölüm 13 — Buildroot](build/13_buildroot.md)
 
+**Kısım VI — Uygulama Geliştirme ve Donanım**
+
+- [Bölüm 14 — Eclipse ile Uygulama Geliştirme](build/14_eclipse.md)
+
 ## Bu Repo Nasıl Çalışır?
 
 | Yer | Ne var? |

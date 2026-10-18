@@ -49,8 +49,9 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [11. Linux Device Tree](11_device_tree.md) | Kernel'in donanımı nasıl tanıdığını öğren |
 | <b>V — Root Filesystem</b> | [12. BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md) | Kendi rootfs'ini sıfırdan kur, NFS ile bilgisayardan aç |
 | | [13. Buildroot](13_buildroot.md) | Bütün sistemi tek komutla derle, hazır SD kart imajı üret |
+| <b>VI — Uygulama Geliştirme ve Donanım</b> | [14. Eclipse ile Uygulama Geliştirme](14_eclipse.md) | Eclipse'te ARM için program yaz, tek tıkla kartta çalıştır |
 
-<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: Eclipse ile uygulama geliştirme, AM335x GPIO'ları ve sysfs, harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: AM335x GPIO'ları ve sysfs, harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
@@ -81,6 +82,7 @@ Her bölüm aynı düzende yazıldı:
 | `gparted` | SD kartı bölümlemek için ([Bölüm 4](04_sd_card_boot.md)) |
 | `tftpd-hpa` | TFTP sunucusu ([Bölüm 8](08_tftp_boot.md)) |
 | `nfs-kernel-server` | Rootfs'i ağdan bağlamak için NFS sunucusu ([Bölüm 12](12_busybox_rootfs.md)) |
+| Eclipse (Eclipse IDE for C/C++ Developers) | Uygulama geliştirme ([Bölüm 14](14_eclipse.md)) |
 | Cross toolchain, U-Boot, kernel, BusyBox kaynakları | Derleme bölümlerinde kurulur ([Bölüm 9](09_uboot_build.md), [Bölüm 10](10_linux_kernel.md), [Bölüm 12](12_busybox_rootfs.md)) |
 
 ---
@@ -100,6 +102,7 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 | Kendi derlediğimiz kernel | 5.10.162 (BeagleBoard, dal `5.10`, `bb.org_defconfig`) | 10 |
 | BusyBox / Dropbear | 1.36.1 / 2022.83 | 12 |
 | Buildroot (LTS) | 2026.02.3 (kernel 6.18.1, U-Boot 2026.01) | 13 |
+| Eclipse | 2026-09 (Eclipse IDE for C/C++ Developers) | 14 |
 | Host PC IP / kart IP | 192.168.27.1 / 192.168.27.2 | 8 |
 
 ---

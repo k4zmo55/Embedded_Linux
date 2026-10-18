@@ -34,6 +34,10 @@ chapters = ["10_linux_kernel.md", "11_device_tree.md"]
 title = "Root Filesystem"
 chapters = ["12_busybox_rootfs.md", "13_buildroot.md"]
 
+[[book.parts]]
+title = "Uygulama Geliştirme ve Donanım"
+chapters = ["14_eclipse.md"]
+
 # ---------------------------------------------------------------------------
 
 [vars.course]
@@ -93,6 +97,16 @@ uboot_version = "2026.01"
 toolchain = "Bootlin armv7-eabihf glibc stable 2025.08-1"
 busybox_version = "1.37.0"
 dropbear_version = "2026.91"
+
+# Eclipse (Eclipse bölümü)
+[vars.eclipse]
+version = "2026-09"
+package = "Eclipse IDE for C/C++ Developers"
+release_site = "https://download.eclipse.org/releases/{{eclipse.version}}/"
+toolchain_win_tarball = "gcc-linaro-{{build.gcc_version}}-{{build.linaro_date}}-i686-mingw32_arm-linux-gnueabihf.tar.xz"
+toolchain_win_url = "https://releases.linaro.org/components/toolchain/binaries/{{build.linaro_release}}/arm-linux-gnueabihf/{{eclipse.toolchain_win_tarball}}"
+project = "hello_bbb"
+target_user = "debian"
 
 # Kendi derlediğimiz U-Boot ve toolchain (U-Boot derleme bölümü)
 [vars.build]

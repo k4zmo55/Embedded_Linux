@@ -35,3 +35,7 @@
 
 - [Bölüm 12 — BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md)
 - [Bölüm 13 — Buildroot](13_buildroot.md)
+
+**Kısım VI — Uygulama Geliştirme ve Donanım**
+
+- [Bölüm 14 — Eclipse ile Uygulama Geliştirme](14_eclipse.md)

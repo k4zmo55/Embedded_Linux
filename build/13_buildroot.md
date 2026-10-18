@@ -384,4 +384,4 @@ make my_bbb_defconfig && make
 
 ---
 
-[← Bölüm 12: BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md) · [İçindekiler](README.md)
+[← Bölüm 12: BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md) · [İçindekiler](README.md) · [Bölüm 14: Eclipse ile Uygulama Geliştirme →](14_eclipse.md)
