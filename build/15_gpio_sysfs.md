@@ -334,4 +334,4 @@ Kartta (root olarak):
 
 ---
 
-[← Bölüm 14: Eclipse ile Uygulama Geliştirme](14_eclipse.md) · [İçindekiler](README.md)
+[← Bölüm 14: Eclipse ile Uygulama Geliştirme](14_eclipse.md) · [İçindekiler](README.md) · [Bölüm 16: Harici LED Bağlamak →](16_external_led.md)

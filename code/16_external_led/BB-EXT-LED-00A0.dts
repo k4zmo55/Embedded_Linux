@@ -1,0 +1,38 @@
+/*
+ * BB-EXT-LED-00A0.dts — P9_12'ye (GPIO1_28) bağlı harici LED'i kernel'in LED
+ * alt sistemine ("gpio-leds" sürücüsü) tanıtan device tree overlay'i.
+ *
+ * Derleme:  dtc -@ -I dts -O dtb -o BB-EXT-LED-00A0.dtbo BB-EXT-LED-00A0.dts
+ * Sonuç:    /sys/class/leds/ext:red:p9_12  (varsayılan tetikleyici: heartbeat)
+ *
+ * Ana DTB'nin sembollerle (-@) derlenmiş olması gerekir (BeagleBoard kernel'leri
+ * böyle derler). P9_12'yi başka bir pinmux yardımcısı (cape-universal) tutuyorsa
+ * önce onu kapat.
+ */
+/dts-v1/;
+/plugin/;
+
+/* Pin ayarı: P9_12 = conf_gpmc_be1n, 0x44E10878. pinctrl-single ofseti 0x878 - 0x800 = 0x078.
+ * 0x07 = mod 7 (GPIO), pull-down, giriş kapalı (sadece çıkış). */
+&am33xx_pinmux {
+	ext_led_pins: ext-led-pins {
+		pinctrl-single,pins = <
+			0x078 0x07	/* P9_12: gpmc_be1n.gpio1_28, çıkış */
+		>;
+	};
+};
+
+&{/} {
+	ext-leds {
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&ext_led_pins>;
+
+		ext-led {
+			label = "ext:red:p9_12";
+			gpios = <&gpio1 28 0>;			/* 0 = GPIO_ACTIVE_HIGH */
+			linux,default-trigger = "heartbeat";
+			default-state = "off";
+		};
+	};
+};
