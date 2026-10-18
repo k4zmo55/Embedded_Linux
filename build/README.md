@@ -28,4 +28,9 @@
 
 **Kısım IV — Linux Kernel**
 
-- [Bölüm 10 — Linux Device Tree](10_device_tree.md)
+- [Bölüm 10 — Linux Kernel: Kaynak Ağacı ve Derleme](10_linux_kernel.md)
+- [Bölüm 11 — Linux Device Tree](11_device_tree.md)
+
+**Kısım V — Root Filesystem**
+
+- [Bölüm 12 — BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md)

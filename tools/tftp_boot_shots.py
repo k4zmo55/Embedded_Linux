@@ -6,7 +6,8 @@ from term_shots import (render, t, FG, DIM, GREEN, BLUE, CYAN, MAGENTA, RED, YEL
                         ORANGE)
 from term_shots import V, set_default_out
 
-PB_UBOOT = V("prebuilt.uboot_version")
+SD_UB = V("prebuilt.sd_uboot_version")
+ETH_DEV = V("build.eth_device")
 KVER = V("prebuilt.kernel_version")
 HOST_IP = V("network.host_ip")
 BOARD_IP = V("network.board_ip")
@@ -99,7 +100,7 @@ MINICOM = "mehmet@ubuntu: ~ — minicom -D /dev/ttyUSB0 -b 115200"
 
 
 def ub(cmd):
-    return [("U-Boot# ", YELLOW), (cmd, FG)]
+    return [("=> ", YELLOW), (cmd, FG)]
 
 
 def sh(cmd):
@@ -142,19 +143,19 @@ render("07_sd_boot_part.png", TITLE, [
 
 # 8) U-Boot'ta ağ ayarları ve ping
 render("08_uboot_net.png", MINICOM, [
-    t(f"U-Boot {PB_UBOOT} (Oct 16 2026 - 10:12:41)", FG),
-    t("Net:   cpsw, usb_ether"),
+    t(f"U-Boot {SD_UB} (Oct 16 2026 - 10:12:41)", FG),
+    t(f"Net:   eth2: {ETH_DEV}, eth3: usb_ether"),
     note("Hit any key to stop autoboot:  0", FG, "    <-- herhangi bir tuşa bas"),
     ub(f"setenv ipaddr {BOARD_IP}"),
     ub(f"setenv serverip {HOST_IP}"),
-    ub("setenv ethact cpsw"),
+    ub(f"setenv ethact {ETH_DEV}"),
     ub("printenv ipaddr serverip ethact"),
     t(f"ipaddr={BOARD_IP}", CYAN),
     t(f"serverip={HOST_IP}", CYAN),
-    t("ethact=cpsw", CYAN),
+    t(f"ethact={ETH_DEV}", CYAN),
     ub(f"ping {HOST_IP}"),
     t("link up on port 0, speed 100, full duplex"),
-    t("Using cpsw device"),
+    t(f"Using {ETH_DEV} device"),
     note(f"host {HOST_IP} is alive", GREEN, "                 <-- bağlantı tamam"),
 ])
 
@@ -162,7 +163,7 @@ render("08_uboot_net.png", MINICOM, [
 render("09_tftpboot.png", MINICOM, [
     ub("tftpboot 0x82000000 uImage"),
     t("link up on port 0, speed 100, full duplex"),
-    t("Using cpsw device"),
+    t(f"Using {ETH_DEV} device"),
     t(f"TFTP from server {HOST_IP}; our IP address is {BOARD_IP}"),
     t("Filename 'uImage'."),
     t("Load address: 0x82000000"),
@@ -200,7 +201,7 @@ render("10_bootm.png", MINICOM, [
 
 # 11) uEnv.txt ile otomatik TFTP boot
 render("11_uenv_auto.png", MINICOM, [
-    t(f"U-Boot {PB_UBOOT} (Oct 16 2026 - 10:12:41)", FG),
+    t(f"U-Boot {SD_UB} (Oct 16 2026 - 10:12:41)", FG),
     t("Hit any key to stop autoboot:  0"),
     t("mmc0 is current device"),
     note("reading uEnv.txt", FG, "                           <-- SD kart, 1. bölüm"),
@@ -208,7 +209,7 @@ render("11_uenv_auto.png", MINICOM, [
     t("Importing environment from mmc ..."),
     note("Running uenvcmd ...", FG, "                        <-- bizim komutumuz"),
     t("*** Booting From Network ***", ORANGE),
-    t("Using cpsw device"),
+    t(f"Using {ETH_DEV} device"),
     t(f"TFTP from server {HOST_IP}; our IP address is {BOARD_IP}"),
     t("Filename 'uImage'."),
     t("Bytes transferred = 4380760 (42d858 hex)", GREEN),
@@ -240,7 +241,7 @@ render("13_hatalar.png", MINICOM + " (temsili hatalar)", [
     ub("tftpboot 0x82000000 uImage"),
     note("*** ERROR: `serverip' not set", RED, "              <-- setenv serverip ..."),
     ub("tftpboot 0x82000000 uImage"),
-    note("Using usb_ether device", RED, "                     <-- setenv ethact cpsw"),
+    note("Using usb_ether device", RED, "                     <-- setenv ethact ..."),
     ub("tftpboot 0x82000000 uImage"),
     t(f"TFTP from server {HOST_IP}; our IP address is {BOARD_IP}"),
     t("Loading: T T T T T T T T T T", RED),
@@ -292,7 +293,7 @@ render("16_cmdline.png", "root@beaglebone (initramfs) — seri konsol", [
 
 # 17) Genel uEnv.txt: eMMC ve SD başarısız, TFTP ile açılış
 render("17_generic_fallback.png", MINICOM + " (SD kart takılı değil)", [
-    t(f"U-Boot {PB_UBOOT} (Oct 16 2026 - 10:12:41)", FG),
+    t(f"U-Boot {SD_UB} (Oct 16 2026 - 10:12:41)", FG),
     note("Card did not respond to voltage select!", DIM, "     <-- mmcdev 0 (SD) yok"),
     note("SD/MMC found on device 1", FG, "                    <-- eMMC'ye geçti"),
     t("reading uEnv.txt"),
@@ -302,7 +303,7 @@ render("17_generic_fallback.png", MINICOM + " (SD kart takılı değil)", [
     t("[2/4] SD kart deneniyor ...", ORANGE),
     note("Card did not respond to voltage select!", RED, "     <-- SD yok"),
     t("[3/4] TFTP (initramfs) deneniyor ...", ORANGE),
-    t("Using cpsw device"),
+    t(f"Using {ETH_DEV} device"),
     t(f"TFTP from server {HOST_IP}; our IP address is {BOARD_IP}"),
     t("Bytes transferred = 4380760 (42d858 hex)", GREEN),
     t("Bytes transferred = 24884 (6134 hex)", GREEN),

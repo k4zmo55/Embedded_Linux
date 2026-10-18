@@ -186,6 +186,16 @@ Bu bölümde kullanılan adresler:
 
 Önce Yol 1 ile bir kere çalıştır, sonra Yol 2'ye geç. Yol 2'deki `uEnv.txt` aynı komutları içerdiği için bir hata olursa Yol 1'e dönüp tek tek denersin.
 
+<b>Hangi dosyalar?</b>
+
+| Nerede? | Dosya | Kaynak |
+|---|---|---|
+| SD kart (BOOT) | `MLO`, `u-boot.img` | Kursun güncel `SD-boot` imajları (U-Boot {{prebuilt.sd_uboot_version}}) ya da [Bölüm 9](09_uboot_build.md)'da kendi derlediklerin |
+| Host (`{{network.tftp_dir}}`) | `uImage`, `am335x-boneblack.dtb`, `initramfs` | Kursun `tftp-boot` klasörü (Ångström kernel {{prebuilt.kernel_version}}) ya da kendi derlediklerin |
+
+> [!WARNING]
+> Kursun güncel `SD-boot` U-Boot'unda `bootdelay=0`. Yani `Hit any key to stop autoboot` geri sayımı yok denecek kadar kısa. U-Boot'u durdurmak için kart açılırken <b>Space tuşuna basılı tut</b> ya da art arda bas. Bekleme süresini uzatmak [9.4](09_uboot_build.md#94-challenge-autoboot-bekleme-süresini-10-saniyeye-çıkarmak)'teki challenge'ın konusu.
+
 > [!NOTE]
 > Aşağıdaki ekran görüntüleri <b>temsilidir</b>; arayüz adı (`{{network.host_iface}}`), sürüm, tarih, boyut ve hız değerleri senin ortamında farklı olacaktır.
 
@@ -244,18 +254,18 @@ Minicom açıkken kartı S2'ye basılı tutarak başlat, `Hit any key to stop au
 ![U-Boot'ta ipaddr, serverip, ethact ayarlama ve ping](../images/tftp_boot/08_uboot_net.png)
 
 ```
-U-Boot# setenv ipaddr {{network.board_ip}}
-U-Boot# setenv serverip {{network.host_ip}}
-U-Boot# setenv ethact cpsw
-U-Boot# printenv ipaddr serverip ethact
-U-Boot# ping {{network.host_ip}}
+=> setenv ipaddr {{network.board_ip}}
+=> setenv serverip {{network.host_ip}}
+=> setenv ethact {{build.eth_device}}
+=> printenv ipaddr serverip ethact
+=> ping {{network.host_ip}}
 ```
 
 | Komut | Açıklama |
 |---|---|
 | `setenv ipaddr ...` | Kartın (istemci) IP adresi |
 | `setenv serverip ...` | TFTP sunucusunun (host) IP adresi. `tftpboot` dosyayı bu adresten ister. |
-| `setenv ethact cpsw` | Kullanılacak ağ aygıtı. Kursun hazır U-Boot'unda ({{prebuilt.uboot_version}}) iki aygıt var (`Net: cpsw, usb_ether`); `cpsw` Ethernet portudur. Çoğu zaman zaten varsayılandır, ama `Using usb_ether device` görürsen bu satır gerekir. Kendi derlediğin U-Boot {{build.uboot_version}}'te aygıtın adı `{{build.eth_device}}`'dir ([9.3](09_uboot_build.md#93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme)). |
+| `setenv ethact {{build.eth_device}}` | Kullanılacak ağ aygıtı. BBB'nin U-Boot'unda iki aygıt var: Ethernet portu ve USB üzerinden ağ (`usb_ether`). Adlarını açılıştaki `Net:` satırında görürsün. U-Boot {{prebuilt.sd_uboot_version}}'te Ethernet'in adı `{{build.eth_device}}`, 2016–2017 öncesi sürümlerde `cpsw`'dir. Çoğu zaman zaten varsayılandır, ama `Using usb_ether device` görürsen bu satır gerekir. |
 | `ping ...` | Kablo ve IP ayarlarını test eder. `is alive` görmelisin. |
 
 > [!NOTE]
@@ -266,9 +276,9 @@ U-Boot# ping {{network.host_ip}}
 ![tftpboot ile uImage, dtb ve initramfs'i RAM'e çekme](../images/tftp_boot/09_tftpboot.png)
 
 ```
-U-Boot# tftpboot 0x82000000 uImage
-U-Boot# tftpboot 0x88000000 am335x-boneblack.dtb
-U-Boot# tftpboot 0x88080000 initramfs
+=> tftpboot 0x82000000 uImage
+=> tftpboot 0x88000000 am335x-boneblack.dtb
+=> tftpboot 0x88080000 initramfs
 ```
 
 Adresler seri boot bölümündekiyle aynı ([7.5](07_uart_boot.md#75-önerilen-ram-yükleme-adresleri)): kernel `0x82000000`, DTB `0x88000000`, initramfs `0x88080000`. `Bytes transferred` değeri host'taki `ls -l` boyutuyla aynı olmalı. (`tftp` ve `tftpboot` U-Boot'ta aynı komuttur.)
@@ -278,8 +288,8 @@ Adresler seri boot bölümündekiyle aynı ([7.5](07_uart_boot.md#75-önerilen-r
 ![bootargs ayarlama ve bootm ile boot](../images/tftp_boot/10_bootm.png)
 
 ```
-U-Boot# setenv bootargs console={{prebuilt.console}},115200 root=/dev/ram0 rw initrd=0x88080000
-U-Boot# bootm 0x82000000 0x88080000 0x88000000
+=> setenv bootargs console={{prebuilt.console}},115200 root=/dev/ram0 rw initrd=0x88080000
+=> bootm 0x82000000 0x88080000 0x88000000
 ```
 
 `bootm` argüman sırası: <b>kernel – initramfs – DTB</b>. Komuta sadece adresler yazılır. `bootargs`'ın ayrıntıları: [7.8 Adım 7](07_uart_boot.md#adım-7--bootargs-ayarla-ve-bootm-ile-boot-et).
@@ -400,6 +410,26 @@ cat /proc/cmdline
 ```
 
 Burada `console={{prebuilt.console}},115200n8 root=/dev/ram0 ...` görmüyorsan `linuxbootargs` çalışmamış demektir (değişken adını kontrol et).
+
+### Adım 6 — S2'ye basmadan açılış (Challenge)
+
+Kursun bu bölümdeki challenge'ı: <i>TFTP boot'u `uEnv.txt` ile otomatikleştir; kart güç alınca ya da reset'e basılınca imajlar kendiliğinden insin ve <b>S2'ye basmadan</b> açılsın.</i>
+
+S2'ye basmadan güç verince ROM Code <b>eMMC</b>'deki MLO/U-Boot'u çalıştırır ([3.5](03_boot_process.md#35-boot-kaynakları-ve-boot-sırası-sysboot-pinleri)). Çözüm, eMMC'deki U-Boot'un `uEnv.txt`'yi nerede aradığına bağlı:
+
+1. <b>Önce kontrol et.</b> U-Boot'u durdur ve ortamına bak:
+   ```
+   => printenv mmcdev bootenvfile bootenv
+   => printenv bootcmd
+   ```
+   `mmcdev=0` ve `bootcmd` içinde `loadbootenv` / `envboot` gibi bir adım varsa, U-Boot açılışta önce <b>SD kartın 1. bölümündeki</b> `uEnv.txt`'yi okur (`mmc 0` = SD kart).
+2. <b>Bu durumda yapman gereken tek şey</b> Adım 3'teki `uEnv.txt`'yi SD kartın BOOT bölümüne koymak. Kart eMMC'den açılsa bile SD karttaki dosyayı okur ve `uenvcmd` ile TFTP boot'u başlatır. S2'ye basmana gerek kalmaz.
+3. eMMC'deki U-Boot dosyayı başka bir yerde arıyorsa (BeagleBoard'un yeni Debian imajları gibi, ör. eMMC'nin rootfs'indeki `/boot/uEnv.txt`), iki seçenek var:
+   - Komutları U-Boot'un okuduğu dosyaya yaz, ya da
+   - eMMC'deki `MLO`'yu devre dışı bırak. ROM Code eMMC'de geçerli MLO bulamayınca SD karta geçer ([3.1](03_boot_process.md#31-rbl-rom-boot-loader)).
+
+> [!CAUTION]
+> eMMC'deki `MLO`'yu silmek, eMMC'deki sistemin kendi başına açılmamasına yol açar. Geri dönmek için [Bölüm 5](05_emmc_boot.md)'teki gibi eMMC'yi yeniden flash'lamak gerekir. Önce 1. ve 2. maddeyi dene.
 
 ### Yol 2'nin özeti
 
@@ -522,7 +552,7 @@ uenvcmd=if test "${generic_tried}" != "yes"; then setenv generic_tried yes; sete
 | `net_load` | TFTP ile kernel + DTB. TFTP ve NFS adımları ortak kullanır. |
 | `try_tftp` | Kernel + DTB + <b>initramfs</b>. Rootfs RAM'de (Yol 2 ile aynı). |
 | `try_nfs` | Kernel + DTB TFTP'den gelir, rootfs NFS ile host'tan bağlanır. `ip=...` kernel'e kendi IP'sini verir; U-Boot'un IP'si kernel'e geçmediği için NFS'te şart. Bu adım, host'ta `initramfs` dosyası yoksa devreye girer. |
-| `uenvcmd` | Makroları sırayla çağırır. `generic_tried` bir <b>koruma bayrağı</b>: BBB'nin varsayılan `bootcmd`'si önce SD'de, sonra eMMC'de `mmcboot` çalıştırır, yani `uenvcmd` iki kez çalışabilir. Bayrak sayesinde zincir sadece bir kez denenir. |
+| `uenvcmd` | Makroları sırayla çağırır. `generic_tried` bir <b>koruma bayrağı</b>: U-Boot sürümüne göre varsayılan `bootcmd` önce SD'de, sonra eMMC'de `uEnv.txt` arayabilir, yani `uenvcmd` iki kez çalışabilir. Bayrak sayesinde zincir sadece bir kez denenir. |
 
 > [!WARNING]
 > <b>eMMC'nin kernel'deki adı değişebilir.</b> U-Boot'ta eMMC her zaman `mmc 1`'dir. Ama eski kernel'lerde ({{prebuilt.kernel_version}} gibi) SD kart <b>takılı değilse</b> eMMC `mmcblk0` olarak görünür, takılıysa `mmcblk1` olarak görünür. `emmc_root` makrosu SD kartın olup olmadığına bakıp doğru adı seçer. Yeni kernel'lerde DTB'deki `aliases` ile bu sabitlenebilir.
@@ -579,7 +609,7 @@ Bir adımı elle denemek istersen U-Boot'u durdurup `uEnv.txt`'yi yükle (`run l
 | Hata | Sebep | Çözüm |
 |---|---|---|
 | `*** ERROR: 'serverip' not set` | Sunucu IP'si tanımlı değil | `setenv serverip {{network.host_ip}}` |
-| `Using usb_ether device` | U-Boot USB ağını kullanmaya çalışıyor | `setenv ethact cpsw` (U-Boot {{build.uboot_version}}'te: `setenv ethact {{build.eth_device}}`) |
+| `Using usb_ether device` | U-Boot USB ağını kullanmaya çalışıyor | `setenv ethact {{build.eth_device}}` (eski U-Boot'larda `setenv ethact cpsw`) |
 | `Loading: T T T T ...` / `Retry count exceeded` | Paket gidiyor ama cevap gelmiyor | Host IP'si ve alt ağ doğru mu? `systemctl status tftpd-hpa` çalışıyor mu? Firewall (`sudo ufw allow 69/udp`)? VM ise Bridged mi? Sunucu port 69'da mı? |
 | `TFTP error: 'File not found' (1)` | Dosya `{{network.tftp_dir}}` içinde değil ya da adı yanlış | `ls -l {{network.tftp_dir}}`. Linux'ta büyük-küçük harf farklıdır: `uImage` ≠ `uimage` |
 | `TFTP error: 'Permission denied'` | Dosya okunamıyor | `sudo chmod -R 777 {{network.tftp_dir}}` |

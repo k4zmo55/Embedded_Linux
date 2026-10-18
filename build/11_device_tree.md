@@ -1,5 +1,5 @@
 <!-- Bu dosya otomatik üretildi. Düzenlemek için chapters/ altındaki kaynağı değiştir. -->
-# Bölüm 10 — Linux Device Tree
+# Bölüm 11 — Linux Device Tree
 
 > <b>Bu bölümde:</b>
 > - Kernel'in, kendini tanıtmayan donanımı (UART, I2C, GPIO...) nereden öğrendiğini anlayacaksın.
@@ -11,7 +11,7 @@
 
 ---
 
-## 10.1 Problem: Kernel Donanımı Nereden Bilecek?
+## 11.1 Problem: Kernel Donanımı Nereden Bilecek?
 
 Kernel'in çalışabilmesi için kartta <b>hangi donanımların olduğunu, nerede durduklarını ve nasıl bağlandıklarını</b> bilmesi gerekir. Örneğin:
 
@@ -57,7 +57,7 @@ Bu yöntemin sorunları:
 
 ---
 
-## 10.2 Device Tree Nedir?
+## 11.2 Device Tree Nedir?
 
 <b>Device Tree (DT)</b>, bir sistemdeki donanımı tarif eden, <b>ağaç (tree) şeklinde bir veri yapısıdır</b>.
 
@@ -74,7 +74,7 @@ Device Tree'de olmayan bir şey kernel tarafından <b>bilinemez</b>. Driver kern
 
 ---
 
-## 10.3 Dosya Türleri: DTS, DTSI, DTC, DTB, DTBO
+## 11.3 Dosya Türleri: DTS, DTSI, DTC, DTB, DTBO
 
 ![Device Tree: kaynaktan blob'a (DTS → dtc → DTB)](../images/device_tree/dts_to_dtb.png)
 
@@ -88,7 +88,7 @@ Device Tree'de olmayan bir şey kernel tarafından <b>bilinemez</b>. Driver kern
 | <b>dtc</b> | Device Tree <b>Compiler</b> | `.dts` dosyasını `.dtb`'ye derleyen (ve tersini yapabilen) araç |
 | <b>.dtb</b> | Device Tree <b>Blob</b> (Binary) | Derlenmiş, <b>ikili (binary)</b> çıktı. Bootloader bunu RAM'e yükler ve kernel bunu okur. Örn: `am335x-boneblack.dtb` |
 | <b>FDT</b> | Flattened Device Tree | DTB'nin bellekteki "düzleştirilmiş" formatının adı. U-Boot'taki `fdt` komutu ve `fdtaddr` değişkeni buradan gelir. |
-| <b>.dtbo</b> | Device Tree Blob <b>Overlay</b> | Var olan bir DTB'ye çalışma/boot anında eklenen <b>yama</b>. Cape/HAT gibi eklenti kartlar için kullanılır. ([10.12](#1012-device-tree-overlay-dtbo)) |
+| <b>.dtbo</b> | Device Tree Blob <b>Overlay</b> | Var olan bir DTB'ye çalışma/boot anında eklenen <b>yama</b>. Cape/HAT gibi eklenti kartlar için kullanılır. ([11.12](#1112-device-tree-overlay-dtbo)) |
 
 ### Derleme akışı
 
@@ -123,7 +123,7 @@ $ hexdump -C am335x-boneblack.dtb | head -1     # ilk 4 byte: d0 0d fe ed
 
 ---
 
-## 10.4 Söz Dizimi (Syntax)
+## 11.4 Söz Dizimi (Syntax)
 
 ![Device Tree temel söz dizimi](../images/device_tree/dt_temel_soz_dizimi.png)
 
@@ -166,7 +166,7 @@ Property'ler `isim = değer;` şeklindedir. Değer türleri:
 
 ---
 
-## 10.5 Bir Device Tree'nin Genel Yapısı
+## 11.5 Bir Device Tree'nin Genel Yapısı
 
 ![DT genel yapısı: kod ve donanım karşılığı](../images/device_tree/dt_genel_yapi.png)
 
@@ -227,7 +227,7 @@ leds {
 
 ---
 
-## 10.6 Önemli Property'ler
+## 11.6 Önemli Property'ler
 
 | Property | Anlamı | Örnek |
 |---|---|---|
@@ -272,7 +272,7 @@ i2c0: i2c@44e0b000 {
 
 ---
 
-## 10.7 compatible ile Driver Eşleşmesi
+## 11.7 compatible ile Driver Eşleşmesi
 
 Kernel DTB'yi okuduğunda her node için bir <b>device</b> oluşturur. Sonra her device için `compatible` string'ine bakar ve <b>aynı string'i destekleyen bir driver</b> arar. Eşleşme bulunursa driver'ın `probe()` fonksiyonu çağrılır ve cihaz o driver'a <b>bağlanır (bind)</b>.
 
@@ -323,7 +323,7 @@ Driver `probe()` içinde `reg`, `interrupts`, `clocks` gibi property'leri okuyar
 
 ---
 
-## 10.8 Kalıtım: .dtsi, include ve Label ile Override
+## 11.8 Kalıtım: .dtsi, include ve Label ile Override
 
 Aynı SoC'u kullanan onlarca kart vardır. Her kart için SoC'un tamamını baştan yazmak yerine:
 
@@ -380,7 +380,7 @@ Bir node'u değiştirmek için tam yolunu tekrar yazmak yerine, <b>label</b>'ı 
 
 ---
 
-## 10.9 dtc Kullanımı
+## 11.9 dtc Kullanımı
 
 ![dtc ile derleme ve geri derleme örneği](../images/device_tree/dtc_ornek.png)
 
@@ -435,7 +435,7 @@ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- ti/omap/am335x-boneblack.dtb
 
 ---
 
-## 10.10 Boot Sürecinde Device Tree
+## 11.10 Boot Sürecinde Device Tree
 
 [Linux boot sürecinde](03_boot_process.md) gördüğümüz gibi U-Boot, kernel'i başlatmadan önce <b>hem kernel image'ını hem de DTB'yi</b> RAM'e yükler:
 
@@ -491,7 +491,7 @@ U-Boot'un `fdt` komutuyla RAM'deki DTB'ye bakılabilir:
 
 ---
 
-## 10.11 Çalışan Sistemde Device Tree'yi İncelemek
+## 11.11 Çalışan Sistemde Device Tree'yi İncelemek
 
 Kernel, okuduğu device tree'yi bir dosya sistemi olarak dışarı açar:
 
@@ -552,7 +552,7 @@ ls /boot/dtbs/$(uname -r)/ | grep boneblack
 
 ---
 
-## 10.12 Device Tree Overlay (.dtbo)
+## 11.12 Device Tree Overlay (.dtbo)
 
 BeagleBone'a <b>cape</b> (P8/P9 header'larına takılan eklenti kart) takıldığında donanım değişir. Her cape kombinasyonu için ayrı bir `.dts` yazmak mantıklı değildir. Bunun çözümü <b>overlay</b>'dir.
 
@@ -591,7 +591,7 @@ uboot_overlay_addr0=/lib/firmware/BB-I2C2-00A0.dtbo
 
 ---
 
-## 10.13 Özet
+## 11.13 Özet
 
 | Kavram | Bir cümlede |
 |---|---|
@@ -634,4 +634,4 @@ Kernel DTB'yi okur → device'ları oluşturur → compatible ile driver'ları p
 
 ---
 
-[← Bölüm 9: Cross Toolchain, SPL ve U-Boot Derleme](09_uboot_build.md) · [İçindekiler](README.md)
+[← Bölüm 10: Linux Kernel: Kaynak Ağacı ve Derleme](10_linux_kernel.md) · [İçindekiler](README.md) · [Bölüm 12: BusyBox ile Minimal Root Filesystem →](12_busybox_rootfs.md)

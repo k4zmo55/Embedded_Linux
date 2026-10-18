@@ -11,6 +11,14 @@ Bu repo, bir Embedded Linux kursunun (BeagleBone Black) notlarından oluşan Tü
 | `images/` | Görseller. `images/<konu>/NN_isim.png` terminal görüntüleri `tools/*_shots.py` ile üretilir. |
 | `build/` | `python tools/book.py build` çıktısı (bölümler, `Embedded_Linux.md`, `Embedded_Linux.pdf`). Elle düzenlenmez. Kök `README.md` de build tarafından üretilir. |
 | `tools/book.py` | `check`, `build`, `renumber` komutları |
+| `sources/` | Git'e gönderilmeyen kaynaklar: kursun ders listesi (`sources/course_outline/`), slayt görüntüleri, ham notlar. Okunur ama kitaba konmaz. |
+
+## Kaynaklar ve kursla eşleşme
+
+- Kursun ders listesi: `sources/course_outline/ders_bolum_icerik.md` (kurs bölüm 12–21). Kursun reposu: https://github.com/niekiran/EmbeddedLinuxBBB (challenge'lar, makaleler, `notes/compilation_commands`, hazır imajlar, init betikleri).
+- Kurs slaytları sadece kaynaktır; kitaba kendi metnimiz, diyagramlarımız ve terminal görüntülerimiz girer. Bootlin / beagleboard.org gibi CC BY-SA kaynaklardan görsel alınabilir, altına kaynak ve lisans yazılır.
+- Kursun reposu eski (2017), videolar güncellenmiş. Sürüm iddialarını imajların kendisinden doğrula (ör. uImage başlığı, `strings u-boot.img`).
+- Kitap her zaman güncel kalmalı: eskimiş bir komut/sürüm görürsen düzelt ve kursun farkını bir NOTE ile belirt.
 
 Oturum başında SessionStart hook'u `book.py check --brief` çalıştırır. Çıktıda "Kitaba eklenmemiş notlar" görürsen aşağıdaki **Yeni not ekleme** adımlarını uygula; "build güncel değil" görürsen değişiklik yaptıktan sonra build al.
 

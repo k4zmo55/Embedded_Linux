@@ -6,9 +6,15 @@ from term_shots import (render, ub, host, t, FG, DIM, GREEN, BLUE, YELLOW,
                         CYAN, RED, MAGENTA, ORANGE)
 from term_shots import V, set_default_out
 
-PB_UBOOT = V("prebuilt.uboot_version")
+SPL_VER = V("prebuilt.serial_spl_version")
+UB_VER = V("prebuilt.serial_uboot_version")
 KVER = V("prebuilt.kernel_version")
 set_default_out("images/serial_boot")
+
+
+def ub(cmd):
+    """Bu U-Boot sürümünün komut istemi => (eski 2013.x sürümlerinde U-Boot#)."""
+    return [("=> ", YELLOW), (cmd, FG)]
 
 MINICOM = "mehmet@ubuntu: ~/bbb — minicom -D /dev/ttyUSB0 -b 115200"
 
@@ -89,7 +95,7 @@ render("04_rom_spl_xmodem.png", MINICOM, [
     t("|Transfer complete                                            |", GREEN),
     t("+-------------------------------------------------------------+", BLUE),
     t(""),
-    t(f"U-Boot SPL {PB_UBOOT} (Oct 17 2026 - 09:58:12)", FG),
+    t(f"U-Boot SPL {SPL_VER} (Oct 17 2026 - 09:58:12)", FG),
     note("CCCCCCCC", ORANGE, "      <-- şimdi SPL, u-boot.img'i Ymodem ile bekliyor"),
 ])
 
@@ -105,7 +111,7 @@ render("05_spl_uboot_ymodem.png", MINICOM, [
     t("+-------------------------------------------------------------+", BLUE),
     t("Loaded 403524 bytes", DIM),
     t(""),
-    t(f"U-Boot {PB_UBOOT} (Oct 17 2026 - 09:58:12)", FG),
+    t(f"U-Boot {UB_VER} (Oct 17 2026 - 09:58:12)", FG),
     t(""),
     t("I2C:   ready"),
     t("DRAM:  512 MiB"),

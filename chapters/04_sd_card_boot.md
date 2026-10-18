@@ -601,7 +601,43 @@ Ya da kartı yeniden başlat (`reset` veya Power butonu).
 
 ---
 
-## 4.11 Özet
+## 4.11 Kursun Güncel SD Kart İmajları (U-Boot {{prebuilt.sd_uboot_version}} + Kernel {{prebuilt.sd_kernel_version}})
+
+Bu bölümde kullandığımız Ångström dosyaları kursun ilk sürümünden kalma (2013). Kursun reposundaki `pre-built-images/SD-boot` klasöründe güncel bir set de var:
+
+| Dosya | İçerik | SD kartta nereye? |
+|---|---|---|
+| `MLO`, `u-boot.img` | U-Boot {{prebuilt.sd_uboot_version}} | BOOT |
+| `uImage` | Linux {{prebuilt.sd_kernel_version}} | BOOT |
+| `am335x-boneblack.dtb` | Aynı kernel'in device tree'si | BOOT |
+| `uEnv.txt` | Aşağıda | BOOT |
+
+Farklar:
+- Kernel ve DTB artık ROOTFS'teki `/boot` klasöründe değil, <b>BOOT (FAT) bölümünde</b> duruyor. `load mmc 0:1 ...` ile okunuyor.
+- Bu set bir rootfs içermiyor. ROOTFS bölümüne [Bölüm 12](12_busybox_rootfs.md)'de BusyBox ile hazırlayacağımız dosya sistemini koyacağız. Kernel 5.10 ile 2012 tarihli Ångström rootfs'i birlikte çalışmaz.
+- Bu U-Boot'ta `bootdelay=0`: geri sayım yok. U-Boot'u durdurmak için kart açılırken <b>Space'e basılı tut</b>. Bekleme süresini uzatmak [9.4](09_uboot_build.md#94-challenge-autoboot-bekleme-süresini-10-saniyeye-çıkarmak)'ün konusu.
+
+Kursun `uEnv.txt`'si:
+
+```text
+console=ttyS0,115200n8
+netargs=setenv bootargs console=ttyO0,115200n8 root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait debug earlyprintk mem=512M
+netboot=echo Booting from microSD ...; setenv autoload no ; load mmc 0:1 ${loadaddr} uImage ; load mmc 0:1 ${fdtaddr} am335x-boneblack.dtb ; run netargs ; bootm ${loadaddr} - ${fdtaddr}
+uenvcmd=run netboot
+```
+
+| Parça | Anlamı |
+|---|---|
+| `rootfstype=ext4` | Rootfs'in dosya sistemi türü. ext4 sürücüsü ext3 bölümleri de bağlayabilir. |
+| `rootwait` | Kernel, rootfs'in bulunduğu aygıt (SD kart) hazır olana kadar bekler. MMC aygıtları geç algılandığı için önemli. |
+| `debug earlyprintk` | Açılışta daha fazla mesaj basar. Sorun ayıklarken işe yarar. |
+| `mem=512M` | Kernel'e kullanacağı RAM miktarını söyler. |
+| `${loadaddr}`, `${fdtaddr}` | U-Boot'un kendi varsayılan değişkenleri (`0x82000000`, `0x88000000`). Dosyada tanımlanmadıkları halde çalışır. |
+
+> [!WARNING]
+> Dosyanın ilk satırında `console=ttyS0` tanımlanmış ama `netargs` bu değişkeni kullanmıyor, `console=ttyO0` yazıyor. Kernel 5.10'da UART0'ın adı `ttyS0`'dır ([3.4](03_boot_process.md#34-linux-kernel-ve-root-filesystem)). Açılışta `Starting kernel ...`'dan sonra mesaj göremezsen `netargs` içinde `console=${console}` kullan.
+
+## 4.12 Özet
 
 - SD kart iki bölümden oluşur: <b>BOOT</b> (FAT16, `boot` bayraklı: `MLO`, `u-boot.img`, `uEnv.txt`) ve <b>ROOTFS</b> (ext3: kernel, DTB ve Linux dosyaları).
 - Dosya adları önemli: RBL tam olarak <b>`MLO`</b>'yu, MLO tam olarak <b>`u-boot.img`</b>'yi arar.
@@ -609,7 +645,7 @@ Ya da kartı yeniden başlat (`reset` veya Power butonu).
 - U-Boot `uEnv.txt`'deki `uenvcmd`'yi çalıştırır: kernel ve DTB'yi `mmc 0:2`'den RAM'e yükler, `bootargs`'ı ayarlar, `bootm` ile başlatır.
 - `uImage` = 64 byte U-Boot header + `zImage`. `md.b` ile byte byte, `iminfo` ile çözülmüş halde okunabilir.
 
-## 4.12 Karşılaşılabilecek Problemler
+## 4.13 Karşılaşılabilecek Problemler
 
 | Belirti | Olası sebep |
 |---|---|

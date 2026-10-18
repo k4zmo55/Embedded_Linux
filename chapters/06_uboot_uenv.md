@@ -3,7 +3,7 @@
 > <b>Bu bölümde:</b>
 > - `uEnv.txt` dosyasının <b>satır satır ne yaptığını</b> anlayacaksın.
 > - Bu dosyayı SD karta kopyalamadan, <b>seri port (UART) üzerinden</b> doğrudan U-Boot'a göndereceksin (`loady`, `env import`).
-> - Challenge: Kernel ve DTB'yi <b>SD karttan</b> yükleyip rootfs'i <b>eMMC'den</b> bağlayacaksın.
+> - Kursun challenge'ı: boot imajlarını eMMC yerine <b>SD karttan (MMC0)</b> yükleyeceksin. Ek alıştırmada da tersini yapıp rootfs'i <b>eMMC'den</b> bağlayacaksın.
 > - <b>ROOTFS</b> bölümünde hangi klasör ve dosyaların olduğunu ve bunlara <b>hangi komutlarla</b> ulaşacağını göreceksin.
 >
 > <b>Ön koşul:</b> [Bölüm 4](04_sd_card_boot.md) — SD karttan boot, [Bölüm 5](05_emmc_boot.md) — eMMC'deki Debian.
@@ -80,7 +80,7 @@ RAM (DDR, 0x80000000'dan başlar)
 ```
 
 > [!NOTE]
-> `mmc 0` ↔ `/dev/mmcblk0` eşleşmesi çoğu kurulumda doğrudur ama <b>garanti değildir</b>. U-Boot tarafında `mmc list`, Linux tarafında `lsblk` ile kontrol et ([6.4](#64-challenge-kernel-ve-dtb-sd-karttan-rootfs-emmcden)).
+> `mmc 0` ↔ `/dev/mmcblk0` eşleşmesi çoğu kurulumda doğrudur ama <b>garanti değildir</b>. U-Boot tarafında `mmc list`, Linux tarafında `lsblk` ile kontrol et ([6.5](#65-ek-alıştırma-kernel-ve-dtb-sd-karttan-rootfs-emmcden)).
 
 ---
 
@@ -160,9 +160,65 @@ U-Boot# boot
 
 ---
 
-## 6.4 Challenge: Kernel ve DTB SD Karttan, Rootfs eMMC'den
+## 6.4 Challenge: Boot İmajlarını MMC0'dan (SD Kart) Yüklemek
 
 ### Görev
+
+Kursun bu bölümdeki challenge'ı:
+
+> <i>Derste boot imajları (uImage ve DTB) <b>MMC1</b>'den (eMMC) yüklendi, dosya sistemi olarak <b>MMC0</b>'daki (microSD) rootfs kullanıldı. `uEnv.txt`'yi, boot imajları da <b>MMC0</b>'dan (microSD) yüklenecek şekilde değiştir.</i>
+
+| | Önce | Sonra |
+|---|---|---|
+| Kernel + DTB | eMMC (`mmc 1`) | <b>SD kart (`mmc 0`)</b> |
+| Rootfs | SD kart, 2. bölüm (`/dev/mmcblk0p2`) | Değişmez |
+
+### Çözüm
+
+Değişen tek şey `load` komutlarındaki <b>aygıt numarası</b> (ve dosyanın o aygıttaki yeri). `bootargs` değişmez, çünkü rootfs zaten SD kartta.
+
+<b>1) Dosyaları SD karta koy.</b> `uImage` ve `am335x-boneblack.dtb`'yi SD kartın BOOT bölümüne kopyala:
+
+```bash
+cp uImage am335x-boneblack.dtb /media/$USER/BOOT/
+sync && sudo umount /media/$USER/BOOT /media/$USER/ROOTFS
+```
+
+<b>2) `load` satırlarını `mmc 0:1`'e çevir.</b>
+
+```text
+eski:  load mmc 1:2 0x82000000 /boot/uImage                    (eMMC, 2. bölüm)
+yeni:  load mmc 0:1 0x82000000 uImage                          (SD kart, 1. bölüm: BOOT)
+
+eski:  load mmc 1:2 0x88000000 /boot/am335x-boneblack.dtb
+yeni:  load mmc 0:1 0x88000000 am335x-boneblack.dtb
+```
+
+[6.2](#62-uenvtxt-satır-satır)'deki dosyanın `bootcmd` satırı tam olarak bunu yapıyor:
+
+```text
+bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000 uImage;load mmc 0:1 0x88000000 am335x-boneblack.dtb;bootm 0x82000000 - 0x88000000
+```
+
+<b>3) Doğrula.</b> U-Boot'u durdurup dosyaların orada olduğunu gör, sonra boot et:
+
+```text
+=> ls mmc 0:1
+=> boot
+```
+
+Ekranda `**********Booting from memory**********` yazısından sonra `reading uImage` görüyorsan imajlar SD karttan geliyor.
+
+> [!TIP]
+> SD kart dosyayı U-Boot'a FAT bölümünden de ext bölümünden de verebilir. `uImage`'ı BOOT (FAT) bölümüne koymak, dosyayı Windows'tan bile kopyalayabilmeni sağlar. ROOTFS bölümündeki `/boot` klasöründe tutmak istersen `load mmc 0:2 ... /boot/uImage` yaz.
+
+---
+
+## 6.5 Ek Alıştırma: Kernel ve DTB SD Karttan, Rootfs eMMC'den
+
+### Görev
+
+Challenge'ın tersi: kernel ve DTB SD karttan gelsin, ama rootfs eMMC'deki Debian olsun.
 
 | Ne? | Nereden? |
 |---|---|
@@ -244,13 +300,13 @@ findmnt /           # rootfs'in kaynağı
 
 ---
 
-## 6.5 ROOTFS Bölümünde Neler Var?
+## 6.6 ROOTFS Bölümünde Neler Var?
 
 <b>Root filesystem (rootfs)</b>, Linux'un `/` (kök) dizinidir. Kernel açıldıktan sonra `root=` ile gösterilen bölümü `/` olarak bağlar ve bundan sonra çalışan <b>her program, her ayar dosyası ve her kütüphane</b> buradan okunur. Kernel tek başına bir işe yaramaz; kullanıcıya kabuk (shell), komutlar ve servisler rootfs ile gelir.
 
 Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Standard)</b> denen ortak bir standarda uyar. Bu yüzden Ubuntu'da, BeagleBone'daki Ångström'de veya eMMC'deki Debian'da aynı klasörleri görürüz.
 
-### 6.5.1 Klasörler ve görevleri
+### 6.6.1 Klasörler ve görevleri
 
 | Klasör | İçinde ne var? | BBB'de örnek | Bakmak için |
 |---|---|---|---|
@@ -273,7 +329,7 @@ Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Sta
 > [!IMPORTANT]
 > <i>(sanal)</i> işaretli klasörler <b>sanal (virtual)</b> dosya sistemleridir. Diskte gerçek dosya içermezler; kernel çalışırken içlerini <b>RAM'de</b> doldurur (`devtmpfs`, `proc`, `sysfs`, `tmpfs`). Bu yüzden SD kartı bilgisayara takıp baktığında bu klasörler <b>boş</b> görünür. Bu bir hata değildir.
 
-### 6.5.2 ROOTFS'e üç yerden ulaşabiliriz
+### 6.6.2 ROOTFS'e üç yerden ulaşabiliriz
 
 ```
                   ┌─────────────────────────────────────────────────┐
@@ -289,7 +345,7 @@ Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Sta
 | <b>b) U-Boot</b> | Linux açılmadan önce, dosya gerçekten orada mı diye bakmak için | `mmc 0:2` (SD) veya `mmc 1:2` (eMMC) |
 | <b>c) BBB Linux</b> | Kart açıldıktan sonra, seri konsol (Minicom) veya SSH üzerinden | `/` |
 
-### 6.5.3 a) Bilgisayardan ulaşmak
+### 6.6.3 a) Bilgisayardan ulaşmak
 
 SD kartı bilgisayara tak. Ubuntu bölümleri <b>etiket (label)</b> adlarıyla otomatik bağlar. Önce kartın nereye bağlandığını bul, sonra klasöre gir:
 
@@ -318,7 +374,7 @@ cat etc/hostname        # BBB'nin hostname'i (başta / YOK)
 >
 > `file bin/bash` çıktısında `ARM` yazdığı için bu programları bilgisayarda <b>çalıştıramazsın</b> (`./bin/bash` → `Exec format error`). Sadece okuyabilir/kopyalayabilirsin. Bunun sebebini [Bölüm 9](09_uboot_build.md)'da (cross compile) göreceğiz.
 
-### 6.5.4 b) U-Boot'tan ulaşmak
+### 6.6.4 b) U-Boot'tan ulaşmak
 
 U-Boot dosya sistemini <b>okuyabilir</b> (ext2/3/4 ve FAT). Linux açılmadan önce kernel'in gerçekten orada olup olmadığını görmek için kullanışlıdır:
 
@@ -339,7 +395,7 @@ U-Boot# ls mmc 1:2 /          # eMMC'nin 2. bölümü (Debian rootfs)
 > [!NOTE]
 > U-Boot'ta `cd` yoktur ve dosya içeriğini `cat` ile göremezsin; her komutta tam yolu yazarsın. U-Boot rootfs'e normalde <b>yazmaz</b>, sadece okur.
 
-### 6.5.5 c) BBB Linux'tan ulaşmak
+### 6.6.5 c) BBB Linux'tan ulaşmak
 
 Kart açılıp `root` olarak giriş yaptıktan sonra rootfs artık `/` dizinidir. Dolaşmak için temel komutlar:
 
@@ -409,11 +465,11 @@ mount | grep -E ' / | /proc | /sys | /dev '   # gerçek ve sanal bağlamalar
 
 ![BBB'de /dev, /boot ve disk kullanımı](../images/rootfs/07_bbb_dev_boot.png)
 
-`mount` çıktısında `/` gerçek bir diskten (`/dev/mmcblk0p2`, `ext3`) gelirken `/dev`, `/proc` ve `/sys`'in tipi `devtmpfs`, `proc`, `sysfs` olarak görünür. Bu, [6.5.1](#651-klasörler-ve-görevleri)'deki sanal klasörlerin kanıtıdır. Rootfs'i eMMC'den açtıysan ([6.4](#64-challenge-kernel-ve-dtb-sd-karttan-rootfs-emmcden)) `df -h /` satırında `/dev/mmcblk1p2` görürsün.
+`mount` çıktısında `/` gerçek bir diskten (`/dev/mmcblk0p2`, `ext3`) gelirken `/dev`, `/proc` ve `/sys`'in tipi `devtmpfs`, `proc`, `sysfs` olarak görünür. Bu, [6.6.1](#661-klasörler-ve-görevleri)'deki sanal klasörlerin kanıtıdır. Rootfs'i eMMC'den açtıysan ([6.5](#65-ek-alıştırma-kernel-ve-dtb-sd-karttan-rootfs-emmcden)) `df -h /` satırında `/dev/mmcblk1p2` görürsün.
 
 ---
 
-## 6.6 Özet
+## 6.7 Özet
 
 | Komut / Değişken | Görevi |
 |---|---|
@@ -439,7 +495,7 @@ mount | grep -E ' / | /proc | /sys | /dev '   # gerçek ve sanal bağlamalar
 | `cat /proc/cmdline` | Kernel'e giden bootargs |
 | `df -h /` · `mount` | Rootfs hangi bölümden geliyor? |
 
-## 6.7 Karşılaşılabilecek Problemler
+## 6.8 Karşılaşılabilecek Problemler
 
 | Belirti | Sebep | Çözüm |
 |---|---|---|

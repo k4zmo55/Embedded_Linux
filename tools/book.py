@@ -160,7 +160,7 @@ def is_external(target):
 # --------------------------------------------------------------------------- check
 
 def find_orphans(listed):
-    skip_dirs = {".git", ".claude", "build", "chapters", "node_modules", ".vscode"}
+    skip_dirs = {".git", ".claude", "build", "chapters", "sources", "node_modules", ".vscode"}
     out = []
     for dirpath, dirnames, filenames in os.walk(ROOT):
         dirnames[:] = [d for d in dirnames if d not in skip_dirs]
@@ -556,7 +556,7 @@ def renumber():
             old_num, new_num = num_maps[dest]
             if old_num is not None and new_num:
                 label = re.sub(rf"^(Bölüm ){old_num}\b", rf"\g<1>{new_num}", label)
-                label = re.sub(rf"^{old_num}(?=\.\d)", str(new_num), label)
+                label = re.sub(rf"^{old_num}(?=\.(\d|\s))", str(new_num), label)
             new_path = rename[path] if path else ""
             return f"{bang}[{label}]({new_path}{sep}{anchor})"
         return sub

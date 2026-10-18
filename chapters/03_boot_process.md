@@ -162,7 +162,7 @@ Bu şema (TRM Figure 26-6), RBL'in ikinci aşama bootloader'ı (MLO) nasıl arad
 
 U-Boot `bootm` (veya `bootz`) komutuyla kernel'e atladıktan sonra zincirin son iki halkası çalışır:
 
-1. <b>Kernel</b> kendini RAM'de açar (`zImage` sıkıştırılmıştır), U-Boot'un verdiği <b>Device Tree</b>'yi okuyup kartta hangi donanımın olduğunu öğrenir ve sürücüleri başlatır ([Bölüm 10](10_device_tree.md)).
+1. <b>Kernel</b> kendini RAM'de açar (`zImage` sıkıştırılmıştır), U-Boot'un verdiği <b>Device Tree</b>'yi okuyup kartta hangi donanımın olduğunu öğrenir ve sürücüleri başlatır ([Bölüm 11](11_device_tree.md)).
 2. Kernel, `bootargs`'taki <b>`root=`</b> parametresine bakarak <b>root filesystem</b>'i (`/`) bağlar. Bu bir SD kart bölümü (`/dev/mmcblk0p2`), eMMC bölümü veya RAM'deki bir initramfs olabilir.
 3. Rootfs'teki ilk program olan <b>`init`</b>'i (systemd veya BusyBox init) çalıştırır. Bundan sonra servisler başlar ve `login:` ekranı gelir.
 

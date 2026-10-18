@@ -13,8 +13,8 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 
 ```
            ┌──────────────────────────────────────────────────┐
-  KART     │ 4. Root filesystem  /bin /etc /lib ... programlar │  Bölüm 4, 6, 7
-           │ 3. Linux kernel  +  Device Tree (.dtb)            │  Bölüm 3, 10
+  KART     │ 4. Root filesystem  /bin /etc /lib ... programlar │  Bölüm 6, 12
+           │ 3. Linux kernel  +  Device Tree (.dtb)            │  Bölüm 10, 11
            │ 2. Bootloader: ROM Code → SPL (MLO) → U-Boot      │  Bölüm 3 – 9
            └──────────────────────────────────────────────────┘
                             ▲ derlenir
@@ -27,8 +27,8 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 |---|---|---|
 | <b>Cross toolchain</b> | PC'de (x86) çalışıp karta (ARM) uygun program üreten derleyici ve araçlar | [Bölüm 9](09_uboot_build.md) |
 | <b>Bootloader</b> | Kart açılınca belleği hazırlar, kernel'i ve device tree'yi RAM'e yükleyip başlatır | [Bölüm 3](03_boot_process.md) – [Bölüm 9](09_uboot_build.md) |
-| <b>Linux kernel + Device Tree</b> | İşletim sisteminin çekirdeği ve kartın donanımını kernel'e tarif eden dosya | [Bölüm 10](10_device_tree.md) |
-| <b>Root filesystem</b> | Kernel açıldıktan sonra çalışan her şey: kabuk, komutlar, ayar dosyaları | [Bölüm 4](04_sd_card_boot.md), [Bölüm 6](06_uboot_uenv.md), [Bölüm 7](07_uart_boot.md) |
+| <b>Linux kernel + Device Tree</b> | İşletim sisteminin çekirdeği ve kartın donanımını kernel'e tarif eden dosya | [Bölüm 10](10_linux_kernel.md), [Bölüm 11](11_device_tree.md) |
+| <b>Root filesystem</b> | Kernel açıldıktan sonra çalışan her şey: kabuk, komutlar, ayar dosyaları | [Bölüm 6](06_uboot_uenv.md), [Bölüm 12](12_busybox_rootfs.md) |
 
 ---
 
@@ -45,7 +45,11 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [7. Seri Porttan (UART) Boot](07_uart_boot.md) | Kartı SD kart ve eMMC olmadan, sadece seri kabloyla aç |
 | | [8. TFTP ile Ağdan Boot](08_tftp_boot.md) | Kernel'i her seferinde ağdan çekerek geliştirmeyi hızlandır |
 | | [9. Cross Toolchain, SPL ve U-Boot Derleme](09_uboot_build.md) | Bootloader'ı kaynak koddan kendin derle |
-| <b>IV — Linux Kernel</b> | [10. Linux Device Tree](10_device_tree.md) | Kernel'in donanımı nasıl tanıdığını öğren |
+| <b>IV — Linux Kernel</b> | [10. Linux Kernel: Kaynak Ağacı ve Derleme](10_linux_kernel.md) | Kernel kaynağında gezin, kernel'i ve modülleri derle |
+| | [11. Linux Device Tree](11_device_tree.md) | Kernel'in donanımı nasıl tanıdığını öğren |
+| <b>V — Root Filesystem</b> | [12. BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md) | Kendi rootfs'ini sıfırdan kur, NFS ile bilgisayardan aç |
+
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: Buildroot, Eclipse ile uygulama geliştirme, AM335x GPIO'ları ve sysfs, harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
@@ -75,7 +79,8 @@ Her bölüm aynı düzende yazıldı:
 | `minicom`, `lrzsz` | Seri konsol ve Xmodem/Ymodem ile dosya gönderme ([Bölüm 2](02_serial_console.md)) |
 | `gparted` | SD kartı bölümlemek için ([Bölüm 4](04_sd_card_boot.md)) |
 | `tftpd-hpa` | TFTP sunucusu ([Bölüm 8](08_tftp_boot.md)) |
-| Cross toolchain, U-Boot kaynağı | Derleme bölümünde kurulur ([Bölüm 9](09_uboot_build.md)) |
+| `nfs-kernel-server` | Rootfs'i ağdan bağlamak için NFS sunucusu ([Bölüm 12](12_busybox_rootfs.md)) |
+| Cross toolchain, U-Boot, kernel, BusyBox kaynakları | Derleme bölümlerinde kurulur ([Bölüm 9](09_uboot_build.md), [Bölüm 10](10_linux_kernel.md), [Bölüm 12](12_busybox_rootfs.md)) |
 
 ---
 
@@ -85,11 +90,14 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 
 | Ne? | Değer | Bölüm |
 |---|---|---|
-| Kursun hazır imajları: MLO / U-Boot | U-Boot 2013.04 | 4, 6, 7, 8 |
-| Kursun hazır imajları: Linux kernel | 3.8.13 (Ångström) | 4, 6, 7, 8 |
+| Kursun ilk hazır imajları (Ångström): U-Boot / kernel | 2013.04 / 3.8.13 | 4, 6, 7, 8 |
+| Kursun seri boot imajları: SPL / U-Boot | 2017.03 / 2016.11-rc1 | 7 |
+| Kursun güncel SD kart imajları: U-Boot / kernel | 2022.04 / 5.10.168 | 4, 8 |
 | eMMC'ye yüklenen Debian imajı | `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz` | 5 |
 | Kendi derlediğimiz U-Boot | 2022.04 (`am335x_evm_defconfig`) | 9 |
-| Cross toolchain | Linaro GCC 7.5.0 (7.5-2019.12) | 9 |
+| Cross toolchain | Linaro GCC 7.5.0 (7.5-2019.12) | 9, 10, 12 |
+| Kendi derlediğimiz kernel | 5.10.162 (BeagleBoard, dal `5.10`, `bb.org_defconfig`) | 10 |
+| BusyBox / Dropbear | 1.36.1 / 2022.83 | 12 |
 | Host PC IP / kart IP | 192.168.27.1 / 192.168.27.2 | 8 |
 
 ---

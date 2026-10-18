@@ -32,7 +32,12 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 
 **Kısım IV — Linux Kernel**
 
-- [Bölüm 10 — Linux Device Tree](build/10_device_tree.md)
+- [Bölüm 10 — Linux Kernel: Kaynak Ağacı ve Derleme](build/10_linux_kernel.md)
+- [Bölüm 11 — Linux Device Tree](build/11_device_tree.md)
+
+**Kısım V — Root Filesystem**
+
+- [Bölüm 12 — BusyBox ile Minimal Root Filesystem](build/12_busybox_rootfs.md)
 
 ## Bu Repo Nasıl Çalışır?
 

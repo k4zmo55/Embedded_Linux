@@ -26,7 +26,12 @@
 
 **Kısım IV — Linux Kernel**
 
-- [Bölüm 10 — Linux Device Tree](#c10-bölüm-10--linux-device-tree)
+- [Bölüm 10 — Linux Kernel: Kaynak Ağacı ve Derleme](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme)
+- [Bölüm 11 — Linux Device Tree](#c11-bölüm-11--linux-device-tree)
+
+**Kısım V — Root Filesystem**
+
+- [Bölüm 12 — BusyBox ile Minimal Root Filesystem](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)
 
 <div class="page-break"></div>
 
@@ -44,8 +49,8 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 
 ```
            ┌──────────────────────────────────────────────────┐
-  KART     │ 4. Root filesystem  /bin /etc /lib ... programlar │  Bölüm 4, 6, 7
-           │ 3. Linux kernel  +  Device Tree (.dtb)            │  Bölüm 3, 10
+  KART     │ 4. Root filesystem  /bin /etc /lib ... programlar │  Bölüm 6, 12
+           │ 3. Linux kernel  +  Device Tree (.dtb)            │  Bölüm 10, 11
            │ 2. Bootloader: ROM Code → SPL (MLO) → U-Boot      │  Bölüm 3 – 9
            └──────────────────────────────────────────────────┘
                             ▲ derlenir
@@ -58,8 +63,8 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 |---|---|---|
 | <b>Cross toolchain</b> | PC'de (x86) çalışıp karta (ARM) uygun program üreten derleyici ve araçlar | [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme) |
 | <b>Bootloader</b> | Kart açılınca belleği hazırlar, kernel'i ve device tree'yi RAM'e yükleyip başlatır | [Bölüm 3](#c3-bölüm-3--linux-boot-süreci-rbl--spl--u-boot) – [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme) |
-| <b>Linux kernel + Device Tree</b> | İşletim sisteminin çekirdeği ve kartın donanımını kernel'e tarif eden dosya | [Bölüm 10](#c10-bölüm-10--linux-device-tree) |
-| <b>Root filesystem</b> | Kernel açıldıktan sonra çalışan her şey: kabuk, komutlar, ayar dosyaları | [Bölüm 4](#c4-bölüm-4--sd-karttan-boot), [Bölüm 6](#c6-bölüm-6--u-boot-komut-satırı-ve-uenvtxt), [Bölüm 7](#c7-bölüm-7--seri-porttan-uart-boot) |
+| <b>Linux kernel + Device Tree</b> | İşletim sisteminin çekirdeği ve kartın donanımını kernel'e tarif eden dosya | [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme), [Bölüm 11](#c11-bölüm-11--linux-device-tree) |
+| <b>Root filesystem</b> | Kernel açıldıktan sonra çalışan her şey: kabuk, komutlar, ayar dosyaları | [Bölüm 6](#c6-bölüm-6--u-boot-komut-satırı-ve-uenvtxt), [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem) |
 
 ---
 
@@ -76,7 +81,11 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [7. Seri Porttan (UART) Boot](#c7-bölüm-7--seri-porttan-uart-boot) | Kartı SD kart ve eMMC olmadan, sadece seri kabloyla aç |
 | | [8. TFTP ile Ağdan Boot](#c8-bölüm-8--tftp-ile-ağdan-boot) | Kernel'i her seferinde ağdan çekerek geliştirmeyi hızlandır |
 | | [9. Cross Toolchain, SPL ve U-Boot Derleme](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme) | Bootloader'ı kaynak koddan kendin derle |
-| <b>IV — Linux Kernel</b> | [10. Linux Device Tree](#c10-bölüm-10--linux-device-tree) | Kernel'in donanımı nasıl tanıdığını öğren |
+| <b>IV — Linux Kernel</b> | [10. Linux Kernel: Kaynak Ağacı ve Derleme](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme) | Kernel kaynağında gezin, kernel'i ve modülleri derle |
+| | [11. Linux Device Tree](#c11-bölüm-11--linux-device-tree) | Kernel'in donanımı nasıl tanıdığını öğren |
+| <b>V — Root Filesystem</b> | [12. BusyBox ile Minimal Root Filesystem](#c12-bölüm-12--busybox-ile-minimal-root-filesystem) | Kendi rootfs'ini sıfırdan kur, NFS ile bilgisayardan aç |
+
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: Buildroot, Eclipse ile uygulama geliştirme, AM335x GPIO'ları ve sysfs, harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
@@ -106,7 +115,8 @@ Her bölüm aynı düzende yazıldı:
 | `minicom`, `lrzsz` | Seri konsol ve Xmodem/Ymodem ile dosya gönderme ([Bölüm 2](#c2-bölüm-2--seri-konsol-ve-minicom)) |
 | `gparted` | SD kartı bölümlemek için ([Bölüm 4](#c4-bölüm-4--sd-karttan-boot)) |
 | `tftpd-hpa` | TFTP sunucusu ([Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)) |
-| Cross toolchain, U-Boot kaynağı | Derleme bölümünde kurulur ([Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme)) |
+| `nfs-kernel-server` | Rootfs'i ağdan bağlamak için NFS sunucusu ([Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)) |
+| Cross toolchain, U-Boot, kernel, BusyBox kaynakları | Derleme bölümlerinde kurulur ([Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme), [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme), [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)) |
 
 ---
 
@@ -116,11 +126,14 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 
 | Ne? | Değer | Bölüm |
 |---|---|---|
-| Kursun hazır imajları: MLO / U-Boot | U-Boot 2013.04 | 4, 6, 7, 8 |
-| Kursun hazır imajları: Linux kernel | 3.8.13 (Ångström) | 4, 6, 7, 8 |
+| Kursun ilk hazır imajları (Ångström): U-Boot / kernel | 2013.04 / 3.8.13 | 4, 6, 7, 8 |
+| Kursun seri boot imajları: SPL / U-Boot | 2017.03 / 2016.11-rc1 | 7 |
+| Kursun güncel SD kart imajları: U-Boot / kernel | 2022.04 / 5.10.168 | 4, 8 |
 | eMMC'ye yüklenen Debian imajı | `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz` | 5 |
 | Kendi derlediğimiz U-Boot | 2022.04 (`am335x_evm_defconfig`) | 9 |
-| Cross toolchain | Linaro GCC 7.5.0 (7.5-2019.12) | 9 |
+| Cross toolchain | Linaro GCC 7.5.0 (7.5-2019.12) | 9, 10, 12 |
+| Kendi derlediğimiz kernel | 5.10.162 (BeagleBoard, dal `5.10`, `bb.org_defconfig`) | 10 |
+| BusyBox / Dropbear | 1.36.1 / 2022.83 | 12 |
 | Host PC IP / kart IP | 192.168.27.1 / 192.168.27.2 | 8 |
 
 ---
@@ -281,7 +294,7 @@ User LED'lerin devre şeması (her LED bir transistör üzerinden GPIO ile sür�
 ![User LED şeması](../images/beaglebone/bbb_user_led_sema.png)
 
 > [!TIP]
-> USR0'ın kalp atışı gibi yanıp sönmesi kernel kodunda değil, <b>Device Tree</b>'de tanımlıdır ([10.5](#c10-105-bir-device-treenin-genel-yapısı)).
+> USR0'ın kalp atışı gibi yanıp sönmesi kernel kodunda değil, <b>Device Tree</b>'de tanımlıdır ([11.5](#c11-115-bir-device-treenin-genel-yapısı)).
 
 ## <a name="c1-17-boot-sırası-ve-s2-butonu"></a>1.7 Boot Sırası ve S2 Butonu
 
@@ -679,7 +692,7 @@ Bu şema (TRM Figure 26-6), RBL'in ikinci aşama bootloader'ı (MLO) nasıl arad
 
 U-Boot `bootm` (veya `bootz`) komutuyla kernel'e atladıktan sonra zincirin son iki halkası çalışır:
 
-1. <b>Kernel</b> kendini RAM'de açar (`zImage` sıkıştırılmıştır), U-Boot'un verdiği <b>Device Tree</b>'yi okuyup kartta hangi donanımın olduğunu öğrenir ve sürücüleri başlatır ([Bölüm 10](#c10-bölüm-10--linux-device-tree)).
+1. <b>Kernel</b> kendini RAM'de açar (`zImage` sıkıştırılmıştır), U-Boot'un verdiği <b>Device Tree</b>'yi okuyup kartta hangi donanımın olduğunu öğrenir ve sürücüleri başlatır ([Bölüm 11](#c11-bölüm-11--linux-device-tree)).
 2. Kernel, `bootargs`'taki <b>`root=`</b> parametresine bakarak <b>root filesystem</b>'i (`/`) bağlar. Bu bir SD kart bölümü (`/dev/mmcblk0p2`), eMMC bölümü veya RAM'deki bir initramfs olabilir.
 3. Rootfs'teki ilk program olan <b>`init`</b>'i (systemd veya BusyBox init) çalıştırır. Bundan sonra servisler başlar ve `login:` ekranı gelir.
 
@@ -1400,7 +1413,43 @@ Ya da kartı yeniden başlat (`reset` veya Power butonu).
 
 ---
 
-## <a name="c4-411-özet"></a>4.11 Özet
+## <a name="c4-411-kursun-güncel-sd-kart-i̇majları-u-boot-202204--kernel-510168"></a>4.11 Kursun Güncel SD Kart İmajları (U-Boot 2022.04 + Kernel 5.10.168)
+
+Bu bölümde kullandığımız Ångström dosyaları kursun ilk sürümünden kalma (2013). Kursun reposundaki `pre-built-images/SD-boot` klasöründe güncel bir set de var:
+
+| Dosya | İçerik | SD kartta nereye? |
+|---|---|---|
+| `MLO`, `u-boot.img` | U-Boot 2022.04 | BOOT |
+| `uImage` | Linux 5.10.168 | BOOT |
+| `am335x-boneblack.dtb` | Aynı kernel'in device tree'si | BOOT |
+| `uEnv.txt` | Aşağıda | BOOT |
+
+Farklar:
+- Kernel ve DTB artık ROOTFS'teki `/boot` klasöründe değil, <b>BOOT (FAT) bölümünde</b> duruyor. `load mmc 0:1 ...` ile okunuyor.
+- Bu set bir rootfs içermiyor. ROOTFS bölümüne [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)'de BusyBox ile hazırlayacağımız dosya sistemini koyacağız. Kernel 5.10 ile 2012 tarihli Ångström rootfs'i birlikte çalışmaz.
+- Bu U-Boot'ta `bootdelay=0`: geri sayım yok. U-Boot'u durdurmak için kart açılırken <b>Space'e basılı tut</b>. Bekleme süresini uzatmak [9.4](#c9-94-challenge-autoboot-bekleme-süresini-10-saniyeye-çıkarmak)'ün konusu.
+
+Kursun `uEnv.txt`'si:
+
+```text
+console=ttyS0,115200n8
+netargs=setenv bootargs console=ttyO0,115200n8 root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait debug earlyprintk mem=512M
+netboot=echo Booting from microSD ...; setenv autoload no ; load mmc 0:1 ${loadaddr} uImage ; load mmc 0:1 ${fdtaddr} am335x-boneblack.dtb ; run netargs ; bootm ${loadaddr} - ${fdtaddr}
+uenvcmd=run netboot
+```
+
+| Parça | Anlamı |
+|---|---|
+| `rootfstype=ext4` | Rootfs'in dosya sistemi türü. ext4 sürücüsü ext3 bölümleri de bağlayabilir. |
+| `rootwait` | Kernel, rootfs'in bulunduğu aygıt (SD kart) hazır olana kadar bekler. MMC aygıtları geç algılandığı için önemli. |
+| `debug earlyprintk` | Açılışta daha fazla mesaj basar. Sorun ayıklarken işe yarar. |
+| `mem=512M` | Kernel'e kullanacağı RAM miktarını söyler. |
+| `${loadaddr}`, `${fdtaddr}` | U-Boot'un kendi varsayılan değişkenleri (`0x82000000`, `0x88000000`). Dosyada tanımlanmadıkları halde çalışır. |
+
+> [!WARNING]
+> Dosyanın ilk satırında `console=ttyS0` tanımlanmış ama `netargs` bu değişkeni kullanmıyor, `console=ttyO0` yazıyor. Kernel 5.10'da UART0'ın adı `ttyS0`'dır ([3.4](#c3-34-linux-kernel-ve-root-filesystem)). Açılışta `Starting kernel ...`'dan sonra mesaj göremezsen `netargs` içinde `console=${console}` kullan.
+
+## <a name="c4-412-özet"></a>4.12 Özet
 
 - SD kart iki bölümden oluşur: <b>BOOT</b> (FAT16, `boot` bayraklı: `MLO`, `u-boot.img`, `uEnv.txt`) ve <b>ROOTFS</b> (ext3: kernel, DTB ve Linux dosyaları).
 - Dosya adları önemli: RBL tam olarak <b>`MLO`</b>'yu, MLO tam olarak <b>`u-boot.img`</b>'yi arar.
@@ -1408,7 +1457,7 @@ Ya da kartı yeniden başlat (`reset` veya Power butonu).
 - U-Boot `uEnv.txt`'deki `uenvcmd`'yi çalıştırır: kernel ve DTB'yi `mmc 0:2`'den RAM'e yükler, `bootargs`'ı ayarlar, `bootm` ile başlatır.
 - `uImage` = 64 byte U-Boot header + `zImage`. `md.b` ile byte byte, `iminfo` ile çözülmüş halde okunabilir.
 
-## <a name="c4-412-karşılaşılabilecek-problemler"></a>4.12 Karşılaşılabilecek Problemler
+## <a name="c4-413-karşılaşılabilecek-problemler"></a>4.13 Karşılaşılabilecek Problemler
 
 | Belirti | Olası sebep |
 |---|---|
@@ -1733,7 +1782,7 @@ Ardından kart kendini kapatır ve SSH bağlantısı kopar (`Connection to 192.1
 > <b>Bu bölümde:</b>
 > - `uEnv.txt` dosyasının <b>satır satır ne yaptığını</b> anlayacaksın.
 > - Bu dosyayı SD karta kopyalamadan, <b>seri port (UART) üzerinden</b> doğrudan U-Boot'a göndereceksin (`loady`, `env import`).
-> - Challenge: Kernel ve DTB'yi <b>SD karttan</b> yükleyip rootfs'i <b>eMMC'den</b> bağlayacaksın.
+> - Kursun challenge'ı: boot imajlarını eMMC yerine <b>SD karttan (MMC0)</b> yükleyeceksin. Ek alıştırmada da tersini yapıp rootfs'i <b>eMMC'den</b> bağlayacaksın.
 > - <b>ROOTFS</b> bölümünde hangi klasör ve dosyaların olduğunu ve bunlara <b>hangi komutlarla</b> ulaşacağını göreceksin.
 >
 > <b>Ön koşul:</b> [Bölüm 4](#c4-bölüm-4--sd-karttan-boot) — SD karttan boot, [Bölüm 5](#c5-bölüm-5--emmcden-boot) — eMMC'deki Debian.
@@ -1810,7 +1859,7 @@ RAM (DDR, 0x80000000'dan başlar)
 ```
 
 > [!NOTE]
-> `mmc 0` ↔ `/dev/mmcblk0` eşleşmesi çoğu kurulumda doğrudur ama <b>garanti değildir</b>. U-Boot tarafında `mmc list`, Linux tarafında `lsblk` ile kontrol et ([6.4](#c6-64-challenge-kernel-ve-dtb-sd-karttan-rootfs-emmcden)).
+> `mmc 0` ↔ `/dev/mmcblk0` eşleşmesi çoğu kurulumda doğrudur ama <b>garanti değildir</b>. U-Boot tarafında `mmc list`, Linux tarafında `lsblk` ile kontrol et ([6.5](#c6-65-ek-alıştırma-kernel-ve-dtb-sd-karttan-rootfs-emmcden)).
 
 ---
 
@@ -1890,9 +1939,65 @@ U-Boot# boot
 
 ---
 
-## <a name="c6-64-challenge-kernel-ve-dtb-sd-karttan-rootfs-emmcden"></a>6.4 Challenge: Kernel ve DTB SD Karttan, Rootfs eMMC'den
+## <a name="c6-64-challenge-boot-i̇majlarını-mmc0dan-sd-kart-yüklemek"></a>6.4 Challenge: Boot İmajlarını MMC0'dan (SD Kart) Yüklemek
 
 ### <a name="c6-görev"></a>Görev
+
+Kursun bu bölümdeki challenge'ı:
+
+> <i>Derste boot imajları (uImage ve DTB) <b>MMC1</b>'den (eMMC) yüklendi, dosya sistemi olarak <b>MMC0</b>'daki (microSD) rootfs kullanıldı. `uEnv.txt`'yi, boot imajları da <b>MMC0</b>'dan (microSD) yüklenecek şekilde değiştir.</i>
+
+| | Önce | Sonra |
+|---|---|---|
+| Kernel + DTB | eMMC (`mmc 1`) | <b>SD kart (`mmc 0`)</b> |
+| Rootfs | SD kart, 2. bölüm (`/dev/mmcblk0p2`) | Değişmez |
+
+### <a name="c6-çözüm"></a>Çözüm
+
+Değişen tek şey `load` komutlarındaki <b>aygıt numarası</b> (ve dosyanın o aygıttaki yeri). `bootargs` değişmez, çünkü rootfs zaten SD kartta.
+
+<b>1) Dosyaları SD karta koy.</b> `uImage` ve `am335x-boneblack.dtb`'yi SD kartın BOOT bölümüne kopyala:
+
+```bash
+cp uImage am335x-boneblack.dtb /media/$USER/BOOT/
+sync && sudo umount /media/$USER/BOOT /media/$USER/ROOTFS
+```
+
+<b>2) `load` satırlarını `mmc 0:1`'e çevir.</b>
+
+```text
+eski:  load mmc 1:2 0x82000000 /boot/uImage                    (eMMC, 2. bölüm)
+yeni:  load mmc 0:1 0x82000000 uImage                          (SD kart, 1. bölüm: BOOT)
+
+eski:  load mmc 1:2 0x88000000 /boot/am335x-boneblack.dtb
+yeni:  load mmc 0:1 0x88000000 am335x-boneblack.dtb
+```
+
+[6.2](#c6-62-uenvtxt-satır-satır)'deki dosyanın `bootcmd` satırı tam olarak bunu yapıyor:
+
+```text
+bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000 uImage;load mmc 0:1 0x88000000 am335x-boneblack.dtb;bootm 0x82000000 - 0x88000000
+```
+
+<b>3) Doğrula.</b> U-Boot'u durdurup dosyaların orada olduğunu gör, sonra boot et:
+
+```text
+=> ls mmc 0:1
+=> boot
+```
+
+Ekranda `**********Booting from memory**********` yazısından sonra `reading uImage` görüyorsan imajlar SD karttan geliyor.
+
+> [!TIP]
+> SD kart dosyayı U-Boot'a FAT bölümünden de ext bölümünden de verebilir. `uImage`'ı BOOT (FAT) bölümüne koymak, dosyayı Windows'tan bile kopyalayabilmeni sağlar. ROOTFS bölümündeki `/boot` klasöründe tutmak istersen `load mmc 0:2 ... /boot/uImage` yaz.
+
+---
+
+## <a name="c6-65-ek-alıştırma-kernel-ve-dtb-sd-karttan-rootfs-emmcden"></a>6.5 Ek Alıştırma: Kernel ve DTB SD Karttan, Rootfs eMMC'den
+
+### <a name="c6-görev-1"></a>Görev
+
+Challenge'ın tersi: kernel ve DTB SD karttan gelsin, ama rootfs eMMC'deki Debian olsun.
 
 | Ne? | Nereden? |
 |---|---|
@@ -1974,13 +2079,13 @@ findmnt /           # rootfs'in kaynağı
 
 ---
 
-## <a name="c6-65-rootfs-bölümünde-neler-var"></a>6.5 ROOTFS Bölümünde Neler Var?
+## <a name="c6-66-rootfs-bölümünde-neler-var"></a>6.6 ROOTFS Bölümünde Neler Var?
 
 <b>Root filesystem (rootfs)</b>, Linux'un `/` (kök) dizinidir. Kernel açıldıktan sonra `root=` ile gösterilen bölümü `/` olarak bağlar ve bundan sonra çalışan <b>her program, her ayar dosyası ve her kütüphane</b> buradan okunur. Kernel tek başına bir işe yaramaz; kullanıcıya kabuk (shell), komutlar ve servisler rootfs ile gelir.
 
 Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Standard)</b> denen ortak bir standarda uyar. Bu yüzden Ubuntu'da, BeagleBone'daki Ångström'de veya eMMC'deki Debian'da aynı klasörleri görürüz.
 
-### <a name="c6-651-klasörler-ve-görevleri"></a>6.5.1 Klasörler ve görevleri
+### <a name="c6-661-klasörler-ve-görevleri"></a>6.6.1 Klasörler ve görevleri
 
 | Klasör | İçinde ne var? | BBB'de örnek | Bakmak için |
 |---|---|---|---|
@@ -2003,7 +2108,7 @@ Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Sta
 > [!IMPORTANT]
 > <i>(sanal)</i> işaretli klasörler <b>sanal (virtual)</b> dosya sistemleridir. Diskte gerçek dosya içermezler; kernel çalışırken içlerini <b>RAM'de</b> doldurur (`devtmpfs`, `proc`, `sysfs`, `tmpfs`). Bu yüzden SD kartı bilgisayara takıp baktığında bu klasörler <b>boş</b> görünür. Bu bir hata değildir.
 
-### <a name="c6-652-rootfse-üç-yerden-ulaşabiliriz"></a>6.5.2 ROOTFS'e üç yerden ulaşabiliriz
+### <a name="c6-662-rootfse-üç-yerden-ulaşabiliriz"></a>6.6.2 ROOTFS'e üç yerden ulaşabiliriz
 
 ```
                   ┌─────────────────────────────────────────────────┐
@@ -2019,7 +2124,7 @@ Rootfs'teki klasör düzeni rastgele değildir; <b>FHS (Filesystem Hierarchy Sta
 | <b>b) U-Boot</b> | Linux açılmadan önce, dosya gerçekten orada mı diye bakmak için | `mmc 0:2` (SD) veya `mmc 1:2` (eMMC) |
 | <b>c) BBB Linux</b> | Kart açıldıktan sonra, seri konsol (Minicom) veya SSH üzerinden | `/` |
 
-### <a name="c6-653-a-bilgisayardan-ulaşmak"></a>6.5.3 a) Bilgisayardan ulaşmak
+### <a name="c6-663-a-bilgisayardan-ulaşmak"></a>6.6.3 a) Bilgisayardan ulaşmak
 
 SD kartı bilgisayara tak. Ubuntu bölümleri <b>etiket (label)</b> adlarıyla otomatik bağlar. Önce kartın nereye bağlandığını bul, sonra klasöre gir:
 
@@ -2048,7 +2153,7 @@ cat etc/hostname        # BBB'nin hostname'i (başta / YOK)
 >
 > `file bin/bash` çıktısında `ARM` yazdığı için bu programları bilgisayarda <b>çalıştıramazsın</b> (`./bin/bash` → `Exec format error`). Sadece okuyabilir/kopyalayabilirsin. Bunun sebebini [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme)'da (cross compile) göreceğiz.
 
-### <a name="c6-654-b-u-boottan-ulaşmak"></a>6.5.4 b) U-Boot'tan ulaşmak
+### <a name="c6-664-b-u-boottan-ulaşmak"></a>6.6.4 b) U-Boot'tan ulaşmak
 
 U-Boot dosya sistemini <b>okuyabilir</b> (ext2/3/4 ve FAT). Linux açılmadan önce kernel'in gerçekten orada olup olmadığını görmek için kullanışlıdır:
 
@@ -2069,7 +2174,7 @@ U-Boot# ls mmc 1:2 /          # eMMC'nin 2. bölümü (Debian rootfs)
 > [!NOTE]
 > U-Boot'ta `cd` yoktur ve dosya içeriğini `cat` ile göremezsin; her komutta tam yolu yazarsın. U-Boot rootfs'e normalde <b>yazmaz</b>, sadece okur.
 
-### <a name="c6-655-c-bbb-linuxtan-ulaşmak"></a>6.5.5 c) BBB Linux'tan ulaşmak
+### <a name="c6-665-c-bbb-linuxtan-ulaşmak"></a>6.6.5 c) BBB Linux'tan ulaşmak
 
 Kart açılıp `root` olarak giriş yaptıktan sonra rootfs artık `/` dizinidir. Dolaşmak için temel komutlar:
 
@@ -2139,11 +2244,11 @@ mount | grep -E ' / | /proc | /sys | /dev '   # gerçek ve sanal bağlamalar
 
 ![BBB'de /dev, /boot ve disk kullanımı](../images/rootfs/07_bbb_dev_boot.png)
 
-`mount` çıktısında `/` gerçek bir diskten (`/dev/mmcblk0p2`, `ext3`) gelirken `/dev`, `/proc` ve `/sys`'in tipi `devtmpfs`, `proc`, `sysfs` olarak görünür. Bu, [6.5.1](#c6-651-klasörler-ve-görevleri)'deki sanal klasörlerin kanıtıdır. Rootfs'i eMMC'den açtıysan ([6.4](#c6-64-challenge-kernel-ve-dtb-sd-karttan-rootfs-emmcden)) `df -h /` satırında `/dev/mmcblk1p2` görürsün.
+`mount` çıktısında `/` gerçek bir diskten (`/dev/mmcblk0p2`, `ext3`) gelirken `/dev`, `/proc` ve `/sys`'in tipi `devtmpfs`, `proc`, `sysfs` olarak görünür. Bu, [6.6.1](#c6-661-klasörler-ve-görevleri)'deki sanal klasörlerin kanıtıdır. Rootfs'i eMMC'den açtıysan ([6.5](#c6-65-ek-alıştırma-kernel-ve-dtb-sd-karttan-rootfs-emmcden)) `df -h /` satırında `/dev/mmcblk1p2` görürsün.
 
 ---
 
-## <a name="c6-66-özet"></a>6.6 Özet
+## <a name="c6-67-özet"></a>6.7 Özet
 
 | Komut / Değişken | Görevi |
 |---|---|
@@ -2169,7 +2274,7 @@ mount | grep -E ' / | /proc | /sys | /dev '   # gerçek ve sanal bağlamalar
 | `cat /proc/cmdline` | Kernel'e giden bootargs |
 | `df -h /` · `mount` | Rootfs hangi bölümden geliyor? |
 
-## <a name="c6-67-karşılaşılabilecek-problemler"></a>6.7 Karşılaşılabilecek Problemler
+## <a name="c6-68-karşılaşılabilecek-problemler"></a>6.8 Karşılaşılabilecek Problemler
 
 | Belirti | Sebep | Çözüm |
 |---|---|---|
@@ -2333,7 +2438,7 @@ Bilgisayar (HOST)                          BeagleBone Black
 ──────────────────                         ────────────────────────────────────────
                                            ROM kodu (S2 basılı, SD kart yok) → UART0
 u-boot-spl.bin ──── Xmodem ──────────────► SPL çalışır (DDR'ı hazırlar)
-u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → U-Boot# komut satırı
+u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → => komut satırı komut satırı
 uImage         ──── loadx / loady ───────► 0x82000000
 .dtb           ──── loadx / loady ───────► 0x88000000
 initramfs      ──── loadx / loady ───────► 0x88080000
@@ -2357,9 +2462,9 @@ Seri boot için bilgisayarda (HOST) şu 5 dosya hazır olmalı. Her biri boot zi
 | Dosya | Nedir? | Kim yükler? | Nereye yüklenir? | Protokol |
 |---|---|---|---|---|
 | <b>`u-boot-spl.bin`</b> | <b>SPL</b> (Secondary Program Loader). U-Boot'un küçük ilk aşaması. Saatleri, pin ayarlarını, UART'ı ve en önemlisi <b>DDR RAM</b>'i hazırlar. | ROM kodu | AM335x'in iç SRAM'i (`0x402F0400`, en fazla ~109 KB) | Xmodem |
-| <b>`u-boot.img`</b> | Asıl <b>U-Boot</b>. Başında 64 baytlık U-Boot (mkimage) başlığı vardır. Komut satırını (`U-Boot#`) bize o verir. | SPL | DDR (`0x80800000`) | Ymodem |
+| <b>`u-boot.img`</b> | Asıl <b>U-Boot</b>. Başında 64 baytlık U-Boot (mkimage) başlığı vardır. Komut satırını (`=>`) bize o verir. | SPL | DDR (`0x80800000`) | Ymodem |
 | <b>`uImage`</b> | <b>Linux kernel</b>. `zImage`'in başına U-Boot başlığı (yükleme adresi, giriş noktası, CRC) eklenmiş hali ([4.9](#c4-49-uimage-nedir)). | U-Boot (`loadx`) | `0x82000000` | Xmodem |
-| <b>`am335x-boneblack.dtb`</b> | <b>Device Tree Blob</b>. Kernel'e kartta hangi donanımın olduğunu anlatan derlenmiş dosya ([Bölüm 10](#c10-bölüm-10--linux-device-tree)). | U-Boot (`loadx`) | `0x88000000` | Xmodem |
+| <b>`am335x-boneblack.dtb`</b> | <b>Device Tree Blob</b>. Kernel'e kartta hangi donanımın olduğunu anlatan derlenmiş dosya ([Bölüm 11](#c11-bölüm-11--linux-device-tree)). | U-Boot (`loadx`) | `0x88000000` | Xmodem |
 | <b>`initramfs`</b> | RAM'de çalışan küçük <b>kök dosya sistemi</b> (genellikle BusyBox). `cpio` arşivi + gzip + U-Boot başlığı. SD/eMMC olmadığı için rootfs'i buradan alırız. | U-Boot (`loadx`) | `0x88080000` | Xmodem |
 
 ### <a name="c7-bu-dosyaları-nereden-bulurum"></a>Bu dosyaları nereden bulurum?
@@ -2511,6 +2616,9 @@ Transfer bitince SPL çalışır, DDR'ı hazırlar, `U-Boot SPL ...` yazısını
 
 ### <a name="c7-adım-3--u-bootu-gönder-ymodem"></a>Adım 3 — U-Boot'u gönder (Ymodem)
 
+> [!NOTE]
+> Kursun `serial-boot` klasöründeki dosyalar: SPL <b>2017.03</b>, U-Boot <b>2016.11-rc1</b>. Bu sürümlerde U-Boot'un komut istemi `=>`'dir. [Bölüm 4](#c4-bölüm-4--sd-karttan-boot)'teki eski Ångström U-Boot'u (2013.04) ise `U-Boot#` gösterir. Komutlar ikisinde de aynıdır.
+
 1. `Ctrl-A` → `S` → <b>ymodem</b> → <b>`u-boot.img`</b> seç, gönder.
 2. U-Boot açılır. `Hit any key to stop autoboot` çıkınca <b>hemen bir tuşa bas.</b>
 
@@ -2522,7 +2630,7 @@ Transfer bitince SPL çalışır, DDR'ı hazırlar, `U-Boot SPL ...` yazısını
 ### <a name="c7-adım-4--kerneli-rame-al-loadx-0x82000000"></a>Adım 4 — Kernel'i RAM'e al: `loadx 0x82000000`
 
 ```text
-U-Boot# loadx 0x82000000
+=> loadx 0x82000000
 ```
 
 U-Boot Xmodem ile beklemeye başlar. Minicom'da `Ctrl-A` → `S` → <b>xmodem</b> → <b>`uImage`</b>.
@@ -2535,8 +2643,8 @@ U-Boot Xmodem ile beklemeye başlar. Minicom'da `Ctrl-A` → `S` → <b>xmodem</
 ### <a name="c7-adım-5--dtb-ve-initramfsi-rame-al"></a>Adım 5 — DTB ve initramfs'i RAM'e al
 
 ```text
-U-Boot# loadx 0x88000000        (Minicom: xmodem -> am335x-boneblack.dtb)
-U-Boot# loadx 0x88080000        (Minicom: xmodem -> initramfs)
+=> loadx 0x88000000        (Minicom: xmodem -> am335x-boneblack.dtb)
+=> loadx 0x88080000        (Minicom: xmodem -> initramfs)
 ```
 
 ![loadx ile DTB ve initramfs gönderimi](../images/serial_boot/07_loadx_dtb_initramfs.png)
@@ -2546,9 +2654,9 @@ U-Boot# loadx 0x88080000        (Minicom: xmodem -> initramfs)
 Boot etmeden önce dosyaların sağlam geldiğini görmek, sonradan "neden açılmadı?" diye uğraşmaktan iyidir:
 
 ```text
-U-Boot# iminfo 0x82000000
-U-Boot# iminfo 0x88080000
-U-Boot# md.b 0x88000000 4
+=> iminfo 0x82000000
+=> iminfo 0x88080000
+=> md.b 0x88000000 4
 ```
 
 ![iminfo ile CRC kontrolü, md ile DTB sihirli sayısı](../images/serial_boot/08_iminfo_kontrol.png)
@@ -2559,8 +2667,8 @@ U-Boot# md.b 0x88000000 4
 ### <a name="c7-adım-7--bootargs-ayarla-ve-bootm-ile-boot-et"></a>Adım 7 — `bootargs` ayarla ve `bootm` ile boot et
 
 ```text
-U-Boot# setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
-U-Boot# bootm 0x82000000 0x88080000 0x88000000
+=> setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
+=> bootm 0x82000000 0x88080000 0x88000000
 ```
 
 Boot etmeden önce kernel'e <b>rootfs'in nerede olduğunu</b> `bootargs` ile bildiriyoruz:
@@ -2596,11 +2704,11 @@ Kernel initramfs'i açar, içindeki `/init` (BusyBox) çalışır ve seri konsol
 Minicom: Ctrl-A S -> xmodem -> u-boot-spl.bin
 Minicom: Ctrl-A S -> ymodem -> u-boot.img
 [Hit any key -> tuşa bas]
-U-Boot# loadx 0x82000000          -> xmodem -> uImage
-U-Boot# loadx 0x88000000          -> xmodem -> am335x-boneblack.dtb
-U-Boot# loadx 0x88080000          -> xmodem -> initramfs
-U-Boot# setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
-U-Boot# bootm 0x82000000 0x88080000 0x88000000
+=> loadx 0x82000000          -> xmodem -> uImage
+=> loadx 0x88000000          -> xmodem -> am335x-boneblack.dtb
+=> loadx 0x88080000          -> xmodem -> initramfs
+=> setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
+=> bootm 0x82000000 0x88080000 0x88000000
 ```
 
 ---
@@ -2882,6 +2990,16 @@ Bu bölümde kullanılan adresler:
 
 Önce Yol 1 ile bir kere çalıştır, sonra Yol 2'ye geç. Yol 2'deki `uEnv.txt` aynı komutları içerdiği için bir hata olursa Yol 1'e dönüp tek tek denersin.
 
+<b>Hangi dosyalar?</b>
+
+| Nerede? | Dosya | Kaynak |
+|---|---|---|
+| SD kart (BOOT) | `MLO`, `u-boot.img` | Kursun güncel `SD-boot` imajları (U-Boot 2022.04) ya da [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme)'da kendi derlediklerin |
+| Host (`/var/lib/tftpboot`) | `uImage`, `am335x-boneblack.dtb`, `initramfs` | Kursun `tftp-boot` klasörü (Ångström kernel 3.8.13) ya da kendi derlediklerin |
+
+> [!WARNING]
+> Kursun güncel `SD-boot` U-Boot'unda `bootdelay=0`. Yani `Hit any key to stop autoboot` geri sayımı yok denecek kadar kısa. U-Boot'u durdurmak için kart açılırken <b>Space tuşuna basılı tut</b> ya da art arda bas. Bekleme süresini uzatmak [9.4](#c9-94-challenge-autoboot-bekleme-süresini-10-saniyeye-çıkarmak)'teki challenge'ın konusu.
+
 > [!NOTE]
 > Aşağıdaki ekran görüntüleri <b>temsilidir</b>; arayüz adı (`enp3s0`), sürüm, tarih, boyut ve hız değerleri senin ortamında farklı olacaktır.
 
@@ -2940,18 +3058,18 @@ Minicom açıkken kartı S2'ye basılı tutarak başlat, `Hit any key to stop au
 ![U-Boot'ta ipaddr, serverip, ethact ayarlama ve ping](../images/tftp_boot/08_uboot_net.png)
 
 ```
-U-Boot# setenv ipaddr 192.168.27.2
-U-Boot# setenv serverip 192.168.27.1
-U-Boot# setenv ethact cpsw
-U-Boot# printenv ipaddr serverip ethact
-U-Boot# ping 192.168.27.1
+=> setenv ipaddr 192.168.27.2
+=> setenv serverip 192.168.27.1
+=> setenv ethact ethernet@4a100000
+=> printenv ipaddr serverip ethact
+=> ping 192.168.27.1
 ```
 
 | Komut | Açıklama |
 |---|---|
 | `setenv ipaddr ...` | Kartın (istemci) IP adresi |
 | `setenv serverip ...` | TFTP sunucusunun (host) IP adresi. `tftpboot` dosyayı bu adresten ister. |
-| `setenv ethact cpsw` | Kullanılacak ağ aygıtı. Kursun hazır U-Boot'unda (2013.04) iki aygıt var (`Net: cpsw, usb_ether`); `cpsw` Ethernet portudur. Çoğu zaman zaten varsayılandır, ama `Using usb_ether device` görürsen bu satır gerekir. Kendi derlediğin U-Boot 2022.04'te aygıtın adı `ethernet@4a100000`'dir ([9.3](#c9-93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme)). |
+| `setenv ethact ethernet@4a100000` | Kullanılacak ağ aygıtı. BBB'nin U-Boot'unda iki aygıt var: Ethernet portu ve USB üzerinden ağ (`usb_ether`). Adlarını açılıştaki `Net:` satırında görürsün. U-Boot 2022.04'te Ethernet'in adı `ethernet@4a100000`, 2016–2017 öncesi sürümlerde `cpsw`'dir. Çoğu zaman zaten varsayılandır, ama `Using usb_ether device` görürsen bu satır gerekir. |
 | `ping ...` | Kablo ve IP ayarlarını test eder. `is alive` görmelisin. |
 
 > [!NOTE]
@@ -2962,9 +3080,9 @@ U-Boot# ping 192.168.27.1
 ![tftpboot ile uImage, dtb ve initramfs'i RAM'e çekme](../images/tftp_boot/09_tftpboot.png)
 
 ```
-U-Boot# tftpboot 0x82000000 uImage
-U-Boot# tftpboot 0x88000000 am335x-boneblack.dtb
-U-Boot# tftpboot 0x88080000 initramfs
+=> tftpboot 0x82000000 uImage
+=> tftpboot 0x88000000 am335x-boneblack.dtb
+=> tftpboot 0x88080000 initramfs
 ```
 
 Adresler seri boot bölümündekiyle aynı ([7.5](#c7-75-önerilen-ram-yükleme-adresleri)): kernel `0x82000000`, DTB `0x88000000`, initramfs `0x88080000`. `Bytes transferred` değeri host'taki `ls -l` boyutuyla aynı olmalı. (`tftp` ve `tftpboot` U-Boot'ta aynı komuttur.)
@@ -2974,8 +3092,8 @@ Adresler seri boot bölümündekiyle aynı ([7.5](#c7-75-önerilen-ram-yükleme-
 ![bootargs ayarlama ve bootm ile boot](../images/tftp_boot/10_bootm.png)
 
 ```
-U-Boot# setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
-U-Boot# bootm 0x82000000 0x88080000 0x88000000
+=> setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
+=> bootm 0x82000000 0x88080000 0x88000000
 ```
 
 `bootm` argüman sırası: <b>kernel – initramfs – DTB</b>. Komuta sadece adresler yazılır. `bootargs`'ın ayrıntıları: [7.8 Adım 7](#c7-adım-7--bootargs-ayarla-ve-bootm-ile-boot-et).
@@ -3096,6 +3214,26 @@ cat /proc/cmdline
 ```
 
 Burada `console=ttyO0,115200n8 root=/dev/ram0 ...` görmüyorsan `linuxbootargs` çalışmamış demektir (değişken adını kontrol et).
+
+### <a name="c8-adım-6--s2ye-basmadan-açılış-challenge"></a>Adım 6 — S2'ye basmadan açılış (Challenge)
+
+Kursun bu bölümdeki challenge'ı: <i>TFTP boot'u `uEnv.txt` ile otomatikleştir; kart güç alınca ya da reset'e basılınca imajlar kendiliğinden insin ve <b>S2'ye basmadan</b> açılsın.</i>
+
+S2'ye basmadan güç verince ROM Code <b>eMMC</b>'deki MLO/U-Boot'u çalıştırır ([3.5](#c3-35-boot-kaynakları-ve-boot-sırası-sysboot-pinleri)). Çözüm, eMMC'deki U-Boot'un `uEnv.txt`'yi nerede aradığına bağlı:
+
+1. <b>Önce kontrol et.</b> U-Boot'u durdur ve ortamına bak:
+   ```
+   => printenv mmcdev bootenvfile bootenv
+   => printenv bootcmd
+   ```
+   `mmcdev=0` ve `bootcmd` içinde `loadbootenv` / `envboot` gibi bir adım varsa, U-Boot açılışta önce <b>SD kartın 1. bölümündeki</b> `uEnv.txt`'yi okur (`mmc 0` = SD kart).
+2. <b>Bu durumda yapman gereken tek şey</b> Adım 3'teki `uEnv.txt`'yi SD kartın BOOT bölümüne koymak. Kart eMMC'den açılsa bile SD karttaki dosyayı okur ve `uenvcmd` ile TFTP boot'u başlatır. S2'ye basmana gerek kalmaz.
+3. eMMC'deki U-Boot dosyayı başka bir yerde arıyorsa (BeagleBoard'un yeni Debian imajları gibi, ör. eMMC'nin rootfs'indeki `/boot/uEnv.txt`), iki seçenek var:
+   - Komutları U-Boot'un okuduğu dosyaya yaz, ya da
+   - eMMC'deki `MLO`'yu devre dışı bırak. ROM Code eMMC'de geçerli MLO bulamayınca SD karta geçer ([3.1](#c3-31-rbl-rom-boot-loader)).
+
+> [!CAUTION]
+> eMMC'deki `MLO`'yu silmek, eMMC'deki sistemin kendi başına açılmamasına yol açar. Geri dönmek için [Bölüm 5](#c5-bölüm-5--emmcden-boot)'teki gibi eMMC'yi yeniden flash'lamak gerekir. Önce 1. ve 2. maddeyi dene.
 
 ### <a name="c8-yol-2nin-özeti"></a>Yol 2'nin özeti
 
@@ -3218,7 +3356,7 @@ uenvcmd=if test "${generic_tried}" != "yes"; then setenv generic_tried yes; sete
 | `net_load` | TFTP ile kernel + DTB. TFTP ve NFS adımları ortak kullanır. |
 | `try_tftp` | Kernel + DTB + <b>initramfs</b>. Rootfs RAM'de (Yol 2 ile aynı). |
 | `try_nfs` | Kernel + DTB TFTP'den gelir, rootfs NFS ile host'tan bağlanır. `ip=...` kernel'e kendi IP'sini verir; U-Boot'un IP'si kernel'e geçmediği için NFS'te şart. Bu adım, host'ta `initramfs` dosyası yoksa devreye girer. |
-| `uenvcmd` | Makroları sırayla çağırır. `generic_tried` bir <b>koruma bayrağı</b>: BBB'nin varsayılan `bootcmd`'si önce SD'de, sonra eMMC'de `mmcboot` çalıştırır, yani `uenvcmd` iki kez çalışabilir. Bayrak sayesinde zincir sadece bir kez denenir. |
+| `uenvcmd` | Makroları sırayla çağırır. `generic_tried` bir <b>koruma bayrağı</b>: U-Boot sürümüne göre varsayılan `bootcmd` önce SD'de, sonra eMMC'de `uEnv.txt` arayabilir, yani `uenvcmd` iki kez çalışabilir. Bayrak sayesinde zincir sadece bir kez denenir. |
 
 > [!WARNING]
 > <b>eMMC'nin kernel'deki adı değişebilir.</b> U-Boot'ta eMMC her zaman `mmc 1`'dir. Ama eski kernel'lerde (3.8.13 gibi) SD kart <b>takılı değilse</b> eMMC `mmcblk0` olarak görünür, takılıysa `mmcblk1` olarak görünür. `emmc_root` makrosu SD kartın olup olmadığına bakıp doğru adı seçer. Yeni kernel'lerde DTB'deki `aliases` ile bu sabitlenebilir.
@@ -3275,7 +3413,7 @@ Bir adımı elle denemek istersen U-Boot'u durdurup `uEnv.txt`'yi yükle (`run l
 | Hata | Sebep | Çözüm |
 |---|---|---|
 | `*** ERROR: 'serverip' not set` | Sunucu IP'si tanımlı değil | `setenv serverip 192.168.27.1` |
-| `Using usb_ether device` | U-Boot USB ağını kullanmaya çalışıyor | `setenv ethact cpsw` (U-Boot 2022.04'te: `setenv ethact ethernet@4a100000`) |
+| `Using usb_ether device` | U-Boot USB ağını kullanmaya çalışıyor | `setenv ethact ethernet@4a100000` (eski U-Boot'larda `setenv ethact cpsw`) |
 | `Loading: T T T T ...` / `Retry count exceeded` | Paket gidiyor ama cevap gelmiyor | Host IP'si ve alt ağ doğru mu? `systemctl status tftpd-hpa` çalışıyor mu? Firewall (`sudo ufw allow 69/udp`)? VM ise Bridged mi? Sunucu port 69'da mı? |
 | `TFTP error: 'File not found' (1)` | Dosya `/var/lib/tftpboot` içinde değil ya da adı yanlış | `ls -l /var/lib/tftpboot`. Linux'ta büyük-küçük harf farklıdır: `uImage` ≠ `uimage` |
 | `TFTP error: 'Permission denied'` | Dosya okunamıyor | `sudo chmod -R 777 /var/lib/tftpboot` |
@@ -3297,6 +3435,7 @@ Bir adımı elle denemek istersen U-Boot'u durdurup `uEnv.txt`'yi yükle (`run l
 > - Linaro cross toolchain'ini kurup `PATH`'e ekleyeceksin.
 > - U-Boot 2022.04 kaynağını indirip BeagleBone Black için yapılandıracak ve derleyeceksin: `MLO`, `u-boot-spl.bin`, `u-boot.img`.
 > - Kendi derlediğin U-Boot ile kartı açacaksın.
+> - Challenge: U-Boot'un açılıştaki bekleme süresini kaynak koddan 10 saniyeye çıkaracaksın.
 >
 > <b>Ön koşul:</b> [Bölüm 3](#c3-bölüm-3--linux-boot-süreci-rbl--spl--u-boot) — SPL ve U-Boot'un görevleri, [Bölüm 4](#c4-bölüm-4--sd-karttan-boot) — SD karta dosya koyma.
 
@@ -3366,7 +3505,10 @@ En çok sorun çıkaran konu bu. <b>Eski U-Boot/kernel kaynağını yeni GCC ile
 | U-Boot 2023+, kernel 5.x / 6.x | Güncel GCC | `sudo apt install gcc-arm-linux-gnueabihf` |
 
 > [!IMPORTANT]
-> Bu bölümde kursun kullandığı <b>U-Boot 2022.04 + Linaro GCC 7.5.0</b> kullanılıyor ([9.3](#c9-93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme) Adım 4'teki menuconfig ekranında görünüyor). Başka sürüm kullanırsan komutlarda sadece sürüm numaraları değişir, adımlar aynıdır.
+> Bu bölümde kursun videolarında kullanılan <b>U-Boot 2022.04 + Linaro GCC 7.5.0</b> kullanılıyor ([9.3](#c9-93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme) Adım 4'teki menuconfig ekranında görünüyor). Başka sürüm kullanırsan komutlarda sadece sürüm numaraları değişir, adımlar aynıdır.
+
+> [!NOTE]
+> Kursun GitHub reposundaki eski derleme notları (`notes/compilation_commands`) Linaro GCC 6.3.1 ve `am335x_boneblack_defconfig` kullanıyor. Bu, kursun 2017 sürümüne ait; güncellenen videolarda U-Boot 2022.04 kullanılıyor. Bu kitap videolardaki güncel sürümü takip ediyor.
 
 İndirme adresleri:
 
@@ -3417,7 +3559,7 @@ file hello_x86 hello_arm
 ./hello_arm          # Exec format error: PC ARM kodu çalıştıramaz
 ```
 
-`hello_arm` dosyasını karta kopyalarsan orada çalışır. U-Boot da aynı şekilde: PC'de derlenir, kartta çalışır. [6.5.3](#c6-653-a-bilgisayardan-ulaşmak)'te rootfs'teki programların PC'de çalışmamasının sebebi de budur.
+`hello_arm` dosyasını karta kopyalarsan orada çalışır. U-Boot da aynı şekilde: PC'de derlenir, kartta çalışır. [6.6.3](#c6-663-a-bilgisayardan-ulaşmak)'te rootfs'teki programların PC'de çalışmamasının sebebi de budur.
 
 ### <a name="c9-adım-3--host-paketlerini-kur-ve-u-boot-kaynağını-indir"></a>Adım 3 — Host paketlerini kur ve U-Boot kaynağını indir
 
@@ -3560,15 +3702,69 @@ cp MLO u-boot.img /media/$USER/BOOT/ && sync
 
 ---
 
-## <a name="c9-94-özet"></a>9.4 Özet
+## <a name="c9-94-challenge-autoboot-bekleme-süresini-10-saniyeye-çıkarmak"></a>9.4 Challenge: Autoboot Bekleme Süresini 10 Saniyeye Çıkarmak
+
+### <a name="c9-görev"></a>Görev
+
+Kursun bu bölümdeki challenge'ı:
+
+> <i>U-Boot açılınca otomatik açılışa (uEnv.txt'yi okuma, uImage'ı yükleme...) geçmeden önce birkaç saniye bekler. Bu sürede bir tuşa basarsan U-Boot komut satırına düşersin. Bu bekleme süresini <b>10 saniyeye</b> çıkar ve kartta test et. Bunun için U-Boot <b>kaynak kodunu</b> değiştirip yeniden derlemen gerekiyor.</i>
+
+### <a name="c9-bekleme-süresi-nereden-geliyor"></a>Bekleme süresi nereden geliyor?
+
+Geri sayımı `bootdelay` ortam değişkeni belirler. Bu değişkenin <b>varsayılan</b> değeri derleme sırasında `CONFIG_BOOTDELAY` ayarından gelir ve U-Boot'un içine gömülür:
+
+| Kaynak | Değer |
+|---|---|
+| U-Boot 2022.04 varsayılanı (`am335x_evm_defconfig` değiştirmiyor) | 2 saniye |
+| Kursun güncel `SD-boot` U-Boot'u | 0 (geri sayım yok, tuşa basılı tutmak gerekir) |
+| Kursun eski videolarındaki U-Boot | 5 saniye |
+
+> [!NOTE]
+> `setenv bootdelay 10` + `saveenv` ile de aynı sonuç alınır. Ama bu sadece o kartın kayıtlı ortamını değiştirir; challenge, ayarın <b>U-Boot imajının kendisinde</b> değişmesini istiyor. Böylece imajı hangi karta koyarsan koy 10 saniye bekler.
+
+### <a name="c9-çözüm"></a>Çözüm
+
+<b>1) Ayarı değiştir.</b> [9.3](#c9-93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme)'teki U-Boot kaynak klasöründe `menuconfig`'i aç ve şu ayarı `10` yap:
+
+```
+Boot options  --->
+    Autoboot options  --->
+        (10) delay in seconds before automatically booting
+```
+
+Ayarı bulmak için menüde `/` tuşuna basıp `BOOTDELAY` aramak daha hızlı. Kaydedip çık.
+
+<b>2) Kontrol et, derle, SD karta kopyala.</b>
+
+![bootdelay ayarını değiştirip derleme](../images/uboot_build/09_bootdelay_config.png)
+
+```bash
+grep BOOTDELAY .config                                   # CONFIG_BOOTDELAY=10 görmelisin
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4
+cp MLO u-boot.img /media/$USER/BOOT/ && sync && sudo umount /media/$USER/BOOT
+```
+
+<b>3) Kartta test et.</b> Kartı S2'ye basılı tutarak aç. Geri sayım 10'dan başlamalı:
+
+![10 saniyelik geri sayım](../images/uboot_build/10_bootdelay_boot.png)
+
+> [!IMPORTANT]
+> Geri sayım hâlâ eski değerdeyse, kartta daha önce `saveenv` ile kaydedilmiş bir ortam vardır. Kayıtlı ortam derlemedeki varsayılanı ezer. U-Boot'ta `env default -a` ile varsayılanlara dön ve `saveenv` ile kaydet. Ayrıca `uEnv.txt`'de `bootdelay=` satırı olmadığından emin ol.
+
+> [!TIP]
+> Değişikliğin kaynak kodda kalıcı olmasını istersen `make savedefconfig` ile küçük bir `defconfig` dosyası üret ve onu `configs/` altına kendi adınla kaydet (ör. `configs/my_bbb_defconfig`). Sonraki derlemelerde `make my_bbb_defconfig` yeterli olur.
+
+## <a name="c9-95-özet"></a>9.5 Özet
 
 - Cross toolchain, PC'de (x86) çalışıp ARM kodu üretir. Önek: `arm-linux-gnueabihf-`.
 - Toolchain'i derlenecek kaynağın yaşına göre seç; eski kaynak + yeni GCC = derleme hatası.
 - Derleme üç komut: `distclean` → `am335x_evm_defconfig` → `make -j4`. Hepsinde `ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-`.
 - Çıktılar: `MLO` (SD/eMMC için), `spl/u-boot-spl.bin` (seri boot için), `u-boot.img` (ikisi için de).
 - Kendi U-Boot'unun çalıştığını açılıştaki derleme tarihinden anlarsın.
+- U-Boot'un davranışını değiştirmenin kalıcı yolu `menuconfig` ile `.config`'i değiştirip yeniden derlemektir (ör. `CONFIG_BOOTDELAY`).
 
-## <a name="c9-95-karşılaşılabilecek-problemler"></a>9.5 Karşılaşılabilecek Problemler
+## <a name="c9-96-karşılaşılabilecek-problemler"></a>9.6 Karşılaşılabilecek Problemler
 
 ![Sık görülen derleme hataları (temsili)](../images/uboot_build/08_errors.png)
 
@@ -3592,7 +3788,368 @@ cp MLO u-boot.img /media/$USER/BOOT/ && sync
 
 <div class="page-break"></div>
 
-# <a name="c10-bölüm-10--linux-device-tree"></a>Bölüm 10 — Linux Device Tree
+# <a name="c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme"></a>Bölüm 10 — Linux Kernel: Kaynak Ağacı ve Derleme
+
+> <b>Bu bölümde:</b>
+> - BeagleBone Black için hangi kernel kaynağının kullanıldığını ve kursun kernel sürüm geçmişini öğreneceksin.
+> - Kernel kaynak ağacında gezinmeyi öğreneceksin: ARM mimarisi kodu, kart yapılandırma dosyaları ve SoC sürücüleri nerede durur?
+> - Kernel'i `bb.org_defconfig` ile yapılandırıp `uImage`, `am335x-boneblack.dtb` ve modülleri derleyeceksin.
+> - Kendi derlediğin kernel ile kartı açacaksın.
+>
+> <b>Ön koşul:</b> [Bölüm 3](#c3-bölüm-3--linux-boot-süreci-rbl--spl--u-boot) — boot zinciri, [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme) — cross toolchain kurulumu.
+
+---
+
+## <a name="c10-101-hangi-kernel"></a>10.1 Hangi Kernel?
+
+Linux kernel'in "resmi" kaynağı Linus Torvalds'ın yönettiği <b>mainline</b> ağaçtır (kernel.org). Kart üreticileri bunun üzerine kendi kartlarına özel yamaları ekleyip <b>vendor</b> ağaçları yayınlar. BeagleBone Black için iki seçenek var:
+
+| Kaynak | Adres | Ne zaman? |
+|---|---|---|
+| <b>BeagleBoard kernel'i</b> (vendor) | `https://github.com/beagleboard/linux.git` | Kursta ve bu kitapta kullanılan. BBB'ye özel ayar (`bb.org_defconfig`), cape ve PRU desteği hazır gelir. |
+| <b>Mainline</b> | `https://git.kernel.org` | En yeni özellikler. BBB'de temel donanım çalışır, bazı ekstralar eksik olabilir. |
+
+Kursun kullandığı kernel sürümleri zamanla değişti:
+
+| Nerede? | Kernel |
+|---|---|
+| Kursun ilk hazır imajları (Ångström) | 3.8.13 |
+| Kursun eski derleme notları | 4.4 (`bb.org_defconfig`) ve 4.11 (`omap2plus_defconfig`) |
+| <b>Kursun güncel imajları</b> | <b>5.10.168</b> |
+
+Kursun başındaki "Important Update on Linux Kernel Version" notu bu güncellemeyi anlatıyor. Bu kitap BeagleBoard'un <b>5.10</b> dalını kullanıyor. 5.10 bir <b>LTS</b> (Long Term Support, uzun süre desteklenen) sürümdür.
+
+> [!NOTE]
+> Dal (branch) zamanla güncellenir. Bu kitap yazılırken `5.10` dalının ucu <b>5.10.162</b> sürümündeydi. Kursun hazır imajı 5.10.168. Aradaki fark sadece küçük düzeltmelerdir, anlatılan her şey ikisinde de aynıdır.
+
+---
+
+## <a name="c10-102-kaynak-kodu-i̇ndirme"></a>10.2 Kaynak Kodu İndirme
+
+```bash
+cd ~/bbb
+git clone --depth=1 -b 5.10 https://github.com/beagleboard/linux.git
+cd linux
+head -4 Makefile
+```
+
+![Kernel kaynağını git ile indirme](../images/kernel/01_clone.png)
+
+| Parça | Anlamı |
+|---|---|
+| `--depth=1` | Sadece son sürümü indir, binlerce commit'lik geçmişi indirme. İndirme birkaç GB yerine birkaç yüz MB olur. |
+| `-b 5.10` | `5.10` dalını al |
+| `Makefile` başı | `VERSION`, `PATCHLEVEL`, `SUBLEVEL` satırları indirdiğin sürümü gösterir |
+
+> [!TIP]
+> Kaynak kodda bir fonksiyonun ya da sürücünün nerede tanımlandığını bulmak için tarayıcıdan <b>Elixir</b>'i kullan: <https://elixir.bootlin.com/linux/v5.10/source>. Her sembole tıklayınca tanımına ve kullanıldığı yerlere gider. Bilgisayarda ise `grep -rn "aranan" drivers/` iş görür.
+
+---
+
+## <a name="c10-103-kaynak-ağacının-genel-yapısı"></a>10.3 Kaynak Ağacının Genel Yapısı
+
+![Kernel kaynağının üst düzey klasörleri](../images/kernel/02_top_tree.png)
+
+| Klasör | İçinde ne var? |
+|---|---|
+| <b>`arch/`</b> | Mimariye özel kod: `arch/arm`, `arch/arm64`, `arch/x86`... Açılış kodu, bellek yönetiminin mimariye bağlı kısmı, <b>device tree</b> dosyaları ve <b>defconfig</b>'ler burada. |
+| <b>`drivers/`</b> | Bütün aygıt sürücüleri: GPIO, I2C, SPI, UART, MMC, USB, ağ... Kaynağın yaklaşık yarısı. |
+| `include/` | Ortak başlık dosyaları (`include/linux/`, `include/dt-bindings/`...) |
+| `init/` | Kernel'in açılışı: `start_kernel()` (`init/main.c`) ve ilk kullanıcı programını (`init`) başlatan kod |
+| `kernel/` | Çekirdeğin kalbi: zamanlayıcı (scheduler), süreç yönetimi, sinyaller, zamanlayıcılar |
+| `mm/` | Bellek yönetimi |
+| `fs/` | Dosya sistemleri: ext4, FAT, NFS, proc, sysfs... |
+| `net/` | Ağ yığını: TCP/IP, soketler |
+| `block/` | Blok aygıt katmanı (diskler, SD kart) |
+| `lib/`, `crypto/`, `security/`, `sound/`, `ipc/` | Yardımcı kütüphaneler, şifreleme, güvenlik modülleri, ses, süreçler arası iletişim |
+| `Documentation/` | Kernel'in kendi belgeleri. Device tree binding'leri `Documentation/devicetree/bindings/` altında ([11.7](#c11-117-compatible-ile-driver-eşleşmesi)). |
+| `scripts/` | Derleme sistemi araçları (`kconfig`, `dtc`...) |
+| `Makefile`, `Kconfig` | Derleme sisteminin girişi ve ayar menüsünün kökü |
+
+Kernel'in kullanıcı programlarıyla ilişkisi:
+
+```
+ Kullanıcı alanı (user space)     uygulamalar, BusyBox, kütüphaneler (glibc)
+ ─────────────────────────────── sistem çağrıları (open, read, write, ioctl...)
+ Kernel alanı (kernel space)      kernel/ mm/ fs/ net/ ipc/   ← mimariden bağımsız çekirdek
+                                  drivers/                     ← aygıt sürücüleri
+                                  arch/arm/                    ← ARM'a özel kod
+ ─────────────────────────────── 
+ Donanım                          AM335x: Cortex-A8, UART, GPIO, I2C, MMC, Ethernet...
+```
+
+---
+
+## <a name="c10-104-arm-mimarisi-kodunun-düzeni-archarm"></a>10.4 ARM Mimarisi Kodunun Düzeni (`arch/arm`)
+
+![arch/arm, defconfig'ler, mach-omap2 ve DTS dosyaları](../images/kernel/03_arch_arm.png)
+
+| Klasör | İçinde ne var? |
+|---|---|
+| `arch/arm/boot/` | Derlenen imajlar (`Image`, `zImage`, `uImage`) buraya çıkar. |
+| `arch/arm/boot/compressed/` | `zImage`'in başındaki, kernel'i RAM'de açan küçük program ([4.9](#c4-49-uimage-nedir)) |
+| `arch/arm/boot/dts/` | Device tree kaynakları (`am335x-boneblack.dts` ve `.dtsi`'leri) |
+| `arch/arm/configs/` | Hazır ayar dosyaları (<b>defconfig</b>) |
+| `arch/arm/kernel/` | ARM'a özel çekirdek kodu. Kernel'in ilk çalışan komutları `arch/arm/kernel/head.S`'tedir. |
+| `arch/arm/mm/` | ARM'a özel bellek yönetimi (MMU, cache) |
+| `arch/arm/mach-omap2/` | <b>TI OMAP/AM335x ailesine özel kod:</b> güç ve saat alanları, uyku modu (`sleep33xx.S`), DT ile açılan kartların ortak girişi (`board-generic.c`) |
+| `arch/arm/mach-*/` | Diğer SoC aileleri: `mach-imx` (NXP i.MX), `mach-stm32`, `mach-at91`... |
+
+> [!NOTE]
+> Device tree'den önce her kart için `arch/arm/mach-omap2/board-xxx.c` gibi bir <b>board file</b> yazılırdı. Bugün `mach-omap2` içinde kart dosyası yoktur. Kartları device tree tarif eder, `board-generic.c` sadece "bu SoC ailesi DT ile açılıyor" der ([11.1](#c11-111-problem-kernel-donanımı-nereden-bilecek)).
+
+---
+
+## <a name="c10-105-kart-yapılandırma-dosyaları"></a>10.5 Kart Yapılandırma Dosyaları
+
+Bir kart için kernel hazırlarken iki tür dosya kullanılır:
+
+| Dosya türü | Ne tarif eder? | BBB için |
+|---|---|---|
+| <b>defconfig</b> (`arch/arm/configs/`) | <b>Kernel'e hangi özelliklerin ve sürücülerin derleneceğini</b> | `bb.org_defconfig` |
+| <b>Device tree</b> (`arch/arm/boot/dts/`) | <b>Kartta hangi donanımın nerede olduğunu</b> | `am335x-boneblack.dts` |
+
+Kullanılabilecek defconfig'ler:
+
+| defconfig | Kapsamı |
+|---|---|
+| `bb.org_defconfig` | BeagleBoard'un BBB ve diğer Beagle kartları için hazırladığı ayar. Cape, PRU, USB gadget desteği açık. <b>Bu kitapta kullanılan.</b> |
+| `omap2plus_defconfig` | Mainline'daki bütün OMAP2+ / AM335x / AM437x / DRA7 kartları için ortak ayar |
+| `multi_v7_defconfig` | Bütün ARMv7 kartları (TI, NXP, ST, Rockchip...) için tek kernel. En büyük imaj. |
+
+BBB ailesinin device tree dosyaları:
+
+| DTS | Kart |
+|---|---|
+| `am335x-boneblack.dts` | BeagleBone Black |
+| `am335x-boneblack-wireless.dts` | BeagleBone Black Wireless |
+| `am335x-bonegreen.dts` | SeeedStudio BeagleBone Green |
+| `am335x-bone.dts` | Eski BeagleBone (White) |
+| `am335x-pocketbeagle.dts` | PocketBeagle |
+
+Device tree'nin yapısı ve include zinciri [Bölüm 11](#c11-bölüm-11--linux-device-tree)'de anlatılıyor.
+
+---
+
+## <a name="c10-106-soc-sürücülerinin-düzeni-drivers"></a>10.6 SoC Sürücülerinin Düzeni (`drivers/`)
+
+Sürücüler mimariye göre değil, <b>aygıt türüne</b> göre klasörlenir. AM335x'in çevre birimlerini süren sürücüler:
+
+| AM335x birimi | Sürücü dosyası | Kernel ayarı |
+|---|---|---|
+| UART | `drivers/tty/serial/8250/8250_omap.c` | `CONFIG_SERIAL_8250_OMAP` |
+| GPIO | `drivers/gpio/gpio-omap.c` | `CONFIG_GPIO_OMAP` |
+| I2C | `drivers/i2c/busses/i2c-omap.c` | `CONFIG_I2C_OMAP` |
+| SPI (McSPI) | `drivers/spi/spi-omap2-mcspi.c` | `CONFIG_SPI_OMAP24XX` |
+| MMC / SD / eMMC | `drivers/mmc/host/sdhci-omap.c` (eski: `omap_hsmmc.c`) | `CONFIG_MMC_SDHCI_OMAP` |
+| Ethernet (CPSW) | `drivers/net/ethernet/ti/cpsw.c`, `cpsw_new.c` | `CONFIG_TI_CPSW` |
+| USB (MUSB) | `drivers/usb/musb/musb_dsps.c` | `CONFIG_USB_MUSB_DSPS` |
+| USB gadget: Ethernet (`g_ether`) | `drivers/usb/gadget/legacy/ether.c` | `CONFIG_USB_ETH` |
+| RTC | `drivers/rtc/rtc-omap.c` | `CONFIG_RTC_DRV_OMAP` |
+| Watchdog | `drivers/watchdog/omap_wdt.c` | `CONFIG_OMAP_WATCHDOG` |
+| PWM (EHRPWM) | `drivers/pwm/pwm-tiehrpwm.c` | `CONFIG_PWM_TIEHRPWM` |
+| ADC | `drivers/iio/adc/ti_am335x_adc.c` | `CONFIG_TI_AM335X_ADC` |
+| LCD / HDMI | `drivers/gpu/drm/tilcdc/` | `CONFIG_DRM_TILCDC` |
+| PMIC (TPS65217) | `drivers/mfd/tps65217.c` | `CONFIG_MFD_TPS65217` |
+
+Bir sürücünün hangi device tree düğümüyle eşleştiğini `compatible` dizisinden bulursun:
+
+```bash
+grep -n "compatible" drivers/gpio/gpio-omap.c          # "ti,omap4-gpio" ...
+grep -rn "ti,omap4-gpio" arch/arm/boot/dts/am33xx*.dtsi # DT'deki karşılığı
+```
+
+> [!NOTE]
+> UART sürücüsü konsolun adını belirler: `8250_omap` → `/dev/ttyS0`, eski `omap-serial` → `/dev/ttyO0`. Kernel 5.10'da `8250_omap` kullanıldığı için `bootargs`'ta <b>`console=ttyS0`</b> yazılır ([3.4](#c3-34-linux-kernel-ve-root-filesystem)).
+
+---
+
+## <a name="c10-107-kernel-yapılandırması-kconfig-config-menuconfig"></a>10.7 Kernel Yapılandırması: Kconfig, `.config`, menuconfig
+
+Kernel'de binlerce seçenek var ve her biri `CONFIG_` ile başlayan bir isimle temsil edilir.
+
+| Parça | Görevi |
+|---|---|
+| `Kconfig` dosyaları | Her klasörde bulunur. Seçenekleri, açıklamalarını ve birbirine bağımlılıklarını tanımlar. |
+| `.config` | Derlemede kullanılan <b>gerçek</b> ayar dosyası. Binlerce satır, kaynak klasörünün kökünde. |
+| `defconfig` | `.config`'in kısaltılmış hali: sadece varsayılandan farklı olan satırlar. `make xxx_defconfig` bunu açıp `.config` üretir. |
+| `make menuconfig` | `.config`'i menüden düzenler. U-Boot'taki menüyle aynı ([9.3](#c9-93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme)). |
+| `make savedefconfig` | Değiştirdiğin `.config`'ten tekrar küçük bir `defconfig` üretir. |
+
+![Kernel menuconfig ekranı](../images/kernel/bootlin_menuconfig.png)
+
+*Görsel: Bootlin, "Embedded Linux system development" eğitim slaytları (CC BY-SA 3.0)*
+
+Her sürücü veya özellik için üç seçenek var:
+
+| Değer | menuconfig'te | Anlamı |
+|---|---|---|
+| `y` | `[*]` / `<*>` | Kernel imajının <b>içine</b> derlenir (built-in). Kernel açılır açılmaz hazırdır. |
+| `m` | `<M>` | <b>Modül</b> olarak ayrı bir `.ko` dosyasına derlenir. Rootfs'ten `modprobe` / `insmod` ile sonradan yüklenir. |
+| `n` | `[ ]` / `< >` | Derlenmez |
+
+> [!IMPORTANT]
+> Rootfs'i bağlamak için gereken sürücüler (MMC, ext4, NFS için ağ sürücüsü) <b>`y`</b> olmalıdır. Kernel bunlar olmadan rootfs'i bağlayamaz, rootfs'i bağlamadan da modül yükleyemez. Modüller (`m`) ancak rootfs bağlandıktan sonra kullanılabilir.
+
+---
+
+## <a name="c10-108-adım-adım-kerneli-derleme"></a>10.8 Adım Adım: Kernel'i Derleme
+
+> [!NOTE]
+> Aşağıdaki ekran görüntüleri <b>temsilidir</b>. Örneklerde çalışma klasörü `~/bbb/linux`, toolchain [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme)'da kurulan Linaro GCC 7.5.0.
+
+### <a name="c10-adım-1--host-paketlerini-kur"></a>Adım 1 — Host paketlerini kur
+
+```bash
+sudo apt install build-essential bc bison flex libssl-dev libncurses-dev lzop u-boot-tools git
+```
+
+| Paket | Neden? |
+|---|---|
+| `bc` | Derleme sırasında bazı sabitler `bc` ile hesaplanır |
+| `lzop` | `bb.org_defconfig` kernel'i <b>LZO</b> ile sıkıştırır (`CONFIG_KERNEL_LZO=y`) |
+| `libssl-dev` | Modül imzalama ve sertifika araçları |
+| `u-boot-tools` | `mkimage`: `uImage` üretmek için |
+| `bison`, `flex`, `libncurses-dev` | Kconfig ve `menuconfig` |
+
+### <a name="c10-adım-2--yapılandır"></a>Adım 2 — Yapılandır
+
+![distclean, defconfig ve önemli ayarlar](../images/kernel/04_config.png)
+
+```bash
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bb.org_defconfig
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig     # isteğe bağlı
+```
+
+Kernel'de U-Boot'tan farklı olarak <b>`ARCH=arm` her komutta zorunludur</b>. Yazmazsan kernel host'un mimarisini (x86) varsayar ve yanlış `.config` üretir.
+
+### <a name="c10-adım-3--kernel-imajını-ve-device-treeyi-derle"></a>Adım 3 — Kernel imajını ve device tree'yi derle
+
+![uImage ve dtbs derleme çıktısı](../images/kernel/05_build.png)
+
+```bash
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- uImage dtbs LOADADDR=0x80008000 -j$(nproc)
+```
+
+| Parça | Anlamı |
+|---|---|
+| `uImage` | `vmlinux` → `Image` → `zImage` → `uImage` zincirini üretir ([4.9](#c4-49-uimage-nedir)) |
+| `dtbs` | Bütün `.dts` dosyalarını `.dtb`'ye derler |
+| `LOADADDR=0x80008000` | `uImage` başlığına yazılan yükleme ve giriş adresi. AM335x'te DDR `0x80000000`'da başlar; kernel ilk 32 KB'ın (`0x8000`) arkasına yerleşir. |
+| `-j$(nproc)` | İşlemcinin çekirdek sayısı kadar paralel derle |
+
+İlk derleme bilgisayarına göre 10–40 dakika sürer. Paralel derlemenin etkisi:
+
+![make ve make -j8 karşılaştırması](../images/kernel/bootlin_parallel_make.png)
+
+*Görsel: Bootlin, "Embedded Linux system development" eğitim slaytları (CC BY-SA 3.0)*
+
+Derleme sonunda çıkan dosyalar:
+
+| Dosya | Ne? |
+|---|---|
+| `vmlinux` | Derlenmiş kernel, ELF formatında (sembollü, hata ayıklama için) |
+| `arch/arm/boot/Image` | Ham binary kernel |
+| `arch/arm/boot/zImage` | Sıkıştırılmış, kendini açan kernel |
+| <b>`arch/arm/boot/uImage`</b> | `zImage` + U-Boot başlığı. <b>Karta giden dosya.</b> |
+| <b>`arch/arm/boot/dts/am335x-boneblack.dtb`</b> | BBB'nin device tree'si. <b>Karta giden dosya.</b> |
+| `System.map` | Kernel sembollerinin adresleri |
+
+### <a name="c10-adım-4--modülleri-derle-ve-kur"></a>Adım 4 — Modülleri derle ve kur
+
+`m` olarak seçilen sürücüler ayrı derlenir ve rootfs'e kurulur:
+
+![Modülleri derleme ve rootfs'e kurma](../images/kernel/06_modules.png)
+
+```bash
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules -j$(nproc)
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=~/bbb/rootfs modules_install
+```
+
+`modules_install`, modülleri `<INSTALL_MOD_PATH>/lib/modules/5.10.162/` altına kopyalar ve `modprobe`'un kullandığı `modules.dep` dosyasını üretir. Buradaki rootfs klasörünü [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)'de BusyBox ile dolduracağız.
+
+> [!CAUTION]
+> `INSTALL_MOD_PATH`'i <b>unutma</b>. Yazmazsan `sudo make modules_install` modülleri <b>host bilgisayarının</b> `/lib/modules` klasörüne kurar; ARM modülleri Ubuntu'nun klasörüne karışır.
+
+### <a name="c10-komutların-kısa-özeti"></a>Komutların kısa özeti
+
+```bash
+cd ~/bbb
+git clone --depth=1 -b 5.10 https://github.com/beagleboard/linux.git
+cd linux
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bb.org_defconfig
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- uImage dtbs LOADADDR=0x80008000 -j$(nproc)
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules -j$(nproc)
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=~/bbb/rootfs modules_install
+```
+
+---
+
+## <a name="c10-109-yeni-kerneli-kartta-denemek"></a>10.9 Yeni Kernel'i Kartta Denemek
+
+Kernel'i tam olarak denemek için bir rootfs gerekir. Kendi rootfs'imizi [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)'de hazırlayacağız. Kernel'in açıldığını görmek için şimdilik <b>eMMC'deki Debian'ın rootfs'ini</b> kullanabilirsin.
+
+<b>1) Dosyaları SD kartın BOOT bölümüne kopyala:</b>
+
+```bash
+cp arch/arm/boot/uImage arch/arm/boot/dts/am335x-boneblack.dtb /media/$USER/BOOT/
+```
+
+<b>2) BOOT bölümündeki `uEnv.txt`'yi yaz.</b> Kursun `uEnv-SD.txt` dosyası temel alındı; konsol `ttyS0`, rootfs eMMC:
+
+```text
+console=ttyS0,115200n8
+netargs=setenv bootargs console=${console} root=/dev/mmcblk1p2 rw rootwait
+netboot=echo Booting from microSD ...; setenv autoload no; load mmc 0:1 ${loadaddr} uImage; load mmc 0:1 ${fdtaddr} am335x-boneblack.dtb; run netargs; bootm ${loadaddr} - ${fdtaddr}
+uenvcmd=run netboot
+```
+
+> [!IMPORTANT]
+> eMMC'deki rootfs'in hangi bölümde olduğu Debian imajına göre değişir. Eski imajlarda 2. bölüm (`mmcblk1p2`), yenilerinde tek bölüm (`mmcblk1p1`) olabilir. U-Boot'ta `mmc dev 1` ve `mmc part` ile kontrol et ([6.5](#c6-65-ek-alıştırma-kernel-ve-dtb-sd-karttan-rootfs-emmcden)).
+
+<b>3) Kartı S2'ye basılı tutarak aç.</b> Açılış mesajlarında kendi kernel sürümünü, derleme makineni ve toolchain'ini görmelisin:
+
+![Kendi derlediğin kernel ile açılış](../images/kernel/07_boot_new_kernel.png)
+
+```bash
+cat /proc/version
+```
+
+> [!NOTE]
+> eMMC'deki Debian kendi kernel modüllerini (`/lib/modules/<eski sürüm>`) içerir, senin kernel'inin modüllerini içermez. Kernel açılır ama bazı sürücüler (Wi-Fi, USB gadget...) yüklenmeyebilir. Bu bir sorun değil; amacımız sadece kernel'in açıldığını görmek. Modüller [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)'deki rootfs'e kurulacak.
+
+---
+
+## <a name="c10-1010-özet"></a>10.10 Özet
+
+- BeagleBone Black için BeagleBoard'un kernel ağacı kullanılıyor: `https://github.com/beagleboard/linux.git`, dal `5.10`.
+- `arch/arm` mimariye özel kodu, `arch/arm/configs` defconfig'leri, `arch/arm/boot/dts` device tree'leri, `drivers/` sürücüleri tutar. AM335x'e özel SoC kodu `arch/arm/mach-omap2`'de.
+- `defconfig` → `.config` → `menuconfig` ile ayarlanır. `y` = kernel'in içinde, `m` = modül.
+- Derleme: `distclean` → `bb.org_defconfig` → `uImage dtbs LOADADDR=0x80008000` → `modules` → `modules_install INSTALL_MOD_PATH=...`. Her komutta `ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-`.
+- Karta giden dosyalar: `uImage`, `am335x-boneblack.dtb` ve rootfs'e kurulan modüller.
+
+## <a name="c10-1011-karşılaşılabilecek-problemler"></a>10.11 Karşılaşılabilecek Problemler
+
+![Sık görülen kernel derleme hataları (temsili)](../images/kernel/08_errors.png)
+
+| Belirti | Sebep | Çözüm |
+|---|---|---|
+| `Specify LOADADDR on the commandline to build an uImage` | `uImage` için yükleme adresi verilmedi | Komuta `LOADADDR=0x80008000` ekle |
+| `"mkimage" command not found` | `u-boot-tools` kurulu değil | `sudo apt install u-boot-tools` |
+| `lzop: not found` | Kernel LZO ile sıkıştırılıyor | `sudo apt install lzop` |
+| `openssl/bio.h: No such file` | `libssl-dev` eksik | `sudo apt install libssl-dev` |
+| `bc: not found` | `bc` eksik | `sudo apt install bc` |
+| Derleme x86 için yapılıyor, `.config`'te ARM seçenekleri yok | Bir komutta `ARCH=arm` unutuldu | `distclean` ile temizleyip her komutta `ARCH=arm` yazarak baştan başla |
+| `Starting kernel ...` sonrası hiçbir şey yok | `console=` yanlış ya da DTB uyumsuz | Kernel 5.10'da `console=ttyS0`. DTB'yi aynı kernel kaynağından derle. |
+| `VFS: Unable to mount root fs on unknown-block(179,...)` | `root=` yanlış bölümü gösteriyor | U-Boot'ta `mmc part`, Linux'ta (açılabiliyorsa) `lsblk` ile doğru bölümü bul |
+| Ubuntu'nun `/lib/modules` klasöründe ARM modülleri var | `modules_install` `INSTALL_MOD_PATH` olmadan `sudo` ile çalıştırıldı | O sürüm klasörünü `/lib/modules`'ten sil, komutu `INSTALL_MOD_PATH` ile tekrar çalıştır |
+
+
+<div class="page-break"></div>
+
+# <a name="c11-bölüm-11--linux-device-tree"></a>Bölüm 11 — Linux Device Tree
 
 > <b>Bu bölümde:</b>
 > - Kernel'in, kendini tanıtmayan donanımı (UART, I2C, GPIO...) nereden öğrendiğini anlayacaksın.
@@ -3604,7 +4161,7 @@ cp MLO u-boot.img /media/$USER/BOOT/ && sync
 
 ---
 
-## <a name="c10-101-problem-kernel-donanımı-nereden-bilecek"></a>10.1 Problem: Kernel Donanımı Nereden Bilecek?
+## <a name="c11-111-problem-kernel-donanımı-nereden-bilecek"></a>11.1 Problem: Kernel Donanımı Nereden Bilecek?
 
 Kernel'in çalışabilmesi için kartta <b>hangi donanımların olduğunu, nerede durduklarını ve nasıl bağlandıklarını</b> bilmesi gerekir. Örneğin:
 
@@ -3614,7 +4171,7 @@ Kernel'in çalışabilmesi için kartta <b>hangi donanımların olduğunu, nered
 - USR0 LED'i hangi GPIO pinine bağlı?
 - Hangi cihaz hangi interrupt hattını kullanıyor?
 
-### <a name="c10-keşfedilebilen-ve-keşfedilemeyen-donanım"></a>Keşfedilebilen ve keşfedilemeyen donanım
+### <a name="c11-keşfedilebilen-ve-keşfedilemeyen-donanım"></a>Keşfedilebilen ve keşfedilemeyen donanım
 
 | | Keşfedilebilir (discoverable) | Keşfedilemez (non-discoverable) |
 |---|---|---|
@@ -3623,7 +4180,7 @@ Kernel'in çalışabilmesi için kartta <b>hangi donanımların olduğunu, nered
 
 Masaüstü PC'lerde (x86) bu bilgi BIOS/UEFI tarafından <b>ACPI tabloları</b> ile verilir. Gömülü sistemlerde (ARM, RISC-V, PowerPC) ise donanımın büyük kısmı SoC'un içinde, belirli adreslerde duran ve kendini tanıtmayan bloklardır. Bu yüzden bu bilgiyi kernel'e bir şekilde aktarmak gerekir.
 
-### <a name="c10-eski-yöntem-board-filelar"></a>Eski yöntem: board file'lar
+### <a name="c11-eski-yöntem-board-filelar"></a>Eski yöntem: board file'lar
 
 Device Tree'den önce ARM'da her kart için kernel kaynak kodunda bir C dosyası (<b>board file</b>) yazılırdı (`arch/arm/mach-xxx/board-yyy.c`). Donanım bilgisi bu dosyalara sabit olarak gömülürdü:
 
@@ -3650,7 +4207,7 @@ Bu yöntemin sorunları:
 
 ---
 
-## <a name="c10-102-device-tree-nedir"></a>10.2 Device Tree Nedir?
+## <a name="c11-112-device-tree-nedir"></a>11.2 Device Tree Nedir?
 
 <b>Device Tree (DT)</b>, bir sistemdeki donanımı tarif eden, <b>ağaç (tree) şeklinde bir veri yapısıdır</b>.
 
@@ -3667,7 +4224,7 @@ Device Tree'de olmayan bir şey kernel tarafından <b>bilinemez</b>. Driver kern
 
 ---
 
-## <a name="c10-103-dosya-türleri-dts-dtsi-dtc-dtb-dtbo"></a>10.3 Dosya Türleri: DTS, DTSI, DTC, DTB, DTBO
+## <a name="c11-113-dosya-türleri-dts-dtsi-dtc-dtb-dtbo"></a>11.3 Dosya Türleri: DTS, DTSI, DTC, DTB, DTBO
 
 ![Device Tree: kaynaktan blob'a (DTS → dtc → DTB)](../images/device_tree/dts_to_dtb.png)
 
@@ -3681,9 +4238,9 @@ Device Tree'de olmayan bir şey kernel tarafından <b>bilinemez</b>. Driver kern
 | <b>dtc</b> | Device Tree <b>Compiler</b> | `.dts` dosyasını `.dtb`'ye derleyen (ve tersini yapabilen) araç |
 | <b>.dtb</b> | Device Tree <b>Blob</b> (Binary) | Derlenmiş, <b>ikili (binary)</b> çıktı. Bootloader bunu RAM'e yükler ve kernel bunu okur. Örn: `am335x-boneblack.dtb` |
 | <b>FDT</b> | Flattened Device Tree | DTB'nin bellekteki "düzleştirilmiş" formatının adı. U-Boot'taki `fdt` komutu ve `fdtaddr` değişkeni buradan gelir. |
-| <b>.dtbo</b> | Device Tree Blob <b>Overlay</b> | Var olan bir DTB'ye çalışma/boot anında eklenen <b>yama</b>. Cape/HAT gibi eklenti kartlar için kullanılır. ([10.12](#c10-1012-device-tree-overlay-dtbo)) |
+| <b>.dtbo</b> | Device Tree Blob <b>Overlay</b> | Var olan bir DTB'ye çalışma/boot anında eklenen <b>yama</b>. Cape/HAT gibi eklenti kartlar için kullanılır. ([11.12](#c11-1112-device-tree-overlay-dtbo)) |
 
-### <a name="c10-derleme-akışı"></a>Derleme akışı
+### <a name="c11-derleme-akışı"></a>Derleme akışı
 
 ```
 am33xx.dtsi ─┐
@@ -3716,13 +4273,13 @@ $ hexdump -C am335x-boneblack.dtb | head -1     # ilk 4 byte: d0 0d fe ed
 
 ---
 
-## <a name="c10-104-söz-dizimi-syntax"></a>10.4 Söz Dizimi (Syntax)
+## <a name="c11-114-söz-dizimi-syntax"></a>11.4 Söz Dizimi (Syntax)
 
 ![Device Tree temel söz dizimi](../images/device_tree/dt_temel_soz_dizimi.png)
 
 *Görsel: Bootlin eğitim materyalleri (CC BY-SA 3.0)*
 
-### <a name="c10-node"></a>Node
+### <a name="c11-node"></a>Node
 
 ```dts
 [label:] node-name[@unit-address] {
@@ -3741,7 +4298,7 @@ $ hexdump -C am335x-boneblack.dtb | head -1     # ilk 4 byte: d0 0d fe ed
 
 Bir node'un tam yolu (path) dosya sistemi yoluna benzer: `/ocp/interconnect@44c00000/.../serial@0`.
 
-### <a name="c10-property"></a>Property
+### <a name="c11-property"></a>Property
 
 Property'ler `isim = değer;` şeklindedir. Değer türleri:
 
@@ -3759,7 +4316,7 @@ Property'ler `isim = değer;` şeklindedir. Değer türleri:
 
 ---
 
-## <a name="c10-105-bir-device-treenin-genel-yapısı"></a>10.5 Bir Device Tree'nin Genel Yapısı
+## <a name="c11-115-bir-device-treenin-genel-yapısı"></a>11.5 Bir Device Tree'nin Genel Yapısı
 
 ![DT genel yapısı: kod ve donanım karşılığı](../images/device_tree/dt_genel_yapi.png)
 
@@ -3778,7 +4335,7 @@ Hemen her DT'de bulunan standart node'lar:
 | <b>`aliases`</b> | Kısa isimler. Örn: `serial0 = &uart0;` sayesinde `uart0` → `/dev/ttyS0` olur. |
 | <b>`ocp` / `soc`</b> | SoC içindeki çevre birimlerinin bulunduğu bus. AM335x'te adı `ocp`'dir (On-Chip Peripherals). |
 
-### <a name="c10-beaglebone-blackten-gerçek-bir-örnek"></a>BeagleBone Black'ten gerçek bir örnek
+### <a name="c11-beaglebone-blackten-gerçek-bir-örnek"></a>BeagleBone Black'ten gerçek bir örnek
 
 BBB'nin ana DTS dosyası aslında çok kısadır. Asıl iş include ettiği dosyalardadır:
 
@@ -3820,7 +4377,7 @@ leds {
 
 ---
 
-## <a name="c10-106-önemli-propertyler"></a>10.6 Önemli Property'ler
+## <a name="c11-116-önemli-propertyler"></a>11.6 Önemli Property'ler
 
 | Property | Anlamı | Örnek |
 |---|---|---|
@@ -3835,7 +4392,7 @@ leds {
 | <b>`pinctrl-0`, `pinctrl-names`</b> | Pin multiplexing: SoC pinlerinin bu cihaz için hangi moda alınacağı | `pinctrl-0 = <&uart0_pins>;` |
 | <b>`gpios`, `*-gpios`</b> | Kullanılan GPIO pinleri (phandle + pin no + flag) | `<&gpio1 21 GPIO_ACTIVE_HIGH>` |
 
-### <a name="c10-reg-address-cells-ve-size-cells-ilişkisi"></a>reg, #address-cells ve #size-cells ilişkisi
+### <a name="c11-reg-address-cells-ve-size-cells-ilişkisi"></a>reg, #address-cells ve #size-cells ilişkisi
 
 `reg`'in nasıl okunacağını <b>parent node'daki</b> `#address-cells` ve `#size-cells` belirler:
 
@@ -3865,7 +4422,7 @@ i2c0: i2c@44e0b000 {
 
 ---
 
-## <a name="c10-107-compatible-ile-driver-eşleşmesi"></a>10.7 compatible ile Driver Eşleşmesi
+## <a name="c11-117-compatible-ile-driver-eşleşmesi"></a>11.7 compatible ile Driver Eşleşmesi
 
 Kernel DTB'yi okuduğunda her node için bir <b>device</b> oluşturur. Sonra her device için `compatible` string'ine bakar ve <b>aynı string'i destekleyen bir driver</b> arar. Eşleşme bulunursa driver'ın `probe()` fonksiyonu çağrılır ve cihaz o driver'a <b>bağlanır (bind)</b>.
 
@@ -3916,7 +4473,7 @@ Driver `probe()` içinde `reg`, `interrupts`, `clocks` gibi property'leri okuyar
 
 ---
 
-## <a name="c10-108-kalıtım-dtsi-include-ve-label-ile-override"></a>10.8 Kalıtım: .dtsi, include ve Label ile Override
+## <a name="c11-118-kalıtım-dtsi-include-ve-label-ile-override"></a>11.8 Kalıtım: .dtsi, include ve Label ile Override
 
 Aynı SoC'u kullanan onlarca kart vardır. Her kart için SoC'un tamamını baştan yazmak yerine:
 
@@ -3925,7 +4482,7 @@ Aynı SoC'u kullanan onlarca kart vardır. Her kart için SoC'un tamamını baş
 
 Aynı node birden fazla kez tanımlanırsa dtc bunları <b>birleştirir</b>. Aynı property iki yerde varsa <b>sonra gelen kazanır</b>.
 
-### <a name="c10-beaglebone-blackin-include-zinciri"></a>BeagleBone Black'in include zinciri
+### <a name="c11-beaglebone-blackin-include-zinciri"></a>BeagleBone Black'in include zinciri
 
 ![BeagleBone Black Device Tree kalıtım yapısı](../images/device_tree/dt_bbb_inheritance.png)
 
@@ -3955,7 +4512,7 @@ memory@80000000 {
 };
 ```
 
-### <a name="c10-label-ile-override-tercih-edilen-yöntem"></a>Label ile override (tercih edilen yöntem)
+### <a name="c11-label-ile-override-tercih-edilen-yöntem"></a>Label ile override (tercih edilen yöntem)
 
 Bir node'u değiştirmek için tam yolunu tekrar yazmak yerine, <b>label</b>'ı ile doğrudan ona erişmek tercih edilir:
 
@@ -3973,19 +4530,19 @@ Bir node'u değiştirmek için tam yolunu tekrar yazmak yerine, <b>label</b>'ı 
 
 ---
 
-## <a name="c10-109-dtc-kullanımı"></a>10.9 dtc Kullanımı
+## <a name="c11-119-dtc-kullanımı"></a>11.9 dtc Kullanımı
 
 ![dtc ile derleme ve geri derleme örneği](../images/device_tree/dtc_ornek.png)
 
 *Görsel: Bootlin eğitim slaytları (CC BY-SA 3.0)*
 
-### <a name="c10-kurulum"></a>Kurulum
+### <a name="c11-kurulum"></a>Kurulum
 
 ```bash
 sudo apt install device-tree-compiler
 ```
 
-### <a name="c10-temel-komutlar"></a>Temel komutlar
+### <a name="c11-temel-komutlar"></a>Temel komutlar
 
 ```bash
 # DTS → DTB (derleme)
@@ -4008,7 +4565,7 @@ dtc -I fs -O dts /proc/device-tree
 > [!TIP]
 > Geri derleme (`-I dtb -O dts`) çok işe yarar: Elinde sadece bir `.dtb` varsa (ör. hazır bir image'dan çıkan) içinde ne olduğunu görebilirsin. Ancak çıkan DTS'te yorumlar, `#include`'lar, `#define` isimleri ve label'lar kaybolmuştur. Sayılar ham hex olarak görünür (`GPIO_ACTIVE_HIGH` yerine `0x00` gibi).
 
-### <a name="c10-kernel-kaynak-ağacında-dtb-derleme"></a>Kernel kaynak ağacında DTB derleme
+### <a name="c11-kernel-kaynak-ağacında-dtb-derleme"></a>Kernel kaynak ağacında DTB derleme
 
 Kernel'in içindeki `.dts` dosyaları elle `dtc` çağırmak yerine kernel'in build sistemiyle derlenir. Bu yöntem cpp ön işleme adımını da otomatik yapar:
 
@@ -4028,7 +4585,7 @@ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- ti/omap/am335x-boneblack.dtb
 
 ---
 
-## <a name="c10-1010-boot-sürecinde-device-tree"></a>10.10 Boot Sürecinde Device Tree
+## <a name="c11-1110-boot-sürecinde-device-tree"></a>11.10 Boot Sürecinde Device Tree
 
 [Linux boot sürecinde](#c3-bölüm-3--linux-boot-süreci-rbl--spl--u-boot) gördüğümüz gibi U-Boot, kernel'i başlatmadan önce <b>hem kernel image'ını hem de DTB'yi</b> RAM'e yükler:
 
@@ -4070,7 +4627,7 @@ ARM32'de U-Boot kernel'e atlarken DTB'nin fiziksel adresini <b>`r2` register'ın
 > [!NOTE]
 > U-Boot, kernel'e vermeden önce DTB'yi <b>değiştirebilir</b> de. Örneğin `bootargs` değişkenini DTB'deki `/chosen` node'una yazar ve RAM boyutunu `/memory` node'una işler. Kernel command line'ının kernel'e ulaşma yollarından biri budur.
 
-### <a name="c10-u-bootta-dtbyi-incelemek"></a>U-Boot'ta DTB'yi incelemek
+### <a name="c11-u-bootta-dtbyi-incelemek"></a>U-Boot'ta DTB'yi incelemek
 
 U-Boot'un `fdt` komutuyla RAM'deki DTB'ye bakılabilir:
 
@@ -4084,7 +4641,7 @@ U-Boot'un `fdt` komutuyla RAM'deki DTB'ye bakılabilir:
 
 ---
 
-## <a name="c10-1011-çalışan-sistemde-device-treeyi-i̇ncelemek"></a>10.11 Çalışan Sistemde Device Tree'yi İncelemek
+## <a name="c11-1111-çalışan-sistemde-device-treeyi-i̇ncelemek"></a>11.11 Çalışan Sistemde Device Tree'yi İncelemek
 
 Kernel, okuduğu device tree'yi bir dosya sistemi olarak dışarı açar:
 
@@ -4145,7 +4702,7 @@ ls /boot/dtbs/$(uname -r)/ | grep boneblack
 
 ---
 
-## <a name="c10-1012-device-tree-overlay-dtbo"></a>10.12 Device Tree Overlay (.dtbo)
+## <a name="c11-1112-device-tree-overlay-dtbo"></a>11.12 Device Tree Overlay (.dtbo)
 
 BeagleBone'a <b>cape</b> (P8/P9 header'larına takılan eklenti kart) takıldığında donanım değişir. Her cape kombinasyonu için ayrı bir `.dts` yazmak mantıklı değildir. Bunun çözümü <b>overlay</b>'dir.
 
@@ -4184,7 +4741,7 @@ uboot_overlay_addr0=/lib/firmware/BB-I2C2-00A0.dtbo
 
 ---
 
-## <a name="c10-1013-özet"></a>10.13 Özet
+## <a name="c11-1113-özet"></a>11.13 Özet
 
 | Kavram | Bir cümlede |
 |---|---|
@@ -4217,11 +4774,629 @@ Kernel DTB'yi okur → device'ları oluşturur → compatible ile driver'ları p
 
 ---
 
-### <a name="c10-kaynaklar"></a>Kaynaklar
+### <a name="c11-kaynaklar"></a>Kaynaklar
 
 - Görseller: [Bootlin - Linux kernel and driver development training](https://bootlin.com/training/kernel/) slaytları ve [bootlin/training-materials](https://github.com/bootlin/training-materials) deposu. Lisans: [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
 - [Devicetree Specification - devicetree.org](https://www.devicetree.org/specifications/)
 - [Linux kernel dokümantasyonu: Devicetree](https://docs.kernel.org/devicetree/index.html)
 - [Bootlin - Device Tree 101 webinar](https://bootlin.com/blog/device-tree-101-webinar-slides-and-videos/)
 - [eLinux.org - Device Tree Usage](https://elinux.org/Device_Tree_Usage)
+
+
+<div class="page-break"></div>
+
+<div class="part-title">Kısım V<br>Root Filesystem</div>
+
+<div class="page-break"></div>
+
+# <a name="c12-bölüm-12--busybox-ile-minimal-root-filesystem"></a>Bölüm 12 — BusyBox ile Minimal Root Filesystem
+
+> <b>Bu bölümde:</b>
+> - BusyBox'ın ne olduğunu ve neden gömülü sistemlerde bu kadar yaygın kullanıldığını öğreneceksin.
+> - BusyBox 1.36.1'i ARM için <b>statik</b> derleyip kendi root filesystem'ini sıfırdan kuracaksın.
+> - Kernel modüllerini rootfs'e kurup kartı kendi kernel'in ve kendi rootfs'inle açacaksın.
+> - BusyBox `init`'ini, `inittab`'ı ve `rcS` başlangıç betiklerini anlayacaksın.
+> - USB üzerinden Ethernet sürücüsünü (`g_ether`) açılışta otomatik yükleyeceksin.
+> - Rootfs'i NFS ile bilgisayardan bağlamayı göreceksin.
+> - İki challenge: SSH ve TFTP desteği eklemek, BusyBox'ı dinamik derlemek.
+>
+> <b>Ön koşul:</b> [Bölüm 6](#c6-bölüm-6--u-boot-komut-satırı-ve-uenvtxt) — rootfs klasörleri, [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme) — cross toolchain, [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme) — kernel ve modüller.
+
+---
+
+## <a name="c12-121-root-filesystemde-neler-olmalı"></a>12.1 Root Filesystem'de Neler Olmalı?
+
+Kernel açılışın sonunda `root=` ile gösterilen dosya sistemini `/` olarak bağlar ve içindeki <b>`/sbin/init`</b>'i çalıştırır ([3.4](#c3-34-linux-kernel-ve-root-filesystem)). Bundan sonra olan her şey rootfs'in işidir. Klasörlerin görevlerini [6.6.1](#c6-661-klasörler-ve-görevleri)'de görmüştük. Çalışan en küçük bir Linux için gerekenler şunlar:
+
+| Gereken | Neden? | Bu bölümde nereden? |
+|---|---|---|
+| `/sbin/init` | Kernel'in çalıştırdığı ilk program (PID 1) | BusyBox |
+| Bir kabuk (`/bin/sh`) ve temel komutlar | Sisteme komut verebilmek | BusyBox |
+| `/dev`, `/proc`, `/sys` klasörleri | Kernel'in sanal dosya sistemleri buraya bağlanır | `mkdir` |
+| `/etc/inittab`, `/etc/init.d/rcS` | `init`'in açılışta ne yapacağı | Elle yazacağız |
+| `/lib/modules/<sürüm>/` | Modül olarak derlenen sürücüler | [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme)'daki `modules_install` |
+| `/lib/*.so` (sadece dinamik derlemede) | Paylaşılan kütüphaneler | [12.11](#c12-1211-challenge-2-busyboxı-dinamik-derlemek) |
+
+> [!NOTE]
+> Kursun "About RFS" ve "About initramfs" makaleleri bu konunun teorisini anlatıyor. initramfs, bu bölümde kuracağımız klasör yapısının sıkıştırılıp RAM'e yüklenen halidir. [Bölüm 7](#c7-bölüm-7--seri-porttan-uart-boot)'de kullandığımız `initramfs` dosyası da böyle bir BusyBox rootfs'idir.
+
+---
+
+## <a name="c12-122-busybox-nedir"></a>12.2 BusyBox Nedir?
+
+<b>BusyBox</b>, `ls`, `cp`, `mount`, `sh`, `init`, `ifconfig`, `vi`, `tftp` gibi yüzlerce Unix komutunu <b>tek bir küçük programda</b> toplayan bir projedir. Her komuta <b>applet</b> denir.
+
+- Tek bir `busybox` dosyası vardır (birkaç yüz KB ile 2 MB arası).
+- `/bin/ls`, `/sbin/init` gibi komutlar bu dosyaya giden <b>sembolik linklerdir</b>.
+- `ls` olarak çağrılınca BusyBox, çağrıldığı adı (`argv[0]`) okur ve `ls` gibi davranır. `busybox ls` yazmak da aynı işi yapar.
+
+![BusyBox kurulumu sonrası rootfs ağacı](../images/busybox/bootlin_busybox_tree.png)
+
+*Görsel: Bootlin, "Embedded Linux system development" eğitim slaytları (CC BY-SA 3.0)*
+
+| | Masaüstü Linux (GNU coreutils vb.) | BusyBox |
+|---|---|---|
+| Boyut | Yüzlerce MB, her komut ayrı program | Tek dosya, ~1–2 MB |
+| Özellik | Bütün seçenekler | En çok kullanılan seçenekler |
+| Yapılandırma | — | Kernel gibi `menuconfig` ile hangi applet'lerin derleneceği seçilir |
+
+---
+
+## <a name="c12-123-adım-adım-busyboxı-derlemek"></a>12.3 Adım Adım: BusyBox'ı Derlemek
+
+> [!NOTE]
+> Aşağıdaki ekran görüntüleri <b>temsilidir</b>. Çalışma klasörü `~/bbb`, rootfs `~/bbb/rootfs`. Toolchain [Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme)'da kurulan Linaro GCC 7.5.0.
+
+### <a name="c12-adım-1--i̇ndir-ve-yapılandır"></a>Adım 1 — İndir ve yapılandır
+
+![BusyBox'ı indirme ve statik derleme ayarı](../images/busybox/01_download_config.png)
+
+```bash
+cd ~/bbb
+wget https://busybox.net/downloads/busybox-1.36.1.tar.bz2
+tar -xjf busybox-1.36.1.tar.bz2
+cd busybox-1.36.1
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- defconfig
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig
+```
+
+`menuconfig`'te tek bir ayarı değiştir:
+
+```
+Settings  --->
+    [*] Build static binary (no shared libs)
+```
+
+![BusyBox menuconfig ekranı](../images/busybox/bootlin_busybox_menuconfig.png)
+
+*Görsel: Bootlin, "Embedded Linux system development" eğitim slaytları (CC BY-SA 3.0)*
+
+| | Statik (`CONFIG_STATIC=y`) | Dinamik |
+|---|---|---|
+| Kütüphaneler | `busybox` dosyasının <b>içine</b> gömülür | Çalışırken rootfs'teki `/lib/*.so` dosyalarından yüklenir |
+| Rootfs'te `/lib` gerekir mi? | Hayır | Evet ([12.11](#c12-1211-challenge-2-busyboxı-dinamik-derlemek)) |
+| Ne zaman? | İlk deneme, en basit rootfs. <b>Kursta kullanılan.</b> | Rootfs'e başka dinamik programlar da konacaksa |
+
+### <a name="c12-adım-2--derle-ve-rootfs-klasörüne-kur"></a>Adım 2 — Derle ve rootfs klasörüne kur
+
+![BusyBox'ı derleme ve kurma](../images/busybox/02_build_install.png)
+
+```bash
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CONFIG_PREFIX=~/bbb/rootfs install
+file ~/bbb/rootfs/bin/busybox
+```
+
+`install` hedefi `busybox`'ı `~/bbb/rootfs/bin/` altına koyar ve bütün applet linklerini (`bin/`, `sbin/`, `usr/bin/`, `usr/sbin/`) oluşturur. `file` çıktısında <b>ARM</b> ve <b>statically linked</b> görmelisin.
+
+> [!TIP]
+> Statik derlemede `Using 'getpwnam' in statically linked applications requires at runtime the shared libraries...` gibi uyarılar görebilirsin. Bunlar glibc'nin statik bağlamadaki bilinen uyarılarıdır, derleme başarılıdır.
+
+### <a name="c12-adım-3--kernel-modüllerini-kur"></a>Adım 3 — Kernel modüllerini kur
+
+Kursun "Kernel Modules installation" dersi: [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme)'da derlediğin modülleri aynı rootfs klasörüne kur. Bunu daha önce yaptıysan atlayabilirsin.
+
+```bash
+cd ~/bbb/linux
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=~/bbb/rootfs modules_install
+ls ~/bbb/rootfs/lib/modules/          # 5.10.162
+```
+
+> [!IMPORTANT]
+> `/lib/modules/` altındaki klasör adı, çalışan kernel'in `uname -r` çıktısıyla <b>birebir aynı</b> olmalı. Kernel'i yeniden derleyip sürüm değiştiysen modülleri de yeniden kur. Aksi halde `modprobe` modülleri bulamaz.
+
+---
+
+## <a name="c12-124-rootfsi-tamamlamak"></a>12.4 Rootfs'i Tamamlamak
+
+BusyBox sadece programları kurar. Kalan klasörleri ve ayar dosyalarını elle oluşturuyoruz:
+
+![Rootfs iskeleti, inittab ve init.d](../images/busybox/03_rootfs_tree.png)
+
+```bash
+cd ~/bbb/rootfs
+mkdir -p dev proc sys etc/init.d tmp root var/run var/log mnt
+mkdir -p etc/network/if-pre-up.d etc/network/if-up.d etc/network/if-down.d etc/network/if-post-down.d
+```
+
+| Klasör | Neden boş da olsa gerekli? |
+|---|---|
+| `dev` | Kernel buraya `devtmpfs`'i bağlar ve aygıt dosyalarını (`/dev/ttyS0`, `/dev/mmcblk0`...) kendisi oluşturur. `bb.org_defconfig`'te `CONFIG_DEVTMPFS_MOUNT=y` olduğu için ayrıca bir şey yapmana gerek yok. |
+| `proc`, `sys` | `rcS` buraya `proc` ve `sysfs` sanal dosya sistemlerini bağlayacak |
+| `tmp`, `var/run`, `var/log` | Geçici dosyalar, PID dosyaları ve loglar |
+| `etc/network/if-*.d` | BusyBox'ın `ifup` komutu bu klasörleri arar; yoksa hata verir |
+
+> [!NOTE]
+> `/dev` klasörünü elle doldurmana (`mknod`) gerek yok. Eskiden aygıt dosyaları elle oluşturulurdu; bugün `devtmpfs` bunu kernel tarafında otomatik yapar.
+
+---
+
+## <a name="c12-125-busybox-init-inittab-ve-rcs"></a>12.5 BusyBox `init`, `inittab` ve `rcS`
+
+Kernel rootfs'i bağladıktan sonra şu zincir çalışır:
+
+```
+kernel  ──►  /sbin/init  (BusyBox, PID 1)
+                 │  /etc/inittab'ı okur
+                 ├── ::sysinit   → /etc/init.d/rcS        (bir kez, açılışta)
+                 │                    └── /etc/init.d/S??*  sırayla "start" ile
+                 ├── ::askfirst  → /bin/sh                (konsolda Enter'a basınca kabuk)
+                 └── ::shutdown  → /etc/init.d/rcK        (kapanırken, ters sırayla "stop")
+```
+
+### <a name="c12-etcinittab"></a>`/etc/inittab`
+
+`inittab` her satırda <b>`<tty>:<runlevel>:<eylem>:<program>`</b> biçimindedir. BusyBox `runlevel` alanını kullanmaz. `tty` boşsa konsol kullanılır.
+
+```text
+::sysinit:/etc/init.d/rcS
+::askfirst:-/bin/sh
+::restart:/sbin/init
+::shutdown:/etc/init.d/rcK
+::shutdown:/bin/umount -a -r
+```
+
+| Eylem | Anlamı |
+|---|---|
+| `sysinit` | Açılışta bir kez çalışır, bitene kadar beklenir |
+| `askfirst` | "Please press Enter to activate this console." yazar, Enter'a basınca programı başlatır. Program kapanırsa yeniden başlatır. `-/bin/sh`'teki `-` kabuğu "login shell" yapar. |
+| `respawn` | `askfirst` gibi ama sormadan başlatır |
+| `restart` | `init` yeniden başlatılırken çalışır |
+| `shutdown` | `reboot` / `poweroff` sırasında çalışır |
+
+> [!TIP]
+> `inittab` hiç yoksa BusyBox varsayılan bir tane kullanır: `rcS`'i çalıştırır, konsolda ve <b>tty2–tty4</b>'te kabuk açmaya çalışır. BBB'de bu terminaller olmadığı için `can't open /dev/tty2` hataları görürsün. Kendi `inittab`'ını yazmak bunu önler.
+
+### <a name="c12-etcinitdrcs--kursun-betiği"></a>`/etc/init.d/rcS` — kursun betiği
+
+Kursun reposundaki (`scripts/etc/init.d/rcS`) betik `/proc`'u bağlar ve `/etc/init.d` altındaki `S` ile başlayan iki haneli numaralı betikleri <b>sırayla</b> `start` parametresiyle çalıştırır. Sona `.sh` eklenmiş betikler ayrı süreç açmadan, aynı kabukta çalıştırılır:
+
+```sh
+#!/bin/sh
+
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+echo "Mounting proc"
+mount -t proc /proc /proc
+
+for i in /etc/init.d/S??* ;do
+
+     # Ignore dangling symlinks (if any).
+     [ ! -f "$i" ] && continue
+
+     case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set start
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i start
+	    ;;
+    esac
+done
+```
+
+`echo "Mounting proc"` satırından sonraya şu iki satırı da eklemeni öneririm. `sysfs` birçok aracın ve [Bölüm 1](#c1-bölüm-1--beaglebone-black-donanımı)'deki LED komutlarının, `devpts` ise SSH'ın ([12.10](#c12-1210-challenge-1-ssh-ve-tftp-desteği)) çalışması için gerekli:
+
+```sh
+mount -t sysfs sysfs /sys
+mkdir -p /dev/pts && mount -t devpts devpts /dev/pts
+```
+
+`rcK` aynı döngüyü <b>ters sırada</b> ve `stop` parametresiyle çalıştırır. Numaralar sırayı belirler: `S01` önce, `S50` sonra başlar; kapanırken tersi.
+
+Kursun reposundaki betikler:
+
+| Betik | Görevi |
+|---|---|
+| `S01logging` | `syslogd` ve `klogd`'yi başlatır (loglar `/var/log/messages`'a) |
+| `S02module` | Açılışta kernel modüllerini yükler ([12.7](#c12-127-usb-üzerinden-ethernet-ve-sürücüleri-açılışta-yüklemek)) |
+| `S40network` | `/etc/network/interfaces`'teki arayüzleri `ifup -a` ile açar |
+| `S50sshd` | OpenSSH sunucusunu başlatır. BusyBox rootfs'inde OpenSSH olmadığı için kendi başına çalışmaz ([12.10](#c12-1210-challenge-1-ssh-ve-tftp-desteği)'da yerine Dropbear kullanıyoruz) |
+
+Betiklerin hepsini rootfs'e koy ve <b>çalıştırılabilir</b> yap:
+
+```bash
+cd ~/bbb/rootfs/etc/init.d
+# rcS, rcK, S01logging, S02module, S40network dosyalarını buraya kopyala
+chmod +x rcS rcK S*
+```
+
+---
+
+## <a name="c12-126-kartta-test-rootfs-sd-kartta"></a>12.6 Kartta Test: Rootfs SD Kartta
+
+Kursun "Testing boot images and busybox on BBB" dersleri: kernel ve DTB SD kartın BOOT bölümünden, rootfs ROOTFS bölümünden gelir.
+
+<b>1) Rootfs'i SD karta kopyala.</b>
+
+![Rootfs'i ve kernel'i SD karta kopyalama](../images/busybox/04_copy_sd.png)
+
+```bash
+cd ~/bbb
+sudo rm -rf /media/$USER/ROOTFS/*
+sudo cp -a rootfs/* /media/$USER/ROOTFS/
+sudo chown -R root:root /media/$USER/ROOTFS
+cp linux/arch/arm/boot/uImage linux/arch/arm/boot/dts/am335x-boneblack.dtb /media/$USER/BOOT/
+sync && sudo umount /media/$USER/BOOT /media/$USER/ROOTFS
+```
+
+> [!CAUTION]
+> `sudo rm -rf /media/$USER/ROOTFS/*` komutundaki yolu iki kez kontrol et. Yol yanlış yazılırsa bilgisayarındaki dosyaları silebilir.
+
+<b>2) BOOT bölümündeki `uEnv.txt`</b> ([10.9](#c10-109-yeni-kerneli-kartta-denemek)'dakinin rootfs'i SD kart olan hali):
+
+```text
+console=ttyS0,115200n8
+netargs=setenv bootargs console=${console} root=/dev/mmcblk0p2 rw rootwait
+netboot=echo Booting from microSD ...; setenv autoload no; load mmc 0:1 ${loadaddr} uImage; load mmc 0:1 ${fdtaddr} am335x-boneblack.dtb; run netargs; bootm ${loadaddr} - ${fdtaddr}
+uenvcmd=run netboot
+```
+
+<b>3) Kartı S2'ye basılı tutarak aç.</b> `rcS`'in mesajlarından sonra Enter'a bas:
+
+![Kendi kernel'in ve BusyBox rootfs'inle açılış](../images/busybox/05_boot_busybox.png)
+
+`ps` çıktısında PID 1'in `init` olduğunu görürsün. Artık kartta çalışan her şeyi sen derledin: SPL, U-Boot, kernel, DTB ve rootfs.
+
+---
+
+## <a name="c12-127-usb-üzerinden-ethernet-ve-sürücüleri-açılışta-yüklemek"></a>12.7 USB Üzerinden Ethernet ve Sürücüleri Açılışta Yüklemek
+
+Kursun "Enabling ethernet over usb by driver integration" ve "Auto loading drivers during system startup" dersleri.
+
+### <a name="c12-usb-gadget-g_ether"></a>USB gadget: `g_ether`
+
+BBB'nin mini-USB portu (USB0) <b>gadget</b> (cihaz) modunda çalışabilir. `g_ether` sürücüsü yüklenince kart, bilgisayara USB üzerinden bir <b>ağ kartı</b> gibi görünür. Ethernet kablosu olmadan SSH, TFTP, NFS yapılabilir. Kursun `192.168.7.x` adresleri bu ağdan gelir.
+
+`bb.org_defconfig`'te bu sürücü <b>modül</b> olarak derlenir (`CONFIG_USB_ETH=m`, [10.8](#c10-108-adım-adım-kerneli-derleme)). Başka bir defconfig kullanıyorsan `menuconfig`'te açman gerekir:
+
+```
+Device Drivers  --->
+    [*] USB support  --->
+        <*>   USB Gadget Support  --->
+            <M>   USB Gadget precomposed configurations
+                <M>   Ethernet Gadget (with CDC Ethernet support)
+```
+
+Elle denemek için kartta:
+
+![g_ether ile USB üzerinden ağ](../images/busybox/06_g_ether.png)
+
+```text
+/ # modprobe g_ether
+/ # ifconfig usb0 192.168.7.2 netmask 255.255.255.0 up
+```
+
+Bilgisayarda yeni bir ağ arayüzü (`enx...` veya `usb0`) belirir. Ona `192.168.7.1` ver ve ping at:
+
+```bash
+ip -br link
+sudo ip addr add 192.168.7.1/24 dev enx8e2a4f61c310     # arayüz adını kendi çıktından al
+ping 192.168.7.2
+```
+
+### <a name="c12-açılışta-otomatik-yüklemek"></a>Açılışta otomatik yüklemek
+
+Her açılışta bu komutları yazmamak için iki betik kullanılır.
+
+<b>`S02module`</b> (kursun reposundan) `g_ether`'i yükler:
+
+```sh
+#!/bin/sh
+#
+# load the kernel modules at startup
+#
+
+case "$1" in
+  start)
+	printf "Loading kernel modules : "
+	/sbin/modprobe g_ether
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+  stop)
+	printf "Unloading kernel modules : "
+	/sbin/rmmod g_ether
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+  restart|reload)
+	"$0" stop
+	"$0" start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+```
+
+<b>`S40network`</b> `ifup -a` ile `/etc/network/interfaces` dosyasındaki arayüzleri açar. Bu dosyayı oluştur:
+
+```text
+# /etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto usb0
+iface usb0 inet static
+    address 192.168.7.2
+    netmask 255.255.255.0
+```
+
+Numaralar sırayı garanti eder: önce `S02` sürücüyü yükler, sonra `S40` arayüzü açar. Kartı yeniden başlatınca ekranda `Loading kernel modules : OK` ve `Starting network: OK` görürsün.
+
+---
+
+## <a name="c12-128-rootfsi-nfs-ile-bilgisayardan-bağlamak"></a>12.8 Rootfs'i NFS ile Bilgisayardan Bağlamak
+
+Rootfs'i her değişiklikte SD karta kopyalamak yorucu. <b>NFS</b> (Network File System) ile kart, rootfs'i doğrudan bilgisayardaki bir klasörden bağlar. Bilgisayarda bir dosyayı değiştirdiğin anda kart da görür. [Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)'deki TFTP ile birlikte geliştirme döngüsü şöyle olur:
+
+```
+Host PC                                      BBB
+ /var/lib/tftpboot/uImage, .dtb  ── TFTP ──►  U-Boot: RAM'e yükle, bootm
+ /srv/nfs/bbb/  (rootfs)     ── NFS  ──►  Kernel: / olarak bağla
+```
+
+### <a name="c12-adım-1--hostta-nfs-sunucusu"></a>Adım 1 — Host'ta NFS sunucusu
+
+![NFS sunucusunu kurma ve paylaşımı açma](../images/busybox/07_nfs_host.png)
+
+```bash
+sudo apt install nfs-kernel-server
+sudo mkdir -p /srv/nfs/bbb
+sudo cp -a ~/bbb/rootfs/* /srv/nfs/bbb/
+sudo chown -R root:root /srv/nfs/bbb
+echo "/srv/nfs/bbb  *(rw,sync,no_root_squash,no_subtree_check)" | sudo tee -a /etc/exports
+sudo exportfs -ra
+showmount -e localhost
+```
+
+| `/etc/exports` seçeneği | Anlamı |
+|---|---|
+| `*` | Her IP'den erişime izin ver (yerine `192.168.27.2` yazarak sadece karta açabilirsin) |
+| `rw` | Okuma-yazma |
+| `sync` | Yazmalar diske yazıldıktan sonra onay ver |
+| `no_root_squash` | Karttaki `root` kullanıcısı paylaşımda da `root` olsun. Rootfs için şart. |
+| `no_subtree_check` | Alt klasör kontrollerini kapat (daha hızlı ve sorunsuz) |
+
+### <a name="c12-adım-2--uenvtxt"></a>Adım 2 — `uEnv.txt`
+
+Kursun `uEnv-nfs.txt` dosyası temel alındı. Kursun dosyası USB ağı (`192.168.7.x`) kullanıyor; burada [Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)'deki Ethernet kablosu ve adresleri kullanılıyor:
+
+```text
+console=ttyS0,115200n8
+ipaddr=192.168.27.2
+serverip=192.168.27.1
+rootpath=/srv/nfs/bbb
+loadtftp=echo Booting from network ...; tftpboot ${loadaddr} uImage; tftpboot ${fdtaddr} am335x-boneblack.dtb
+netargs=setenv bootargs console=${console} root=/dev/nfs rw nfsroot=${serverip}:${rootpath},nolock,v3,tcp rootwait ip=${ipaddr}:${serverip}::255.255.255.0::eth0:off init=/sbin/init
+uenvcmd=setenv autoload no; run loadtftp; run netargs; bootm ${loadaddr} - ${fdtaddr}
+```
+
+| `bootargs` parçası | Anlamı |
+|---|---|
+| `root=/dev/nfs` | Rootfs bir disk değil, NFS |
+| `nfsroot=<sunucu>:<klasör>,...` | NFS sunucusu ve paylaşılan klasör |
+| `nolock` | NFS dosya kilitlemesini kapat (kartta kilit servisi yok) |
+| `v3,tcp` | NFS sürüm 3, TCP üzerinden. <b>Önemli:</b> kernel varsayılan olarak NFSv2 dener; Ubuntu 22.04 ve sonrasında NFSv2 kapalıdır. |
+| `ip=<kart>:<sunucu>::<maske>::eth0:off` | Kernel'in IP'sini kendisi ayarlaması. U-Boot'un IP'si kernel'e geçmez ([8.7](#c8-87-linux-açıldıktan-sonra-tftp-ile-dosya-çekme)). |
+| `init=/sbin/init` | Çalıştırılacak ilk program (varsayılan da budur) |
+
+`uImage` ve `am335x-boneblack.dtb`'yi `/var/lib/tftpboot`'a kopyalamayı unutma.
+
+### <a name="c12-adım-3--aç-ve-doğrula"></a>Adım 3 — Aç ve doğrula
+
+![Rootfs'in NFS'ten bağlanması](../images/busybox/08_nfs_boot.png)
+
+```text
+/ # mount | head -1
+192.168.27.1:/srv/nfs/bbb on / type nfs (rw,...,vers=3,...)
+```
+
+> [!WARNING]
+> Rootfs NFS'ten geliyorken kartta <b>`eth0`'ı yeniden yapılandırma</b> (`ifconfig eth0 ...`, `/etc/network/interfaces`'e `eth0` eklemek). Ağ bir an bile kesilirse kernel rootfs'e ulaşamaz ve sistem donar. `eth0`'ı kernel `ip=` ile ayarlıyor; `interfaces` dosyasında sadece `lo` ve `usb0` kalsın.
+
+> [!NOTE]
+> Kursun `uEnv-nfs.txt`'si NFS'i USB ağı (`usb0`) üzerinden yapar. Bunun için `g_ether`'in modül değil <b>kernel'e gömülü</b> (`CONFIG_USB_ETH=y`) olması gerekir; çünkü rootfs bağlanmadan modül yüklenemez ([10.7](#c10-107-kernel-yapılandırması-kconfig-config-menuconfig)). Ethernet kablosunda bu sorun yok, CPSW sürücüsü zaten gömülü.
+
+---
+
+## <a name="c12-129-geliştirme-döngüsü"></a>12.9 Geliştirme Döngüsü
+
+| Ne değişti? | Ne yaparsın? |
+|---|---|
+| Kendi uygulaman / bir betik | Dosyayı `/srv/nfs/bbb` içine kopyala. Kart hemen görür, yeniden başlatma yok. |
+| Kernel veya DTB | `uImage` / `.dtb`'yi `/var/lib/tftpboot`'a kopyala, kartı resetle. |
+| Kernel modülleri | `modules_install INSTALL_MOD_PATH=/srv/nfs/bbb` (sudo ile), kartta `modprobe` ya da reset |
+| BusyBox ayarları | BusyBox'ı yeniden derle, `CONFIG_PREFIX=/srv/nfs/bbb` ile kur |
+
+---
+
+## <a name="c12-1210-challenge-1-ssh-ve-tftp-desteği"></a>12.10 Challenge 1: SSH ve TFTP Desteği
+
+Kursun bu bölümdeki ilk challenge'ı:
+
+> <i>BusyBox ile minimal bir dosya sistemi kurup kartta test ettin. Şimdi onu birkaç araçla zenginleştir: kart ile bilgisayar arasında <b>TFTP</b> ve <b>SSH</b> ile dosya aktarımı yapılabilsin. BusyBox'ta SSH desteği yoktur; üçüncü parti bir kaynaktan eklenmesi gerekir. İpucu: <https://busybox.net/tinyutils.html></i>
+
+### <a name="c12-tftp"></a>TFTP
+
+BusyBox'ın `defconfig`'inde `tftp` applet'i zaten açık (`Networking Utilities → tftp`). Kullanımı [8.7](#c8-87-linux-açıldıktan-sonra-tftp-ile-dosya-çekme)'deki gibi:
+
+```text
+/ # tftp -g -r dosya 192.168.27.1        # host'tan al
+/ # tftp -p -l dosya 192.168.27.1        # host'a gönder
+```
+
+### <a name="c12-ssh-dropbear"></a>SSH: Dropbear
+
+İpucundaki sayfa küçük sistemler için araçları listeler. SSH için önerilen <b>Dropbear</b>: SSH sunucusu, istemcisi ve `scp`'yi birkaç yüz KB'ta sunan bir proje. Kursun derleme notlarındaki adımlar:
+
+![Dropbear'ı derleme, kurma ve SSH ile bağlanma](../images/busybox/09_dropbear.png)
+
+```bash
+cd ~/bbb
+wget https://matt.ucc.asn.au/dropbear/releases/dropbear-2022.83.tar.bz2
+tar -xjf dropbear-2022.83.tar.bz2 && cd dropbear-2022.83
+./configure --host=arm-linux-gnueabihf --disable-zlib --prefix=/usr CC=arm-linux-gnueabihf-gcc
+make PROGRAMS="dropbear dropbearkey dbclient scp" STATIC=1 -j4
+make PROGRAMS="dropbear dropbearkey dbclient scp" STATIC=1 DESTDIR=~/bbb/rootfs install
+```
+
+| Parça | Anlamı |
+|---|---|
+| `--host=arm-linux-gnueabihf` | ARM için cross compile |
+| `--disable-zlib` | zlib sıkıştırma kütüphanesi olmadan derle (rootfs'te zlib yok) |
+| `--prefix=/usr` + `DESTDIR=...` | Kartta `/usr/sbin/dropbear` olacak şekilde rootfs klasörüne kur |
+| `STATIC=1` | BusyBox gibi statik derle, kütüphane gerekmesin |
+
+Kartta SSH'a giriş yapabilmek için bir <b>kullanıcı ve şifre</b> gerekir. Rootfs'e şu iki dosyayı ekle:
+
+```bash
+cd ~/bbb/rootfs
+echo 'root:x:0:0:root:/root:/bin/sh' > etc/passwd
+echo 'root::0:0:99999:7:::' > etc/shadow
+chmod 600 etc/shadow
+```
+
+Kartta şifreyi belirle ve sunucuyu başlat:
+
+```text
+/ # passwd
+/ # mkdir -p /etc/dropbear
+/ # dropbear -R
+```
+
+`-R`, sunucu anahtarlarını ilk bağlantıda otomatik üretir. Bilgisayardan bağlan ve dosya gönder:
+
+```bash
+ssh root@192.168.27.2
+scp dosya root@192.168.27.2:/root/
+```
+
+Açılışta otomatik başlaması için `S50sshd` yerine şu küçük betiği koy:
+
+```sh
+#!/bin/sh
+# /etc/init.d/S50dropbear
+case "$1" in
+  start) printf "Starting dropbear: "; mkdir -p /etc/dropbear; /usr/sbin/dropbear -R && echo "OK" ;;
+  stop)  printf "Stopping dropbear: "; killall dropbear; echo "OK" ;;
+  *)     echo "Usage: $0 {start|stop}"; exit 1 ;;
+esac
+```
+
+> [!IMPORTANT]
+> Dropbear, kabuk açmak için `/dev/pts`'e ihtiyaç duyar. [12.5](#c12-125-busybox-init-inittab-ve-rcs)'te `rcS`'e eklediğimiz `mount -t devpts devpts /dev/pts` satırı yoksa bağlantı `PTY allocation request failed` ile kapanır.
+
+---
+
+## <a name="c12-1211-challenge-2-busyboxı-dinamik-derlemek"></a>12.11 Challenge 2: BusyBox'ı Dinamik Derlemek
+
+Kursun ikinci challenge'ı:
+
+> <i>BusyBox derslerinin hepsinde "statik" derlenmiş programlar kullandık. Dinamik bağlanarak (dynamic linking) cross compile edilmiş bir uygulamayı bu dosya sisteminde çalıştırırsan çalışmaz. BusyBox'ı <b>dinamik</b> bağlanmış programlar üretecek şekilde yeniden derle ve dinamik bağlanmış bir uygulamanın çalıştığını test et.</i>
+
+### <a name="c12-neden-dinamik-program-çalışmıyor"></a>Neden dinamik program çalışmıyor?
+
+Dinamik bağlanmış bir program, çalışırken iki şeye ihtiyaç duyar:
+1. <b>Dinamik yükleyici</b>: ARM hard-float'ta `/lib/ld-linux-armhf.so.3`. Kernel programı başlatırken önce bunu çalıştırır.
+2. Programın kullandığı <b>paylaşılan kütüphaneler</b>: `libc.so.6`, `libm.so.6`...
+
+Statik BusyBox rootfs'inde `/lib` altında sadece kernel modülleri vardır. Yükleyici yoksa kernel programı hiç başlatamaz ve kabuk yanıltıcı bir şekilde `not found` der.
+
+### <a name="c12-çözüm"></a>Çözüm
+
+![BusyBox'ı dinamik derleme ve kütüphaneleri rootfs'e kopyalama](../images/busybox/10_dynamic.png)
+
+<b>1) Statik ayarı kapat, yeniden derle ve kur:</b>
+
+```bash
+cd ~/bbb/busybox-1.36.1
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig      # Settings → Build static binary: [ ]
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CONFIG_PREFIX=~/bbb/rootfs install
+```
+
+<b>2) Hangi kütüphanelerin gerektiğine bak:</b>
+
+```bash
+arm-linux-gnueabihf-readelf -d ~/bbb/rootfs/bin/busybox | grep NEEDED
+arm-linux-gnueabihf-readelf -l ~/bbb/rootfs/bin/busybox | grep interpreter
+```
+
+<b>3) Kütüphaneleri toolchain'den rootfs'e kopyala.</b> Toolchain, ARM için derlenmiş glibc'yi kendi <b>sysroot</b> klasöründe taşır:
+
+```bash
+SYSROOT=$(arm-linux-gnueabihf-gcc -print-sysroot)
+cp -a $SYSROOT/lib/*.so* ~/bbb/rootfs/lib/
+```
+
+> [!TIP]
+> Bu komut toolchain'deki bütün kütüphaneleri kopyalar (birkaç on MB). Sadece gerekenleri istiyorsan `readelf` çıktısındaki dosyaları ve `ld-linux-armhf.so.3`'ü kopyala. Kopyaladıktan sonra `arm-linux-gnueabihf-strip` ile küçültebilirsin.
+
+<b>4) Dinamik bir uygulamayla test et:</b>
+
+```bash
+arm-linux-gnueabihf-gcc hello.c -o hello          # varsayılan: dinamik
+file hello                                            # "dynamically linked, interpreter /lib/ld-linux-armhf.so.3"
+cp hello ~/bbb/rootfs/root/                         # NFS kullanıyorsan /srv/nfs/bbb/root/
+```
+
+Kartta `/root/hello` çalışıyorsa challenge tamam.
+
+---
+
+## <a name="c12-1212-özet"></a>12.12 Özet
+
+- BusyBox, yüzlerce komutu tek bir programda toplar; komutlar ona giden sembolik linklerdir.
+- Minimal rootfs = BusyBox + `dev proc sys etc tmp var` klasörleri + `/etc/inittab` + `/etc/init.d/rcS` + `/lib/modules`.
+- Açılış: kernel → `/sbin/init` (PID 1) → `inittab` → `rcS` → `S??*` betikleri sırayla → konsolda kabuk.
+- `g_ether` kartı USB üzerinden bir ağ kartı yapar; `S02module` + `S40network` ile açılışta otomatik yüklenir.
+- NFS + TFTP ile rootfs ve kernel bilgisayardan gelir; dosyayı kopyalamak, kartta denemek için yeterli olur.
+- SSH için Dropbear, dinamik programlar için `/lib`'e toolchain sysroot'undaki kütüphaneler gerekir.
+
+## <a name="c12-1213-karşılaşılabilecek-problemler"></a>12.13 Karşılaşılabilecek Problemler
+
+![Sık görülen hatalar (temsili)](../images/busybox/11_errors.png)
+
+| Belirti | Sebep | Çözüm |
+|---|---|---|
+| `Kernel panic - not syncing: No working init found` | `/sbin/init` yok, ARM için derlenmemiş ya da dinamik derlenmiş ama `/lib`'te kütüphane yok | `file bin/busybox` → ARM ve statik olmalı (veya [12.11](#c12-1211-challenge-2-busyboxı-dinamik-derlemek)) |
+| `can't open /dev/tty2: No such file or directory` | `/etc/inittab` yok, BusyBox varsayılan olarak tty2–tty4'ü açmaya çalışıyor | [12.5](#c12-125-busybox-init-inittab-ve-rcs)'teki `inittab`'ı ekle |
+| `/etc/init.d/rcS: Permission denied` | Betik çalıştırılabilir değil | `chmod +x etc/init.d/rcS etc/init.d/S*` |
+| `modprobe: can't change directory to '/lib/modules'` | Modüller kurulmamış ya da sürüm klasörü `uname -r` ile uyuşmuyor | `modules_install INSTALL_MOD_PATH=...` ile yeniden kur |
+| `VFS: Unable to mount root fs via NFS` | NFS sürümü (v2), `exports` hatası, yanlış `ip=` / `nfsroot=` | `nfsroot=...,v3,tcp`; host'ta `showmount -e`; firewall'da NFS'e izin |
+| `ifup: can't open '/etc/network/interfaces'` | Dosya yok | [12.7](#c12-127-usb-üzerinden-ethernet-ve-sürücüleri-açılışta-yüklemek)'deki dosyayı oluştur |
+| `run-parts: /etc/network/if-pre-up.d: No such file or directory` | BusyBox `ifup`'ın aradığı klasörler yok | `mkdir -p etc/network/if-{pre-up,up,down,post-down}.d` |
+| SSH: `PTY allocation request failed` | `/dev/pts` bağlı değil | `rcS`'e `mount -t devpts devpts /dev/pts` ekle |
+| SSH: `Permission denied` | root'un şifresi yok | Kartta `passwd` |
+| Derleme: `networking/tc.c: error: 'TCA_CBQ_MAX' undeclared` | Toolchain'in kernel başlıkları çok yeni (6.8+), BusyBox 1.36'nın `tc` applet'i derlenmiyor | `menuconfig` → Networking Utilities → `tc`'yi kapat |
+| Kartta dosyalar `root` yerine `nobody` sahipliğinde görünüyor | `no_root_squash` eksik | `/etc/exports`'a ekle, `sudo exportfs -ra` |
 

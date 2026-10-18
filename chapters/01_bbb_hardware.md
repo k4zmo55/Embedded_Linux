@@ -108,7 +108,7 @@ User LED'lerin devre şeması (her LED bir transistör üzerinden GPIO ile sür�
 ![User LED şeması](../images/beaglebone/bbb_user_led_sema.png)
 
 > [!TIP]
-> USR0'ın kalp atışı gibi yanıp sönmesi kernel kodunda değil, <b>Device Tree</b>'de tanımlıdır ([10.5](10_device_tree.md#105-bir-device-treenin-genel-yapısı)).
+> USR0'ın kalp atışı gibi yanıp sönmesi kernel kodunda değil, <b>Device Tree</b>'de tanımlıdır ([11.5](11_device_tree.md#115-bir-device-treenin-genel-yapısı)).
 
 ## 1.7 Boot Sırası ve S2 Butonu
 

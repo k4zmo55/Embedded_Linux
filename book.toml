@@ -28,7 +28,11 @@ chapters = ["06_uboot_uenv.md", "07_uart_boot.md", "08_tftp_boot.md", "09_uboot_
 
 [[book.parts]]
 title = "Linux Kernel"
-chapters = ["10_device_tree.md"]
+chapters = ["10_linux_kernel.md", "11_device_tree.md"]
+
+[[book.parts]]
+title = "Root Filesystem"
+chapters = ["12_busybox_rootfs.md"]
 
 # ---------------------------------------------------------------------------
 
@@ -50,6 +54,32 @@ rootfs_file = "Angstrom-systemd-image-eglibc-ipk-v2012.12-beagleboard.rootfs.tar
 kernel_version = "3.8.13"
 console = "ttyO0"
 debian_image = "bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz"
+# Seri boot klasöründeki imajlar (pre-built-images/serial-boot)
+serial_spl_version = "2017.03"
+serial_uboot_version = "2016.11-rc1"
+# Kursun güncel SD kart imajları (pre-built-images/SD-boot)
+sd_uboot_version = "2022.04"
+sd_kernel_version = "5.10.168"
+
+# Linux kernel (Linux kernel bölümü)
+[vars.kernel]
+branch = "5.10"
+version = "5.10.162"
+repo = "https://github.com/beagleboard/linux.git"
+dir = "linux"
+defconfig = "bb.org_defconfig"
+console = "ttyS0"
+loadaddr = "0x80008000"
+
+# Root filesystem (BusyBox bölümü)
+[vars.rootfs]
+busybox_version = "1.36.1"
+busybox_url = "https://busybox.net/downloads/busybox-{{rootfs.busybox_version}}.tar.bz2"
+dropbear_version = "2022.83"
+dropbear_url = "https://matt.ucc.asn.au/dropbear/releases/dropbear-{{rootfs.dropbear_version}}.tar.bz2"
+dir = "~/bbb/rootfs"
+usb_board_ip = "192.168.7.2"
+usb_host_ip = "192.168.7.1"
 
 # Kendi derlediğimiz U-Boot ve toolchain (U-Boot derleme bölümü)
 [vars.build]

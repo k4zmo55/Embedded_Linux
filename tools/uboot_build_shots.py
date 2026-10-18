@@ -166,3 +166,31 @@ render("08_errors.png", UTITLE + " (temsili hatalar)", [
     t(""),
     note("/bin/sh: 1: bison: not found", RED, "                         <-- bison/flex eksik"),
 ])
+
+# 9) Challenge: bootdelay'i 10 saniyeye çıkarma
+render("09_bootdelay_config.png", UTITLE, [
+    ubh("grep BOOTDELAY .config"),
+    note("CONFIG_BOOTDELAY=2", CYAN, "                       <-- varsayılan: 2 saniye"),
+    ubh(f"make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig"),
+    note("   Boot options → Autoboot options → delay in seconds before automatically booting: 10", DIM),
+    ubh("grep BOOTDELAY .config"),
+    note("CONFIG_BOOTDELAY=10", GREEN, "                      <-- yeni değer"),
+    ubh(f"make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4"),
+    t("  ...", DIM),
+    t("  MKIMAGE MLO", DIM),
+    t("  MKIMAGE u-boot.img", DIM),
+    ubh("cp MLO u-boot.img /media/mehmet/BOOT/ && sync && sudo umount /media/mehmet/BOOT"),
+])
+
+render("10_bootdelay_boot.png", "mehmet@ubuntu: ~ — minicom -D /dev/ttyUSB0 -b 115200", [
+    t(f"U-Boot {UBOOT_VER} (Oct 19 2026 - 15:20:44 +0300)", ORANGE),
+    t(""),
+    t("CPU  : AM335X-GP rev 2.1"),
+    t("Model: TI AM335x BeagleBone Black"),
+    t("DRAM:  512 MiB"),
+    t(f"Net:   eth2: {ETH_DEV}, eth3: usb_ether"),
+    note("Hit any key to stop autoboot: 10", GREEN, "     <-- 10'dan geri sayar"),
+    note("Hit any key to stop autoboot:  7", FG, "     <-- bir tuşa basınca durur"),
+    [("=> ", ORANGE), ("printenv bootdelay", FG)],
+    t("bootdelay=10", CYAN),
+])

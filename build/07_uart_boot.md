@@ -150,7 +150,7 @@ Bilgisayar (HOST)                          BeagleBone Black
 ──────────────────                         ────────────────────────────────────────
                                            ROM kodu (S2 basılı, SD kart yok) → UART0
 u-boot-spl.bin ──── Xmodem ──────────────► SPL çalışır (DDR'ı hazırlar)
-u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → U-Boot# komut satırı
+u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → => komut satırı komut satırı
 uImage         ──── loadx / loady ───────► 0x82000000
 .dtb           ──── loadx / loady ───────► 0x88000000
 initramfs      ──── loadx / loady ───────► 0x88080000
@@ -174,9 +174,9 @@ Seri boot için bilgisayarda (HOST) şu 5 dosya hazır olmalı. Her biri boot zi
 | Dosya | Nedir? | Kim yükler? | Nereye yüklenir? | Protokol |
 |---|---|---|---|---|
 | <b>`u-boot-spl.bin`</b> | <b>SPL</b> (Secondary Program Loader). U-Boot'un küçük ilk aşaması. Saatleri, pin ayarlarını, UART'ı ve en önemlisi <b>DDR RAM</b>'i hazırlar. | ROM kodu | AM335x'in iç SRAM'i (`0x402F0400`, en fazla ~109 KB) | Xmodem |
-| <b>`u-boot.img`</b> | Asıl <b>U-Boot</b>. Başında 64 baytlık U-Boot (mkimage) başlığı vardır. Komut satırını (`U-Boot#`) bize o verir. | SPL | DDR (`0x80800000`) | Ymodem |
+| <b>`u-boot.img`</b> | Asıl <b>U-Boot</b>. Başında 64 baytlık U-Boot (mkimage) başlığı vardır. Komut satırını (`=>`) bize o verir. | SPL | DDR (`0x80800000`) | Ymodem |
 | <b>`uImage`</b> | <b>Linux kernel</b>. `zImage`'in başına U-Boot başlığı (yükleme adresi, giriş noktası, CRC) eklenmiş hali ([4.9](04_sd_card_boot.md#49-uimage-nedir)). | U-Boot (`loadx`) | `0x82000000` | Xmodem |
-| <b>`am335x-boneblack.dtb`</b> | <b>Device Tree Blob</b>. Kernel'e kartta hangi donanımın olduğunu anlatan derlenmiş dosya ([Bölüm 10](10_device_tree.md)). | U-Boot (`loadx`) | `0x88000000` | Xmodem |
+| <b>`am335x-boneblack.dtb`</b> | <b>Device Tree Blob</b>. Kernel'e kartta hangi donanımın olduğunu anlatan derlenmiş dosya ([Bölüm 11](11_device_tree.md)). | U-Boot (`loadx`) | `0x88000000` | Xmodem |
 | <b>`initramfs`</b> | RAM'de çalışan küçük <b>kök dosya sistemi</b> (genellikle BusyBox). `cpio` arşivi + gzip + U-Boot başlığı. SD/eMMC olmadığı için rootfs'i buradan alırız. | U-Boot (`loadx`) | `0x88080000` | Xmodem |
 
 ### Bu dosyaları nereden bulurum?
@@ -328,6 +328,9 @@ Transfer bitince SPL çalışır, DDR'ı hazırlar, `U-Boot SPL ...` yazısını
 
 ### Adım 3 — U-Boot'u gönder (Ymodem)
 
+> [!NOTE]
+> Kursun `serial-boot` klasöründeki dosyalar: SPL <b>2017.03</b>, U-Boot <b>2016.11-rc1</b>. Bu sürümlerde U-Boot'un komut istemi `=>`'dir. [Bölüm 4](04_sd_card_boot.md)'teki eski Ångström U-Boot'u (2013.04) ise `U-Boot#` gösterir. Komutlar ikisinde de aynıdır.
+
 1. `Ctrl-A` → `S` → <b>ymodem</b> → <b>`u-boot.img`</b> seç, gönder.
 2. U-Boot açılır. `Hit any key to stop autoboot` çıkınca <b>hemen bir tuşa bas.</b>
 
@@ -339,7 +342,7 @@ Transfer bitince SPL çalışır, DDR'ı hazırlar, `U-Boot SPL ...` yazısını
 ### Adım 4 — Kernel'i RAM'e al: `loadx 0x82000000`
 
 ```text
-U-Boot# loadx 0x82000000
+=> loadx 0x82000000
 ```
 
 U-Boot Xmodem ile beklemeye başlar. Minicom'da `Ctrl-A` → `S` → <b>xmodem</b> → <b>`uImage`</b>.
@@ -352,8 +355,8 @@ U-Boot Xmodem ile beklemeye başlar. Minicom'da `Ctrl-A` → `S` → <b>xmodem</
 ### Adım 5 — DTB ve initramfs'i RAM'e al
 
 ```text
-U-Boot# loadx 0x88000000        (Minicom: xmodem -> am335x-boneblack.dtb)
-U-Boot# loadx 0x88080000        (Minicom: xmodem -> initramfs)
+=> loadx 0x88000000        (Minicom: xmodem -> am335x-boneblack.dtb)
+=> loadx 0x88080000        (Minicom: xmodem -> initramfs)
 ```
 
 ![loadx ile DTB ve initramfs gönderimi](../images/serial_boot/07_loadx_dtb_initramfs.png)
@@ -363,9 +366,9 @@ U-Boot# loadx 0x88080000        (Minicom: xmodem -> initramfs)
 Boot etmeden önce dosyaların sağlam geldiğini görmek, sonradan "neden açılmadı?" diye uğraşmaktan iyidir:
 
 ```text
-U-Boot# iminfo 0x82000000
-U-Boot# iminfo 0x88080000
-U-Boot# md.b 0x88000000 4
+=> iminfo 0x82000000
+=> iminfo 0x88080000
+=> md.b 0x88000000 4
 ```
 
 ![iminfo ile CRC kontrolü, md ile DTB sihirli sayısı](../images/serial_boot/08_iminfo_kontrol.png)
@@ -376,8 +379,8 @@ U-Boot# md.b 0x88000000 4
 ### Adım 7 — `bootargs` ayarla ve `bootm` ile boot et
 
 ```text
-U-Boot# setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
-U-Boot# bootm 0x82000000 0x88080000 0x88000000
+=> setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
+=> bootm 0x82000000 0x88080000 0x88000000
 ```
 
 Boot etmeden önce kernel'e <b>rootfs'in nerede olduğunu</b> `bootargs` ile bildiriyoruz:
@@ -413,11 +416,11 @@ Kernel initramfs'i açar, içindeki `/init` (BusyBox) çalışır ve seri konsol
 Minicom: Ctrl-A S -> xmodem -> u-boot-spl.bin
 Minicom: Ctrl-A S -> ymodem -> u-boot.img
 [Hit any key -> tuşa bas]
-U-Boot# loadx 0x82000000          -> xmodem -> uImage
-U-Boot# loadx 0x88000000          -> xmodem -> am335x-boneblack.dtb
-U-Boot# loadx 0x88080000          -> xmodem -> initramfs
-U-Boot# setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
-U-Boot# bootm 0x82000000 0x88080000 0x88000000
+=> loadx 0x82000000          -> xmodem -> uImage
+=> loadx 0x88000000          -> xmodem -> am335x-boneblack.dtb
+=> loadx 0x88080000          -> xmodem -> initramfs
+=> setenv bootargs console=ttyO0,115200 root=/dev/ram0 rw initrd=0x88080000
+=> bootm 0x82000000 0x88080000 0x88000000
 ```
 
 ---

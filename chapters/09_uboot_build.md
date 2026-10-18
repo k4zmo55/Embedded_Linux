@@ -5,6 +5,7 @@
 > - Linaro cross toolchain'ini kurup `PATH`'e ekleyeceksin.
 > - U-Boot {{build.uboot_version}} kaynağını indirip {{board.name}} için yapılandıracak ve derleyeceksin: `MLO`, `u-boot-spl.bin`, `u-boot.img`.
 > - Kendi derlediğin U-Boot ile kartı açacaksın.
+> - Challenge: U-Boot'un açılıştaki bekleme süresini kaynak koddan 10 saniyeye çıkaracaksın.
 >
 > <b>Ön koşul:</b> [Bölüm 3](03_boot_process.md) — SPL ve U-Boot'un görevleri, [Bölüm 4](04_sd_card_boot.md) — SD karta dosya koyma.
 
@@ -74,7 +75,10 @@ En çok sorun çıkaran konu bu. <b>Eski U-Boot/kernel kaynağını yeni GCC ile
 | U-Boot 2023+, kernel 5.x / 6.x | Güncel GCC | `sudo apt install gcc-arm-linux-gnueabihf` |
 
 > [!IMPORTANT]
-> Bu bölümde kursun kullandığı <b>U-Boot {{build.uboot_version}} + Linaro GCC {{build.gcc_version}}</b> kullanılıyor ([9.3](#93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme) Adım 4'teki menuconfig ekranında görünüyor). Başka sürüm kullanırsan komutlarda sadece sürüm numaraları değişir, adımlar aynıdır.
+> Bu bölümde kursun videolarında kullanılan <b>U-Boot {{build.uboot_version}} + Linaro GCC {{build.gcc_version}}</b> kullanılıyor ([9.3](#93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme) Adım 4'teki menuconfig ekranında görünüyor). Başka sürüm kullanırsan komutlarda sadece sürüm numaraları değişir, adımlar aynıdır.
+
+> [!NOTE]
+> Kursun GitHub reposundaki eski derleme notları (`notes/compilation_commands`) Linaro GCC 6.3.1 ve `am335x_boneblack_defconfig` kullanıyor. Bu, kursun 2017 sürümüne ait; güncellenen videolarda U-Boot 2022.04 kullanılıyor. Bu kitap videolardaki güncel sürümü takip ediyor.
 
 İndirme adresleri:
 
@@ -125,7 +129,7 @@ file hello_x86 hello_arm
 ./hello_arm          # Exec format error: PC ARM kodu çalıştıramaz
 ```
 
-`hello_arm` dosyasını karta kopyalarsan orada çalışır. U-Boot da aynı şekilde: PC'de derlenir, kartta çalışır. [6.5.3](06_uboot_uenv.md#653-a-bilgisayardan-ulaşmak)'te rootfs'teki programların PC'de çalışmamasının sebebi de budur.
+`hello_arm` dosyasını karta kopyalarsan orada çalışır. U-Boot da aynı şekilde: PC'de derlenir, kartta çalışır. [6.6.3](06_uboot_uenv.md#663-a-bilgisayardan-ulaşmak)'te rootfs'teki programların PC'de çalışmamasının sebebi de budur.
 
 ### Adım 3 — Host paketlerini kur ve U-Boot kaynağını indir
 
@@ -268,15 +272,69 @@ cp MLO u-boot.img /media/$USER/BOOT/ && sync
 
 ---
 
-## 9.4 Özet
+## 9.4 Challenge: Autoboot Bekleme Süresini 10 Saniyeye Çıkarmak
+
+### Görev
+
+Kursun bu bölümdeki challenge'ı:
+
+> <i>U-Boot açılınca otomatik açılışa (uEnv.txt'yi okuma, uImage'ı yükleme...) geçmeden önce birkaç saniye bekler. Bu sürede bir tuşa basarsan U-Boot komut satırına düşersin. Bu bekleme süresini <b>10 saniyeye</b> çıkar ve kartta test et. Bunun için U-Boot <b>kaynak kodunu</b> değiştirip yeniden derlemen gerekiyor.</i>
+
+### Bekleme süresi nereden geliyor?
+
+Geri sayımı `bootdelay` ortam değişkeni belirler. Bu değişkenin <b>varsayılan</b> değeri derleme sırasında `CONFIG_BOOTDELAY` ayarından gelir ve U-Boot'un içine gömülür:
+
+| Kaynak | Değer |
+|---|---|
+| U-Boot {{build.uboot_version}} varsayılanı (`{{build.uboot_defconfig}}` değiştirmiyor) | 2 saniye |
+| Kursun güncel `SD-boot` U-Boot'u | 0 (geri sayım yok, tuşa basılı tutmak gerekir) |
+| Kursun eski videolarındaki U-Boot | 5 saniye |
+
+> [!NOTE]
+> `setenv bootdelay 10` + `saveenv` ile de aynı sonuç alınır. Ama bu sadece o kartın kayıtlı ortamını değiştirir; challenge, ayarın <b>U-Boot imajının kendisinde</b> değişmesini istiyor. Böylece imajı hangi karta koyarsan koy 10 saniye bekler.
+
+### Çözüm
+
+<b>1) Ayarı değiştir.</b> [9.3](#93-adım-adım-toolchain-kurulumu-ve-u-boot-derleme)'teki U-Boot kaynak klasöründe `menuconfig`'i aç ve şu ayarı `10` yap:
+
+```
+Boot options  --->
+    Autoboot options  --->
+        (10) delay in seconds before automatically booting
+```
+
+Ayarı bulmak için menüde `/` tuşuna basıp `BOOTDELAY` aramak daha hızlı. Kaydedip çık.
+
+<b>2) Kontrol et, derle, SD karta kopyala.</b>
+
+![bootdelay ayarını değiştirip derleme](../images/uboot_build/09_bootdelay_config.png)
+
+```bash
+grep BOOTDELAY .config                                   # CONFIG_BOOTDELAY=10 görmelisin
+make ARCH=arm CROSS_COMPILE={{build.cross_compile}} -j4
+cp MLO u-boot.img /media/$USER/BOOT/ && sync && sudo umount /media/$USER/BOOT
+```
+
+<b>3) Kartta test et.</b> Kartı S2'ye basılı tutarak aç. Geri sayım 10'dan başlamalı:
+
+![10 saniyelik geri sayım](../images/uboot_build/10_bootdelay_boot.png)
+
+> [!IMPORTANT]
+> Geri sayım hâlâ eski değerdeyse, kartta daha önce `saveenv` ile kaydedilmiş bir ortam vardır. Kayıtlı ortam derlemedeki varsayılanı ezer. U-Boot'ta `env default -a` ile varsayılanlara dön ve `saveenv` ile kaydet. Ayrıca `uEnv.txt`'de `bootdelay=` satırı olmadığından emin ol.
+
+> [!TIP]
+> Değişikliğin kaynak kodda kalıcı olmasını istersen `make savedefconfig` ile küçük bir `defconfig` dosyası üret ve onu `configs/` altına kendi adınla kaydet (ör. `configs/my_bbb_defconfig`). Sonraki derlemelerde `make my_bbb_defconfig` yeterli olur.
+
+## 9.5 Özet
 
 - Cross toolchain, PC'de (x86) çalışıp ARM kodu üretir. Önek: `{{build.cross_compile}}`.
 - Toolchain'i derlenecek kaynağın yaşına göre seç; eski kaynak + yeni GCC = derleme hatası.
 - Derleme üç komut: `distclean` → `{{build.uboot_defconfig}}` → `make -j4`. Hepsinde `ARCH=arm CROSS_COMPILE={{build.cross_compile}}`.
 - Çıktılar: `MLO` (SD/eMMC için), `spl/u-boot-spl.bin` (seri boot için), `u-boot.img` (ikisi için de).
 - Kendi U-Boot'unun çalıştığını açılıştaki derleme tarihinden anlarsın.
+- U-Boot'un davranışını değiştirmenin kalıcı yolu `menuconfig` ile `.config`'i değiştirip yeniden derlemektir (ör. `CONFIG_BOOTDELAY`).
 
-## 9.5 Karşılaşılabilecek Problemler
+## 9.6 Karşılaşılabilecek Problemler
 
 ![Sık görülen derleme hataları (temsili)](../images/uboot_build/08_errors.png)
 
