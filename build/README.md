@@ -39,3 +39,4 @@
 **Kısım VI — Uygulama Geliştirme ve Donanım**
 
 - [Bölüm 14 — Eclipse ile Uygulama Geliştirme](14_eclipse.md)
+- [Bölüm 15 — AM335x GPIO'ları, Pin Ayarları ve sysfs](15_gpio_sysfs.md)

@@ -49,8 +49,9 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | <b>V — Root Filesystem</b> | [12. BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md) | Kendi rootfs'ini sıfırdan kur, NFS ile bilgisayardan aç |
 | | [13. Buildroot](13_buildroot.md) | Bütün sistemi tek komutla derle, hazır SD kart imajı üret |
 | <b>VI — Uygulama Geliştirme ve Donanım</b> | [14. Eclipse ile Uygulama Geliştirme](14_eclipse.md) | Eclipse'te ARM için program yaz, tek tıkla kartta çalıştır |
+| | [15. AM335x GPIO'ları, Pin Ayarları ve sysfs](15_gpio_sysfs.md) | Pinmux'u çöz, LED'leri ve GPIO'ları komut satırından ve C'den kontrol et |
 
-<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: AM335x GPIO'ları ve sysfs, harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 

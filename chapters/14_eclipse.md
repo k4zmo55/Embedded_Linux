@@ -75,7 +75,7 @@ which {{build.cross_compile}}gcc
 
 ---
 
-## 14.4 İlk Proje: Oluşturma ve Derleme
+## 14.4 Birinci Proje: Oluşturma ve Derleme
 
 Kursun "Eclipse project creation and build settings" dersi.
 
@@ -207,7 +207,7 @@ ssh {{eclipse.target_user}}@{{network.board_ip}} ./{{eclipse.project}}
 
 ---
 
-## 14.7 Kursun Projelerini İçe Aktarmak
+## 14.7 Kursun Projelerini Eclipse'e Aktarmak
 
 Kursun "Importing Eclipse Projects" dersi. Kursun reposundaki `Project_Src/` klasörü sonraki bölümlerin bütün uygulamalarını içeriyor.
 

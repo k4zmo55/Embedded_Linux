@@ -43,6 +43,7 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 **Kısım VI — Uygulama Geliştirme ve Donanım**
 
 - [Bölüm 14 — Eclipse ile Uygulama Geliştirme](build/14_eclipse.md)
+- [Bölüm 15 — AM335x GPIO'ları, Pin Ayarları ve sysfs](build/15_gpio_sysfs.md)
 
 ## Bu Repo Nasıl Çalışır?
 

@@ -76,7 +76,7 @@ which arm-linux-gnueabihf-gcc
 
 ---
 
-## 14.4 İlk Proje: Oluşturma ve Derleme
+## 14.4 Birinci Proje: Oluşturma ve Derleme
 
 Kursun "Eclipse project creation and build settings" dersi.
 
@@ -208,7 +208,7 @@ ssh debian@192.168.27.2 ./hello_bbb
 
 ---
 
-## 14.7 Kursun Projelerini İçe Aktarmak
+## 14.7 Kursun Projelerini Eclipse'e Aktarmak
 
 Kursun "Importing Eclipse Projects" dersi. Kursun reposundaki `Project_Src/` klasörü sonraki bölümlerin bütün uygulamalarını içeriyor.
 
@@ -265,4 +265,4 @@ git clone https://github.com/niekiran/EmbeddedLinuxBBB.git
 
 ---
 
-[← Bölüm 13: Buildroot](13_buildroot.md) · [İçindekiler](README.md)
+[← Bölüm 13: Buildroot](13_buildroot.md) · [İçindekiler](README.md) · [Bölüm 15: AM335x GPIO'ları, Pin Ayarları ve sysfs →](15_gpio_sysfs.md)
