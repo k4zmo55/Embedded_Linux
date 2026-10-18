@@ -612,4 +612,4 @@ Kartta `/root/hello` çalışıyorsa challenge tamam.
 
 ---
 
-[← Bölüm 11: Linux Device Tree](11_device_tree.md) · [İçindekiler](README.md)
+[← Bölüm 11: Linux Device Tree](11_device_tree.md) · [İçindekiler](README.md) · [Bölüm 13: Buildroot →](13_buildroot.md)

@@ -38,6 +38,7 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 **Kısım V — Root Filesystem**
 
 - [Bölüm 12 — BusyBox ile Minimal Root Filesystem](build/12_busybox_rootfs.md)
+- [Bölüm 13 — Buildroot](build/13_buildroot.md)
 
 ## Bu Repo Nasıl Çalışır?
 

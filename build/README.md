@@ -34,3 +34,4 @@
 **Kısım V — Root Filesystem**
 
 - [Bölüm 12 — BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md)
+- [Bölüm 13 — Buildroot](13_buildroot.md)

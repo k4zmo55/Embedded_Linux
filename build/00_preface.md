@@ -13,7 +13,7 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 
 ```
            ┌──────────────────────────────────────────────────┐
-  KART     │ 4. Root filesystem  /bin /etc /lib ... programlar │  Bölüm 6, 12
+  KART     │ 4. Root filesystem  /bin /etc /lib ... programlar │  Bölüm 6, 12, 13
            │ 3. Linux kernel  +  Device Tree (.dtb)            │  Bölüm 10, 11
            │ 2. Bootloader: ROM Code → SPL (MLO) → U-Boot      │  Bölüm 3 – 9
            └──────────────────────────────────────────────────┘
@@ -28,7 +28,7 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | <b>Cross toolchain</b> | PC'de (x86) çalışıp karta (ARM) uygun program üreten derleyici ve araçlar | [Bölüm 9](09_uboot_build.md) |
 | <b>Bootloader</b> | Kart açılınca belleği hazırlar, kernel'i ve device tree'yi RAM'e yükleyip başlatır | [Bölüm 3](03_boot_process.md) – [Bölüm 9](09_uboot_build.md) |
 | <b>Linux kernel + Device Tree</b> | İşletim sisteminin çekirdeği ve kartın donanımını kernel'e tarif eden dosya | [Bölüm 10](10_linux_kernel.md), [Bölüm 11](11_device_tree.md) |
-| <b>Root filesystem</b> | Kernel açıldıktan sonra çalışan her şey: kabuk, komutlar, ayar dosyaları | [Bölüm 6](06_uboot_uenv.md), [Bölüm 12](12_busybox_rootfs.md) |
+| <b>Root filesystem</b> | Kernel açıldıktan sonra çalışan her şey: kabuk, komutlar, ayar dosyaları | [Bölüm 6](06_uboot_uenv.md), [Bölüm 12](12_busybox_rootfs.md), [Bölüm 13](13_buildroot.md) |
 
 ---
 
@@ -48,8 +48,9 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | <b>IV — Linux Kernel</b> | [10. Linux Kernel: Kaynak Ağacı ve Derleme](10_linux_kernel.md) | Kernel kaynağında gezin, kernel'i ve modülleri derle |
 | | [11. Linux Device Tree](11_device_tree.md) | Kernel'in donanımı nasıl tanıdığını öğren |
 | <b>V — Root Filesystem</b> | [12. BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md) | Kendi rootfs'ini sıfırdan kur, NFS ile bilgisayardan aç |
+| | [13. Buildroot](13_buildroot.md) | Bütün sistemi tek komutla derle, hazır SD kart imajı üret |
 
-<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: Buildroot, Eclipse ile uygulama geliştirme, AM335x GPIO'ları ve sysfs, harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: Eclipse ile uygulama geliştirme, AM335x GPIO'ları ve sysfs, harici LED, 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
@@ -98,6 +99,7 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 | Cross toolchain | Linaro GCC 7.5.0 (7.5-2019.12) | 9, 10, 12 |
 | Kendi derlediğimiz kernel | 5.10.162 (BeagleBoard, dal `5.10`, `bb.org_defconfig`) | 10 |
 | BusyBox / Dropbear | 1.36.1 / 2022.83 | 12 |
+| Buildroot (LTS) | 2026.02.3 (kernel 6.18.1, U-Boot 2026.01) | 13 |
 | Host PC IP / kart IP | 192.168.27.1 / 192.168.27.2 | 8 |
 
 ---

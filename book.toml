@@ -32,7 +32,7 @@ chapters = ["10_linux_kernel.md", "11_device_tree.md"]
 
 [[book.parts]]
 title = "Root Filesystem"
-chapters = ["12_busybox_rootfs.md"]
+chapters = ["12_busybox_rootfs.md", "13_buildroot.md"]
 
 # ---------------------------------------------------------------------------
 
@@ -80,6 +80,19 @@ dropbear_url = "https://matt.ucc.asn.au/dropbear/releases/dropbear-{{rootfs.drop
 dir = "~/bbb/rootfs"
 usb_board_ip = "192.168.7.2"
 usb_host_ip = "192.168.7.1"
+
+# Buildroot (Buildroot bölümü) — LTS sürüm; değerler bu sürümün configs/beaglebone_defconfig'inden
+[vars.buildroot]
+version = "2026.02.3"
+url = "https://buildroot.org/downloads/buildroot-{{buildroot.version}}.tar.gz"
+dir = "buildroot-{{buildroot.version}}"
+defconfig = "beaglebone_defconfig"
+kernel_version = "6.18.1"
+kernel_defconfig = "omap2plus"
+uboot_version = "2026.01"
+toolchain = "Bootlin armv7-eabihf glibc stable 2025.08-1"
+busybox_version = "1.37.0"
+dropbear_version = "2026.91"
 
 # Kendi derlediğimiz U-Boot ve toolchain (U-Boot derleme bölümü)
 [vars.build]
