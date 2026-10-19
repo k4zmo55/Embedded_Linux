@@ -1,0 +1,13 @@
+{
+	// IntelliSense host'un /usr/include'u yerine ARM toolchain'inin başlıklarını kullansın.
+	"configurations": [
+		{
+			"name": "BBB (ARM)",
+			"compilerPath": "${env:HOME}/bbb/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc",
+			"intelliSenseMode": "linux-gcc-arm",
+			"cStandard": "gnu11",
+			"includePath": ["${workspaceFolder}/**"]
+		}
+	],
+	"version": 4
+}

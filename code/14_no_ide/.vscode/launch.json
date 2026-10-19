@@ -1,0 +1,23 @@
+{
+	// F5: programı karta gönderir, gdbserver'ı başlatır ve gdb-multiarch ile bağlanır.
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug on BBB",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/hello_bbb",
+			"cwd": "${workspaceFolder}",
+			"MIMode": "gdb",
+			"miDebuggerPath": "/usr/bin/gdb-multiarch",
+			"miDebuggerServerAddress": "192.168.7.2:2345",
+			"preLaunchTask": "start gdbserver",
+			"stopAtEntry": true,
+			"setupCommands": [
+				// Dinamik programda kütüphaneleri toolchain'in sysroot'undan oku
+				// (arm-linux-gnueabihf-gcc -print-sysroot). Statik programda gerekmez.
+				{ "text": "set sysroot ${env:HOME}/bbb/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/arm-linux-gnueabihf/libc" }
+			]
+		}
+	]
+}

@@ -1,0 +1,4 @@
+{
+	// Kartın SSH adresi (tasks.json'daki ${config:bbb.board}).
+	"bbb.board": "debian@192.168.7.2"
+}

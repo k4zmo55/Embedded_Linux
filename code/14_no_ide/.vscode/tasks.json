@@ -1,0 +1,32 @@
+{
+	// Ctrl+Shift+B: derle. Terminal → Run Task: karta gönder / çalıştır.
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build",
+			"type": "shell",
+			"command": "make",
+			"group": { "kind": "build", "isDefault": true },
+			"problemMatcher": ["$gcc"]
+		},
+		{
+			"label": "run on board",
+			"type": "shell",
+			"command": "make run",
+			"problemMatcher": ["$gcc"]
+		},
+		{
+			"label": "start gdbserver",
+			"type": "shell",
+			"command": "make deploy && ssh ${config:bbb.board} gdbserver :2345 ./hello_bbb",
+			"isBackground": true,
+			"problemMatcher": {
+				"pattern": { "regexp": "^__never__$" },
+				"background": {
+					"activeBegin": "^Process .* created",
+					"activeEnd": "^Listening on port"
+				}
+			}
+		}
+	]
+}

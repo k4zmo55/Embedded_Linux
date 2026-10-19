@@ -49,7 +49,7 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [11. Linux Device Tree](11_device_tree.md) | Kernel'in donanımı nasıl tanıdığını öğren |
 | <b>V — Root Filesystem</b> | [12. BusyBox ile Minimal Root Filesystem](12_busybox_rootfs.md) | Kendi rootfs'ini sıfırdan kur, NFS ile bilgisayardan aç |
 | | [13. Buildroot](13_buildroot.md) | Bütün sistemi tek komutla derle, hazır SD kart imajı üret |
-| <b>VI — Uygulama Geliştirme ve Donanım</b> | [14. Eclipse ile Uygulama Geliştirme](14_eclipse.md) | Eclipse'te ARM için program yaz, tek tıkla kartta çalıştır |
+| <b>VI — Uygulama Geliştirme ve Donanım</b> | [14. Eclipse ile Uygulama Geliştirme](14_eclipse.md) | Eclipse'te ya da `make` + VS Code ile ARM için program yaz, kartta çalıştır, `gdbserver` ile hata ayıkla |
 | | [15. AM335x GPIO'ları, Pin Ayarları ve sysfs](15_gpio_sysfs.md) | Pinmux'u çöz, LED'leri ve GPIO'ları komut satırından ve C'den kontrol et |
 | | [16. Harici LED Bağlamak](16_external_led.md) | LED'i dirençle bir GPIO'ya bağla, C ile ve device tree ile sür |
 | | [17. 7-Segment Gösterge](17_seven_segment.md) | Tek haneli göstergeyi sür, sayaç ve butonla sayma programı yaz |

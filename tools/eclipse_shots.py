@@ -84,6 +84,52 @@ render("05_manual_scp.png", f"mehmet@ubuntu: ~/eclipse-workspace/{PRJ}", [
     t("Kernel: Linux beaglebone 5.10.168-ti-r71 armv7l", CYAN),
 ])
 
+NOIDE = "~/code/14_no_ide"
+USB_IP = V("rootfs.usb_board_ip")
+SYSROOT = f"/home/mehmet/bbb/{TC_DIR}/arm-linux-gnueabihf/libc"
+
+# 7) IDE'siz: make + scp + ssh
+render("07_make_run.png", f"mehmet@ubuntu: {NOIDE}", [
+    host("make", NOIDE),
+    t(f"{CC}gcc -Wall -O0 -g -c -o hello_bbb.o hello_bbb.c", ORANGE),
+    t(f"{CC}gcc  -o hello_bbb hello_bbb.o", ORANGE),
+    host("make run", NOIDE),
+    t(f"scp hello_bbb debian@{USB_IP}:./"),
+    t("hello_bbb                                     100%   14KB   1.2MB/s   00:00"),
+    t(f"ssh debian@{USB_IP} ./hello_bbb"),
+    note("Merhaba BeagleBone! (make + scp ile gönderildi)", GREEN, ""),
+    t("Kernel: Linux beaglebone 5.10.168-ti-r71 armv7l", CYAN),
+    t("1+2+3+4+5 = 15", GREEN),
+    host("make run BOARD=root@" + BOARD_IP, NOIDE),
+    note(f"scp hello_bbb root@{BOARD_IP}:./", FG, "        <-- kart adresini komut satırından değiştir"),
+])
+
+# 8) gdbserver ile uzaktan hata ayıklama
+render("08_gdbserver.png", "BBB (ssh) + mehmet@ubuntu (gdb-multiarch)", [
+    t("--- BBB ---", MAGENTA),
+    [("debian@beaglebone", GREEN), (":~$ ", FG), ("gdbserver :2345 ./hello_bbb", FG)],
+    t("Process ./hello_bbb created; pid = 1873"),
+    note("Listening on port 2345", CYAN, "                          <-- host'un bağlanmasını bekliyor"),
+    t("--- host ---", MAGENTA),
+    host("gdb-multiarch -q hello_bbb", NOIDE),
+    t("Reading symbols from hello_bbb..."),
+    note(f"(gdb) set sysroot {SYSROOT}", FG, ""),
+    note(f"(gdb) target remote {USB_IP}:2345", FG, ""),
+    note(f"Remote debugging using {USB_IP}:2345", CYAN, ""),
+    t("(gdb) break main"),
+    t("Breakpoint 1 at 0x4005a2: file hello_bbb.c, line 15."),
+    t("(gdb) continue"),
+    t("Breakpoint 1, main () at hello_bbb.c:15"),
+    t('15          printf("Merhaba BeagleBone! (make + scp ile gönderildi)\\n");', YELLOW),
+    t("(gdb) break 21 if i == 4"),
+    t("(gdb) continue"),
+    t("Breakpoint 2, main () at hello_bbb.c:21"),
+    t("(gdb) print sum"),
+    note("$1 = 6", GREEN, "                                           <-- 1+2+3"),
+    t("(gdb) continue"),
+    note("[Inferior 1 (process 1873) exited normally]", GREEN, "      <-- program kartta bitti"),
+])
+
 # 6) Hatalar
 render("06_errors.png", "Eclipse — Problems / Console (temsili hatalar)", [
     note(f"Program \"{CC}gcc\" not found in PATH", RED, "              <-- Cross GCC Path yanlış"),
@@ -96,4 +142,9 @@ render("06_errors.png", "Eclipse — Problems / Console (temsili hatalar)", [
     note(f"-sh: ./{PRJ}: not found", RED, "                             <-- BusyBox rootfs'te /lib yok: -static"),
     t(""),
     note("Error during file upload. Failure", RED, "                    <-- kartta SFTP sunucusu yok"),
+    t(""),
+    note("Remote 'g' packet reply is too long (expected 260 bytes, got 328 bytes)", RED, ""),
+    note("", FG, "    <-- host'un x86 gdb'si kullanıldı: gdb-multiarch"),
+    t(""),
+    note(f"{USB_IP}:2345: Connection timed out.", RED, "           <-- kartta gdbserver çalışmıyor"),
 ])

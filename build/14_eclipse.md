@@ -6,6 +6,7 @@
 > - Bir C projesi oluşturup ARM için derleyeceksin ve derleme ayarlarını öğreneceksin.
 > - Programı Eclipse'ten tek tıkla karta gönderip çalıştıracaksın.
 > - Kursun hazır Eclipse projelerini içe aktaracaksın.
+> - Aynı işi Eclipse olmadan yapacaksın: `make` + `scp`/`ssh`, VS Code ve `gdbserver` ile uzaktan hata ayıklama.
 >
 > <b>Ön koşul:</b> [Bölüm 9](09_uboot_build.md) — cross toolchain, kartta SSH ile bağlanılabilen bir Linux ([Bölüm 5](05_emmc_boot.md)'teki Debian ya da [Bölüm 13](13_buildroot.md)'teki Buildroot sistemi).
 
@@ -24,7 +25,7 @@
  └──────────────────────────────────────┘                └──────────────────────┘
 ```
 
-Eclipse kendisi derlemez. Arka planda [Bölüm 9](09_uboot_build.md)'da kurduğun `arm-linux-gnueabihf-gcc`'yi çağırır. Bu yüzden komut satırında öğrendiğin her şey burada da geçerlidir.
+Eclipse kendisi derlemez. Arka planda [Bölüm 9](09_uboot_build.md)'da kurduğun `arm-linux-gnueabihf-gcc`'yi çağırır. Bu yüzden komut satırında öğrendiğin her şey burada da geçerlidir. Eclipse kullanmak istemiyorsan [14.8](#148-eclipsesiz-geliştirme-make-vs-code-ve-gdbserver)'e geç.
 
 > [!NOTE]
 > Kurs bu bölümü <b>Windows</b> üzerinde anlatıyor; kitapta Ubuntu kullanılıyor. Adımlar iki sistemde de aynıdır, farkları [14.3](#143-eclipsei-kurmak)'te belirtildi.
@@ -197,7 +198,7 @@ Bundan sonra yeşil <i>Run</i> düğmesi bu ayarı hatırlar: kodu değiştir, k
 
 ### Eclipse olmadan: `scp` + `ssh`
 
-Aynı işi terminalden de yapabilirsin. Bir şey ters giderse sorunun Eclipse'te mi, kartta mı olduğunu anlamak için iyi bir testtir:
+Aynı işi terminalden de yapabilirsin ([14.8](#148-eclipsesiz-geliştirme-make-vs-code-ve-gdbserver)'de ayrıntılı). Bir şey ters giderse sorunun Eclipse'te mi, kartta mı olduğunu anlamak için iyi bir testtir:
 
 ![scp ve ssh ile elle çalıştırma](../images/eclipse/05_manual_scp.png)
 
@@ -242,15 +243,229 @@ git clone https://github.com/niekiran/EmbeddedLinuxBBB.git
 
 ---
 
-## 14.8 Özet
+## 14.8 Eclipse'siz Geliştirme: make, VS Code ve gdbserver
+
+Eclipse zorunlu değil. Kurs kullandığı için bu bölümde anlatıldı, ama yaptığı her şeyin terminalde bir karşılığı var:
+
+| Eclipse'te | Eclipse'siz |
+|---|---|
+| Cross GCC proje ayarları | `Makefile` (`CROSS_COMPILE`, `CFLAGS`, `LDFLAGS`) |
+| Build Project | `make` |
+| C/C++ Remote Application | `scp` + `ssh` (`make run`) |
+| Debug | Kartta `gdbserver`, host'ta `gdb-multiarch` |
+| Editör, kod tamamlama | Herhangi bir editör; VS Code'da C/C++ eklentisi |
+
+Sonraki bölümlerin programları terminalden de derleniyor, [Bölüm 21](21_kernel_module.md)'den sonraki kernel sürücülerinde ise IDE hiç kullanılmıyor. Sektörde de en yaygın düzen budur: kod herhangi bir editörde yazılır, derleme `make` ya da CMake ile yapılır. Eclipse bir yerde takılırsa sorunu bulmak için de bu komutlara dönersin.
+
+> [!NOTE]
+> Bu kısımdaki terminal görüntüleri temsilidir; sürüm numaraları, adresler ve süreler sende farklı olabilir.
+
+Bu kısmın dosyaları repoda `code/14_no_ide/` klasöründe: `hello_bbb.c`, `Makefile` ve VS Code ayarlarının bulunduğu `.vscode/`.
+
+### 14.8.1 Makefile ile derleme ve karta gönderme
+
+`Makefile`'ın önemli kısmı:
+
+```make
+PROG   ?= hello_bbb
+SRCS   ?= hello_bbb.c
+OBJS    = $(SRCS:.c=.o)
+
+CROSS_COMPILE ?= arm-linux-gnueabihf-
+CC      = $(CROSS_COMPILE)gcc
+CFLAGS ?= -Wall -O0 -g
+
+ifeq ($(STATIC),1)
+LDFLAGS += -static
+endif
+
+BOARD  ?= debian@192.168.7.2
+RDIR   ?= .
+
+$(PROG): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+deploy: $(PROG)
+	scp $(PROG) $(BOARD):$(RDIR)/
+
+run: deploy
+	ssh $(BOARD) $(RDIR)/$(PROG)
+```
+
+- `CC`, Eclipse'teki <b>Prefix</b> ayarının karşılığıdır: `arm-linux-gnueabihf-` + `gcc`. Toolchain'in `bin` klasörü `PATH`'te olmalı ([Bölüm 9](09_uboot_build.md)). Değilse tam yolu ver: `make CROSS_COMPILE=~/bbb/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-`.
+- `?=` ile tanımlanan her değişken komut satırından değiştirilebilir. Varsayılan kart, USB ile bağlı Debian'dır ([5.4.1](05_emmc_boot.md#541-kartın-ip-adresini-öğren)).
+- `make STATIC=1`, Eclipse'te Linker flags'e `-static` yazmanın karşılığıdır ([14.5](#145-karttaki-sistemle-uyum-dinamik-mi-statik-mi)).
+- Makefile'da komut satırları <b>sekme (Tab)</b> ile başlar, boşlukla değil.
+
+Derle, karta gönder ve çalıştır:
+
+![make ile derleme, scp ile gönderme ve ssh ile kartta çalıştırma](../images/eclipse/07_make_run.png)
+
+```bash
+cd ~/code/14_no_ide
+make
+make run
+make run BOARD=root@192.168.27.2      # Ethernet'teki Buildroot kartı
+```
+
+Her `scp`/`ssh` çağrısında şifre sorulmasın diye SSH anahtarını bir kez karta kopyala:
+
+```bash
+ssh-keygen -t ed25519                  # anahtarın yoksa; sorulara Enter
+ssh-copy-id debian@192.168.7.2
+```
+
+> [!TIP]
+> Kart rootfs'ini NFS'ten alıyorsa ([Bölüm 12](12_busybox_rootfs.md)) `scp`'ye de gerek yok: host'taki NFS klasörüne kopyaladığın dosya o an kartta görünür.
+> ```bash
+> make STATIC=1 && sudo cp hello_bbb /srv/nfs/bbb/
+> ```
+> Kartta `/hello_bbb` ile çalıştır.
+
+Başka bir programı derlemek için `PROG` ve `SRCS`'i değiştirmen yeterli. Örneğin [Bölüm 17](17_seven_segment.md)'deki sayıcı:
+
+```bash
+make PROG=counter_7seg \
+     SRCS="../17_7segment/counter_7seg.c ../17_7segment/seg7.c ../lib/gpio_driver.c" \
+     CFLAGS="-Wall -O2 -I../lib"
+```
+
+### 14.8.2 VS Code ile
+
+VS Code'da Eclipse'in proje ayarlarının yerini `.vscode/` klasöründeki birkaç JSON dosyası alır. Derleme yine `make` ile yapılır, VS Code sadece onu çağırır.
+
+<b>1) Kur.</b> VS Code'u (<https://code.visualstudio.com>) ve Microsoft'un <b>C/C++</b> eklentisini (`ms-vscode.cpptools`) kur. Hata ayıklama için host'ta `gdb-multiarch` gerekir:
+
+```bash
+sudo apt install gdb-multiarch
+code ~/code/14_no_ide
+```
+
+<b>2) Kod tamamlama: `c_cpp_properties.json`.</b> Bu dosya yoksa VS Code host'un `/usr/include` başlıklarını kullanır ve ARM'a özgü kodda yanlış uyarılar verir. `compilerPath` cross derleyiciyi gösterince başlıkları ve makroları toolchain'den okur:
+
+```json
+"compilerPath": "${env:HOME}/bbb/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc",
+"intelliSenseMode": "linux-gcc-arm"
+```
+
+<b>3) Derleme ve çalıştırma: `tasks.json`.</b> Üç görev tanımlı:
+
+| Görev | Komut | Nasıl çalıştırılır |
+|---|---|---|
+| `build` | `make` | <b>Ctrl+Shift+B</b>. Derleme hataları Problems panelinde, kendi satırında görünür. |
+| `run on board` | `make run` | <i>Terminal → Run Task...</i> |
+| `start gdbserver` | `make deploy`, sonra kartta `gdbserver` | Hata ayıklama başlarken kendiliğinden ([14.8.4](#1484-vs-codeda-hata-ayıklama)) |
+
+Kartın adresi `.vscode/settings.json`'daki `bbb.board` değeridir.
+
+> [!WARNING]
+> VS Code'un <b>Remote-SSH</b> eklentisiyle doğrudan kartın içinde de çalışılabilir. Ama bunun için kartta VS Code'un sunucu tarafı çalışır; BBB'nin 512 MB RAM'i ve tek çekirdeği için bu ağırdır, BusyBox rootfs'te ise hiç çalışmaz. Kodu host'ta yazıp karta göndermek daha hızlıdır.
+
+### 14.8.3 gdbserver ile uzaktan hata ayıklama
+
+`printf` ile hata aramak her zaman yetmez. <b>gdb</b> ile programı bir satırda durdurabilir, değişkenlere bakabilir, adım adım ilerleyebilirsin. Program kartta çalıştığı için gdb iki parçaya bölünür:
+
+```
+ Host PC                                          BeagleBone Black
+ ┌──────────────────────────────┐   TCP 2345    ┌───────────────────────────┐
+ │ gdb-multiarch hello_bbb      │ ────────────► │ gdbserver :2345 hello_bbb │
+ │ - kaynak kod, semboller (-g) │ ◄──────────── │ - programı çalıştırır,    │
+ │ - break, next, print         │   yazmaçlar,  │   durdurur, belleği okur  │
+ └──────────────────────────────┘   bellek      └───────────────────────────┘
+```
+
+- <b>gdbserver</b> kartta çalışır. Küçüktür; kaynak koda ve sembollere ihtiyaç duymaz.
+- <b>gdb</b> host'ta çalışır, sembolleri (`-g` ile derlenmiş dosyadan) ve kaynak kodu okur. Host'un normal `gdb`'si sadece x86'yı anlar; ARM için <b>`gdb-multiarch`</b> gerekir. (Linaro toolchain'inin içindeki `arm-linux-gnueabihf-gdb` de olur.)
+
+<b>gdbserver'ı karta kur:</b>
+
+| Karttaki sistem | Nasıl? |
+|---|---|
+| Debian ([Bölüm 5](05_emmc_boot.md)) | `sudo apt install gdbserver` (kartın internete çıkabilmesi gerekir) |
+| Buildroot ([Bölüm 13](13_buildroot.md)) | <i>Target packages → Debugging, profiling and benchmark → gdb</i>'yi seç; altındaki <b>gdbserver</b> seçeneği varsayılan olarak işaretli gelir. Sonra yeniden `make`. |
+
+<b>Programı `-g -O0` ile derle.</b> Makefile'daki varsayılan `CFLAGS` bunu yapar. `-O2` ile derlenmiş programda derleyici satırların sırasını değiştirir ve bazı değişkenleri yok eder; gdb onlar için `<optimized out>` gösterir.
+
+<b>Çalıştır:</b>
+
+![Kartta gdbserver, host'ta gdb-multiarch ile adım adım hata ayıklama](../images/eclipse/08_gdbserver.png)
+
+Kartta:
+
+```text
+gdbserver :2345 ./hello_bbb
+```
+
+Host'ta:
+
+```bash
+cd ~/code/14_no_ide
+gdb-multiarch -q hello_bbb
+```
+
+```text
+(gdb) set sysroot ~/bbb/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/arm-linux-gnueabihf/libc
+(gdb) target remote 192.168.7.2:2345
+(gdb) break main
+(gdb) continue
+(gdb) next
+(gdb) print sum
+(gdb) continue
+```
+
+| Komut | Kısaltma | Ne yapar? |
+|---|---|---|
+| `break main`, `break 21` | `b` | Fonksiyonda ya da satırda durma noktası koyar. `break 21 if i == 4` sadece koşul doğruysa durur. |
+| `continue` | `c` | Sonraki durma noktasına kadar çalıştırır. gdbserver programı başlatıp ilk komutta durdurduğu için `run` değil `continue` yazılır. |
+| `next` / `step` | `n` / `s` | Bir satır ilerler; `step` çağrılan fonksiyonun içine girer. |
+| `print sum` | `p` | Değişkenin değerini gösterir. |
+| `backtrace` | `bt` | Program çöktüyse hangi fonksiyon zincirinde olduğunu gösterir. |
+| `info locals` | | Fonksiyonun bütün yerel değişkenleri. |
+
+`set sysroot`, gdb'ye programın kullandığı paylaşılan kütüphanelerin (libc) host'taki kopyasını gösterir. Yol, `arm-linux-gnueabihf-gcc -print-sysroot` komutunun çıktısıdır. Program `-static` derlenmişse bu satıra gerek yoktur.
+
+### 14.8.4 VS Code'da hata ayıklama
+
+Aynı işi VS Code'un arayüzünden yapmak için `.vscode/launch.json`:
+
+```json
+{
+	"name": "Debug on BBB",
+	"type": "cppdbg",
+	"request": "launch",
+	"program": "${workspaceFolder}/hello_bbb",
+	"MIMode": "gdb",
+	"miDebuggerPath": "/usr/bin/gdb-multiarch",
+	"miDebuggerServerAddress": "192.168.7.2:2345",
+	"preLaunchTask": "start gdbserver",
+	"stopAtEntry": true,
+	"setupCommands": [
+		{ "text": "set sysroot ${env:HOME}/bbb/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/arm-linux-gnueabihf/libc" }
+	]
+}
+```
+
+<b>F5</b>'e bastığında:
+
+1. `preLaunchTask` ([14.8.2](#1482-vs-code-ile)'deki `start gdbserver` görevi) programı derleyip karta kopyalar ve kartta `gdbserver`'ı başlatır.
+2. Görev "Listening on port" satırını görünce VS Code `gdb-multiarch`'ı başlatır ve `miDebuggerServerAddress`'e bağlanır.
+3. Program `main`'de durur. Satır numarasının soluna tıklayarak durma noktası koyar, <b>F10</b> (next) ve <b>F11</b> (step) ile ilerler, değişkenleri soldaki <i>Variables</i> panelinde görürsün.
+
+Kartın IP'si değişirse hem `settings.json`'daki `bbb.board`'u hem `launch.json`'daki `miDebuggerServerAddress`'i güncelle.
+
+---
+
+## 14.9 Özet
 
 - Eclipse (Eclipse IDE for C/C++ Developers) Java'sıyla birlikte gelir. Gereken eklentiler: <b>C/C++ GCC Cross Compiler Support</b> ve <b>C/C++ Remote Launch</b>.
 - Proje: <i>C Managed Build → Executable → Cross GCC</i>. Toolchain'i <b>Prefix</b> (`arm-linux-gnueabihf-`) ve <b>Path</b> (`.../bin`) belirler.
 - Karta gönderip çalıştırma: <i>Run Configurations → C/C++ Remote Application</i>, SSH bağlantısı; kartta SFTP sunucusu gerekir.
 - Karttaki rootfs'te kütüphane yoksa ya da glibc eskiyse programı `-static` derle.
 - Kursun projeleri: <i>Import → Existing Projects into Workspace</i>, sonra Cross Settings → Path'i düzelt.
+- Eclipse zorunlu değil: `make` ile derle, `scp` + `ssh` ile çalıştır (`make run`). VS Code'da aynı işi `.vscode/` altındaki `tasks.json` ve `launch.json` yapar.
+- Hata ayıklama: kartta `gdbserver :2345 ./program`, host'ta `gdb-multiarch` → `target remote <kart>:2345`. Programı `-g -O0` ile derle.
 
-## 14.9 Karşılaşılabilecek Problemler
+## 14.10 Karşılaşılabilecek Problemler
 
 ![Sık görülen hatalar (temsili)](../images/eclipse/06_errors.png)
 
@@ -265,6 +480,12 @@ git clone https://github.com/niekiran/EmbeddedLinuxBBB.git
 | `Error during file upload` | Kartta SFTP sunucusu yok | Buildroot'a `gesftpserver` ekle |
 | `Permission denied` (çalıştırırken) | Dosya çalıştırılabilir değil ya da yanlış klasöre kopyalandı | Remote path'in kullanıcının yazabildiği bir yer olduğundan emin ol |
 | Kartta `Exec format error` | Program ARM için değil, host için derlenmiş | Toolchain olarak Cross GCC seçildiğini, `file` çıktısında ARM yazdığını kontrol et |
+| `missing separator.  Stop.` | Makefile'da komut satırı boşlukla başlıyor | Komut satırlarının başına <b>Tab</b> koy |
+| `make: arm-linux-gnueabihf-gcc: No such file or directory` | Toolchain `PATH`'te değil | `make CROSS_COMPILE=<toolchain>/bin/arm-linux-gnueabihf-` ya da `PATH`'e ekle ([14.8.1](#1481-makefile-ile-derleme-ve-karta-gönderme)) |
+| gdb'de `Remote 'g' packet reply is too long` | ARM programa host'un x86 `gdb`'siyle bağlanıldı | `gdb-multiarch` kullan |
+| `target remote` → `Connection timed out` / `refused` | Kartta `gdbserver` çalışmıyor, IP ya da port yanlış | Kartta `gdbserver :2345 ./program` çalışıyor mu bak |
+| gdb'de değişken `<optimized out>`, satırlar atlanıyor | Program `-O2` ile derlenmiş | `-g -O0` ile derle |
+| VS Code ARM başlıklarında yanlış hata gösteriyor | IntelliSense host derleyicisini kullanıyor | `c_cpp_properties.json`'da `compilerPath`'i cross gcc yap |
 
 ---
 
