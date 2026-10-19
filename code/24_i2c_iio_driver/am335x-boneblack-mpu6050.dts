@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * am335x-boneblack-mpu6050.dts — BeagleBone Black + I2C2'deki MPU6050.
+ *
+ * Kernel kaynağında arch/arm/boot/dts/ altına kopyalanır ve
+ * am335x-boneblack-mpu6050.dtb olarak derlenir (Bölüm 24.4).
+ *
+ * I2C2 (P9_19 SCL, P9_20 SDA) BBB'nin DTS'inde zaten açık ve pinmux'u
+ * ayarlı; sadece veriyolunun altına sensörün düğümünü ekliyoruz.
+ */
+#include "am335x-boneblack.dts"
+
+&i2c2 {
+	imu@68 {
+		compatible = "bbb,mpu6050";
+		reg = <0x68>;           /* I2C adresi (AD0 = 0) */
+	};
+};

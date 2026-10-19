@@ -59,6 +59,7 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | <b>VII — Kernel Sürücüleri</b> | [21. Kernel Modülü Yazmak](21_kernel_module.md) | İlk modülünü yaz, kartta yükle, parametre ve sembol paylaşımını dene |
 | | [22. Karakter Aygıt Sürücüsü](22_char_driver.md) | `/dev` altında kendi aygıtını aç; read, write, ioctl'ü yaz |
 | | [23. Device Tree ile GPIO Platform Sürücüsü](23_gpio_platform_driver.md) | LED'i ve butonu DT'den tanıt, kesmeyle süren bir sürücü yaz |
+| | [24. MPU6050 için I2C Sürücüsü (IIO)](24_i2c_iio_driver.md) | Sensörü kernel'de oku, IIO dosyalarıyla dışarı aç |
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 

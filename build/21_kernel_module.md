@@ -71,7 +71,7 @@ Kartta:
 
 ---
 
-## 21.3 İlk Modül: `hello.c`
+## 21.3 Birinci Modül: `hello.c`
 
 Bölümün kodu: [`code/21_kernel_module/`](../code/21_kernel_module/hello.c). En küçük modül iki fonksiyondan oluşur: biri yüklenirken, biri çıkarılırken çalışır.
 

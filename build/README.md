@@ -51,3 +51,4 @@
 - [Bölüm 21 — Kernel Modülü Yazmak](21_kernel_module.md)
 - [Bölüm 22 — Karakter Aygıt Sürücüsü](22_char_driver.md)
 - [Bölüm 23 — Device Tree ile GPIO Platform Sürücüsü](23_gpio_platform_driver.md)
+- [Bölüm 24 — MPU6050 için I2C Sürücüsü (IIO)](24_i2c_iio_driver.md)

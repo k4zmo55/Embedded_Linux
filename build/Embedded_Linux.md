@@ -49,6 +49,7 @@
 - [Bölüm 21 — Kernel Modülü Yazmak](#c21-bölüm-21--kernel-modülü-yazmak)
 - [Bölüm 22 — Karakter Aygıt Sürücüsü](#c22-bölüm-22--karakter-aygıt-sürücüsü)
 - [Bölüm 23 — Device Tree ile GPIO Platform Sürücüsü](#c23-bölüm-23--device-tree-ile-gpio-platform-sürücüsü)
+- [Bölüm 24 — MPU6050 için I2C Sürücüsü (IIO)](#c24-bölüm-24--mpu6050-için-i2c-sürücüsü-iio)
 
 <div class="page-break"></div>
 
@@ -112,6 +113,7 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | <b>VII — Kernel Sürücüleri</b> | [21. Kernel Modülü Yazmak](#c21-bölüm-21--kernel-modülü-yazmak) | İlk modülünü yaz, kartta yükle, parametre ve sembol paylaşımını dene |
 | | [22. Karakter Aygıt Sürücüsü](#c22-bölüm-22--karakter-aygıt-sürücüsü) | `/dev` altında kendi aygıtını aç; read, write, ioctl'ü yaz |
 | | [23. Device Tree ile GPIO Platform Sürücüsü](#c23-bölüm-23--device-tree-ile-gpio-platform-sürücüsü) | LED'i ve butonu DT'den tanıt, kesmeyle süren bir sürücü yaz |
+| | [24. MPU6050 için I2C Sürücüsü (IIO)](#c24-bölüm-24--mpu6050-için-i2c-sürücüsü-iio) | Sensörü kernel'de oku, IIO dosyalarıyla dışarı aç |
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
@@ -8777,7 +8779,7 @@ Kartta:
 
 ---
 
-## <a name="c21-213-i̇lk-modül-helloc"></a>21.3 İlk Modül: `hello.c`
+## <a name="c21-213-birinci-modül-helloc"></a>21.3 Birinci Modül: `hello.c`
 
 Bölümün kodu: [`code/21_kernel_module/`](../code/21_kernel_module/hello.c). En küçük modül iki fonksiyondan oluşur: biri yüklenirken, biri çıkarılırken çalışır.
 
@@ -9892,4 +9894,398 @@ Sürücü ile aygıt arasındaki bağ sysfs'ten koparılıp yeniden kurulabilir.
 | `genirq: Threaded irq requested with handler=NULL and !ONESHOT` | `IRQF_ONESHOT` unutuldu | Bayrağa ekle |
 | `make: *** No rule to make target 'am335x-boneblack-gpiodemo.dtb'` | DTS `arch/arm/boot/dts/`'e kopyalanmadı ya da `Makefile` satırı eklenmedi; kernel 6.5+'ta yol farklı | [23.3](#c23-233-device-treeye-düğüm-eklemek)'teki adımlar |
 | `presses_wait` ilk anda bir kez uyanıyor | `poll()` öncesi dosya okunmadı | Döngüden önce bir kez oku (programdaki gibi) |
+
+
+<div class="page-break"></div>
+
+# <a name="c24-bölüm-24--mpu6050-için-i2c-sürücüsü-iio"></a>Bölüm 24 — MPU6050 için I2C Sürücüsü (IIO)
+
+> <b>Bu bölümde:</b>
+> - Linux'ta I2C'nin iki tarafını, <b>adaptör</b> (denetleyici) ve <b>istemci</b> (sensör) sürücülerini tanıyacaksın.
+> - [Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)'da kullanıcı alanından okuduğun MPU6050'yi kernel'de bir `i2c_driver` ile okuyacaksın.
+> - Sürücüyü kernel'in sensör alt sistemi <b>IIO</b>'ya kaydedip değerleri standart dosyalarla (`in_accel_x_raw`, `in_accel_scale`...) açacaksın.
+> - Sensörü önce `new_device` ile anında, sonra device tree ile kalıcı olarak tanıtacaksın.
+> - Eğim açısını IIO dosyalarından bir kabuk betiğiyle hesaplayacaksın.
+>
+> <b>Ön koşul:</b> [Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c) — MPU6050, register'lar ve I2C, [Bölüm 21](#c21-bölüm-21--kernel-modülü-yazmak) — modül derleme ve `modprobe`, [Bölüm 23](#c23-bölüm-23--device-tree-ile-gpio-platform-sürücüsü) — `probe()`, `devm_` ve device tree düğümü.
+
+> [!NOTE]
+> Bu bölüm kursta yok. Kart, [Bölüm 21](#c21-bölüm-21--kernel-modülü-yazmak)'deki gibi kendi kernel'in (5.10.162) ve BusyBox rootfs'inle (NFS) açılıyor; MPU6050 [19.5](#c19-195-devre)'teki gibi I2C2'ye (P9_19, P9_20) bağlı. Terminal görüntüleri temsilidir.
+
+---
+
+## <a name="c24-241-linuxta-i2cnin-i̇ki-tarafı"></a>24.1 Linux'ta I2C'nin İki Tarafı
+
+[Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)'da `/dev/i2c-2`'yi açıp `ioctl(I2C_SLAVE)` ile sensörün adresini seçtik ve register'ları kullanıcı alanından okuduk. Bunun altında kernel'de iki tür sürücü vardır:
+
+```
+ Kullanıcı alanı     mpu6050_rawread (Bölüm 19)           tilt.sh (bu bölüm)
+                          │ /dev/i2c-2                        │ /sys/bus/iio/devices/iio:device1/
+ ─────────────────────────┼───────────────────────────────────┼───────────────────────────────────
+ Kernel                   ▼                                   ▼
+                     i2c-dev (genel köprü)               bbb_mpu6050  ← I2C istemci sürücüsü
+                          │                                   │        (bu bölüm)
+                          └──────────────┬────────────────────┘
+                                         ▼
+                              I2C çekirdeği (i2c-core)
+                                         │
+                                         ▼
+                              i2c-omap  ← I2C adaptör sürücüsü (AM335x I2C2 denetleyicisi)
+ ─────────────────────────────────────────┼───────────────────────────────────────────────────────
+ Donanım                          SCL / SDA ── MPU6050 (0x68)
+```
+
+| Sürücü | Neyi sürer? | Örnek |
+|---|---|---|
+| <b>Adaptör</b> (bus/controller) sürücüsü | SoC'nin I2C denetleyicisini: START/STOP, bayt gönderme, ACK | `i2c-omap` ([10.6](#c10-106-soc-sürücülerinin-düzeni-drivers)); her I2C hattı için bir `i2c-N` |
+| <b>İstemci</b> (client) sürücüsü | Hattaki bir aygıtı: hangi register'ın ne anlama geldiğini bilir | EEPROM için `at24`, PMIC için `tps65217`, bu bölümdeki `bbb_mpu6050` |
+| `i2c-dev` | Kullanıcı alanına genel bir kapı (`/dev/i2c-N`) | [Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)'daki yol |
+
+İstemci sürücüsü register adreslerini ve birim dönüşümünü kendisi bilir; kullanıcı programı sadece "ivme X ne?" diye sorar. Aynı sensörü kullanan her program aynı sürücüden geçer, iki program aynı anda register adresini karıştıramaz.
+
+---
+
+## <a name="c24-242-iio-sensörler-için-ortak-arayüz"></a>24.2 IIO: Sensörler için Ortak Arayüz
+
+Kernel'de her tür aygıtın bir <b>alt sistemi</b> vardır: LED'ler için `leds` ([15.5](#c15-155-user-ledleri-sysfs-ile-kontrol-etmek)), ağ kartları için `net`, giriş aygıtları için `input`. İvmeölçer, jiroskop, ADC, sıcaklık, basınç, ışık sensörleri için olan alt sistem <b>IIO</b>'dur (Industrial I/O).
+
+Sürücü IIO'ya "şu kanallarım var" der; IIO her kanal için sysfs'te standart adlı dosyalar açar:
+
+| Dosya | Anlamı |
+|---|---|
+| `name` | Aygıtın adı |
+| `in_accel_x_raw` | İvme X ekseni, ham değer (register'daki sayı) |
+| `in_accel_scale` | Ham değeri birime çeviren çarpan: `raw × scale` = <b>m/s²</b> |
+| `in_anglvel_x_raw`, `in_anglvel_scale` | Açısal hız; `raw × scale` = <b>rad/s</b> |
+| `in_temp_raw`, `in_temp_offset`, `in_temp_scale` | Sıcaklık; `(raw + offset) × scale` = <b>milli °C</b> |
+
+Birimler IIO'da sabittir. Hangi üreticinin sensörünü takarsan tak, programın `in_accel_*` dosyalarını okuyup aynı formülü uygulaması yeter. AM335x'in kendi ADC'si de (`AIN0`–`AIN6`, [1.9](#c1-19-genişleme-headerları-p8-ve-p9)) bir IIO aygıtıdır; kartında genelde `iio:device0` odur.
+
+> [!NOTE]
+> Kernel'de MPU6050 için tam özellikli bir IIO sürücüsü zaten var: `inv_mpu6050` (`compatible = "invensense,mpu6050"`). Kesme, tampon (buffer) ve FIFO desteği de içerir. Bu bölümdeki `bbb_mpu6050` öğrenmek için yazılmış küçük bir sürücü; ötekiyle çakışmasın diye farklı bir ad ve `compatible` kullanıyor.
+
+---
+
+## <a name="c24-243-sürücü"></a>24.3 Sürücü
+
+Bölümün kodu: [`code/24_i2c_iio_driver/bbb_mpu6050.c`](../code/24_i2c_iio_driver/bbb_mpu6050.c).
+
+### <a name="c24-kanallar"></a>Kanallar
+
+```c
+#define MPU6050_CHAN(_type, _axis, _reg) {				\
+	.type = _type,							\
+	.modified = 1,							\
+	.channel2 = IIO_MOD_##_axis,					\
+	.address = _reg,						\
+	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),			\
+	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),		\
+}
+
+static const struct iio_chan_spec bbb_mpu_channels[] = {
+	MPU6050_CHAN(IIO_ACCEL, X, MPU6050_REG_ACCEL_XOUT_H),
+	MPU6050_CHAN(IIO_ACCEL, Y, MPU6050_REG_ACCEL_XOUT_H + 2),
+	MPU6050_CHAN(IIO_ACCEL, Z, MPU6050_REG_ACCEL_XOUT_H + 4),
+	MPU6050_CHAN(IIO_ANGL_VEL, X, MPU6050_REG_GYRO_XOUT_H),
+	...
+	{
+		.type = IIO_TEMP,
+		.address = MPU6050_REG_TEMP_OUT_H,
+		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
+				      BIT(IIO_CHAN_INFO_SCALE) |
+				      BIT(IIO_CHAN_INFO_OFFSET),
+	},
+};
+```
+
+| Alan | Anlamı |
+|---|---|
+| `.type` | Ne ölçülüyor: `IIO_ACCEL`, `IIO_ANGL_VEL`, `IIO_TEMP` |
+| `.modified`, `.channel2` | Eksen: dosya adına `_x`, `_y`, `_z` eklenir |
+| `.address` | Sürücünün kendi kullanımı için serbest alan; burada kanalın register adresi ([19.2](#c19-192-mpu6050)) |
+| `info_mask_separate` | Her kanalın kendi dosyası olan bilgiler: `in_accel_x_raw` |
+| `info_mask_shared_by_type` | Aynı türdeki kanalların ortak dosyası: tek bir `in_accel_scale` |
+
+### <a name="c24-read_raw"></a>read_raw
+
+IIO, bir dosya okunduğunda sürücünün `read_raw()` fonksiyonunu hangi kanal ve hangi bilgi istendiğiyle çağırır:
+
+```c
+static int bbb_mpu_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long mask)
+{
+	struct bbb_mpu *m = iio_priv(indio_dev);
+	int ret;
+
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		mutex_lock(&m->lock);
+		ret = i2c_smbus_read_word_swapped(m->client, chan->address);
+		mutex_unlock(&m->lock);
+		if (ret < 0)
+			return ret;
+		*val = (s16)ret;
+		return IIO_VAL_INT;
+
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_ACCEL:         /* ±2 g: 9.80665 / 16384 = 0.000598550 m/s^2 */
+			*val = 0;
+			*val2 = 598550;
+			return IIO_VAL_INT_PLUS_NANO;
+		...
+		}
+
+	case IIO_CHAN_INFO_OFFSET:      /* sadece sıcaklık: 36.53 °C x 340 = 12420.2 */
+		*val = 12420;
+		*val2 = 200000;
+		return IIO_VAL_INT_PLUS_MICRO;
+	}
+
+	return -EINVAL;
+}
+```
+
+- <b>Ham değer:</b> `i2c_smbus_read_word_swapped()` register'dan 2 bayt okur. MPU6050 yüksek baytı önce gönderir; fonksiyonun adındaki "swapped" baytları buna göre çevirir. `(s16)` dönüşümü işaretli 16 bit yapar: [19.8](#c19-198-kursun-programı-ve-düzeltmeler)'deki `be16()`'nın işi.
+- <b>Kayan nokta yok:</b> Kernel'de `float` kullanılmaz ([21.3](#c21-213-birinci-modül-helloc)). Ondalıklı bir çarpan iki tamsayıyla verilir: `IIO_VAL_INT_PLUS_NANO` → `val + val2 × 10⁻⁹`. IIO dosyaya `0.000598550` yazar.
+- <b>Çarpanlar</b> [19.3](#c19-193-ölçek-aralığı-ve-birim-dönüşümü)'teki hassasiyetlerden ve IIO'nun birimlerinden gelir:
+
+| Kanal | Hesap | Değer |
+|---|---|---|
+| İvme (±2 g, 16384 LSB/g) | 9.80665 m/s² / 16384 | 0.000598550 m/s² |
+| Açısal hız (±250 °/s, 131 LSB/(°/s)) | (π / 180) / 131 | 0.000133231 rad/s |
+| Sıcaklık: scale | 1000 / 340 | 2.941176 milli °C |
+| Sıcaklık: offset | 36.53 × 340 | 12420.2 |
+
+Sıcaklık formülü [19.3](#c19-193-ölçek-aralığı-ve-birim-dönüşümü)'tekinin aynısıdır: `raw / 340 + 36.53` = `(raw + 12420.2) × (1000 / 340)` milli °C.
+
+### <a name="c24-probe"></a>probe
+
+```c
+static int bbb_mpu_probe(struct i2c_client *client)
+{
+	...
+	ret = i2c_smbus_read_byte_data(client, MPU6050_REG_WHO_AM_I);
+	if (ret < 0)
+		return dev_err_probe(dev, ret, "no answer at 0x%02x\n", client->addr);
+	if (ret != MPU6050_WHO_AM_I_VALUE)
+		return dev_err_probe(dev, -ENODEV, "WHO_AM_I = 0x%02x, not an MPU6050\n", ret);
+
+	ret = i2c_smbus_write_byte_data(client, MPU6050_REG_PWR_MGMT_1, MPU6050_PWR_CLK_PLL_X);
+	...
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*m));
+	m = iio_priv(indio_dev);
+	m->client = client;
+	...
+	ret = devm_add_action_or_reset(dev, bbb_mpu_sleep, m);   /* ayrılırken uyut */
+	...
+	indio_dev->name = "bbb_mpu6050";
+	indio_dev->info = &bbb_mpu_info;
+	indio_dev->channels = bbb_mpu_channels;
+	indio_dev->num_channels = ARRAY_SIZE(bbb_mpu_channels);
+	indio_dev->modes = INDIO_DIRECT_MODE;
+
+	return devm_iio_device_register(dev, indio_dev);
+}
+```
+
+| Adım | Karşılığı |
+|---|---|
+| `struct i2c_client *client` | Hattaki aygıt: adaptörü (`client->adapter`) ve adresi (`client->addr`) içerir. [Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)'daki `open("/dev/i2c-2")` + `ioctl(I2C_SLAVE, 0x68)`'in kernel'deki hali. |
+| `i2c_smbus_read_byte_data()` / `write_byte_data()` | Register oku/yaz. Kullanıcı alanındaki `I2C_RDWR` mesajlarını ([19.7](#c19-197-linuxta-i2c-devi2c-n)) bu fonksiyonlar kurar. |
+| `WHO_AM_I` kontrolü | Doğru aygıta konuştuğumuzdan emin ol; değilse `probe` başarısız |
+| `devm_iio_device_alloc()` | IIO aygıtı + sürücünün verisi için tek seferde bellek; veriye `iio_priv()` ile ulaşılır |
+| `INDIO_DIRECT_MODE` | Değerler istendiğinde tek tek okunur (dosya okununca). Sürekli örnekleme (buffer) bu örnekte yok. |
+| `devm_iio_device_register()` | sysfs dosyaları burada oluşur; sürücü ayrılırken kendiliğinden kaldırılır |
+
+### <a name="c24-eşleşme-tabloları"></a>Eşleşme tabloları
+
+```c
+static const struct i2c_device_id bbb_mpu_id[] = {
+	{ "bbb_mpu6050", 0 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, bbb_mpu_id);
+
+static const struct of_device_id bbb_mpu_of_match[] = {
+	{ .compatible = "bbb,mpu6050" },
+	{ }
+};
+MODULE_DEVICE_TABLE(of, bbb_mpu_of_match);
+
+static struct i2c_driver bbb_mpu_driver = {
+	.driver = {
+		.name           = "bbb_mpu6050",
+		.of_match_table = bbb_mpu_of_match,
+	},
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+	.probe          = bbb_mpu_probe,
+#else
+	.probe_new      = bbb_mpu_probe,
+#endif
+	.id_table       = bbb_mpu_id,
+};
+module_i2c_driver(bbb_mpu_driver);
+```
+
+İki tablo, aygıtın iki tanıtılma yolu içindir: `id_table` adla ([24.4](#c24-244-aygıtı-tanıtmak)'teki `new_device`), `of_match_table` device tree ile. Kernel 6.3'te `probe`'un imzası değişti (`id` argümanı kalktı); 5.10'da tek argümanlı hali `probe_new` adıyla verilir. `#if` ikisini de karşılar.
+
+---
+
+## <a name="c24-244-aygıtı-tanıtmak"></a>24.4 Aygıtı Tanıtmak
+
+I2C aygıtları kendini tanıtmaz; kernel `0x68`'de ne olduğunu bilemez. Birinin söylemesi gerekir.
+
+### <a name="c24-derle-kur-yükle"></a>Derle, kur, yükle
+
+![Sürücüyü derleme, kurma ve modprobe ile yükleme](../images/iio/01_build_load.png)
+
+Host'ta:
+
+```bash
+cd ~/code/24_i2c_iio_driver
+make
+make install INSTALL_MOD_PATH=~/bbb/rootfs
+sudo cp -a ~/bbb/rootfs/lib/modules/5.10.162 /srv/nfs/bbb/lib/modules/
+sudo cp tilt.sh /srv/nfs/bbb/root/
+```
+
+Kartta:
+
+```text
+~ # modprobe bbb_mpu6050
+~ # ls /sys/bus/i2c/drivers/bbb_mpu6050/
+```
+
+Sürücü IIO'nun çekirdek fonksiyonlarını kullanır (`modinfo -F depends` → `industrialio`). IIO kernel'de modül olarak derlendiyse `insmod` `Unknown symbol` verir; `modprobe` bağımlılığı önce yükler ([21.7](#c21-217-modüller-arası-sembol-paylaşımı-ve-modprobe)). Bu yüzden modül `make install` ile kurulup `modprobe` ile yükleniyor.
+
+Sürücü kayıtlı ama henüz sürdüğü bir aygıt yok.
+
+### <a name="c24-hızlı-yol-new_device"></a>Hızlı yol: new_device
+
+Her I2C hattının sysfs klasöründe `new_device` dosyası vardır. "Bu hatta, bu adreste, bu adla bir aygıt var" demek, aygıtı DTB'yi değiştirmeden anında oluşturur:
+
+![new_device ile aygıtı tanıtma ve IIO aygıtının oluşması](../images/iio/02_new_device.png)
+
+```text
+~ # echo bbb_mpu6050 0x68 > /sys/bus/i2c/devices/i2c-2/new_device
+~ # dmesg | tail -2
+~ # ls /sys/bus/i2c/devices/
+~ # i2cdetect -y -r 2 | grep 60:
+~ # cat /sys/bus/iio/devices/iio:device*/name
+```
+
+Kernel `2-0068` adında bir I2C aygıtı oluşturdu (hat 2, adres `0x68`), `id_table`'daki adla sürücüyü buldu ve `probe`'u çağırdı. `i2cdetect` artık `0x68`'de `UU` gösteriyor: adres bir kernel sürücüsünde ([19.6](#c19-196-komut-satırından-i2c-tools)).
+
+Aygıtı silmek: `echo 0x68 > /sys/bus/i2c/devices/i2c-2/delete_device`. `new_device` kalıcı değildir; kart yeniden açılınca tekrar yazmak gerekir.
+
+### <a name="c24-kalıcı-yol-device-tree"></a>Kalıcı yol: device tree
+
+[Bölüm 23](#c23-233-device-treeye-düğüm-eklemek)'teki gibi bir kart DTS'i: [`am335x-boneblack-mpu6050.dts`](../code/24_i2c_iio_driver/am335x-boneblack-mpu6050.dts). Bu kez düğüm kökün değil, <b>I2C2 hattının</b> altında; çünkü aygıt o hatta bağlı ([11.5](#c11-115-bir-device-treenin-genel-yapısı)'teki EEPROM örneği gibi):
+
+```dts
+#include "am335x-boneblack.dts"
+
+&i2c2 {
+	imu@68 {
+		compatible = "bbb,mpu6050";
+		reg = <0x68>;           /* I2C adresi (AD0 = 0) */
+	};
+};
+```
+
+I2C2 BBB'nin DTS'inde zaten açık ve pinmux'u ayarlı ([19.4](#c19-194-i2cye-kısa-bakış)); `pinctrl` ya da `status` yazmaya gerek yok. `reg`, I2C düğümlerinde aygıtın adresidir ([11.6](#c11-116-önemli-propertyler)).
+
+```bash
+cd ~/bbb/linux
+cp ~/code/24_i2c_iio_driver/am335x-boneblack-mpu6050.dts arch/arm/boot/dts/
+echo 'dtb-$(CONFIG_SOC_AM33XX) += am335x-boneblack-mpu6050.dtb' >> arch/arm/boot/dts/Makefile
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- am335x-boneblack-mpu6050.dtb
+sudo cp arch/arm/boot/dts/am335x-boneblack-mpu6050.dtb /var/lib/tftpboot/am335x-boneblack.dtb
+```
+
+Kart bu DTB ile açılınca kernel açılışta `2-0068` aygıtını kendisi oluşturur; `modprobe bbb_mpu6050` (ya da sürücüyü açılışta yükleyen [12.7](#c12-127-usb-üzerinden-ethernet-ve-sürücüleri-açılışta-yüklemek)'deki betik) yeterli olur.
+
+> [!TIP]
+> [Bölüm 23](#c23-bölüm-23--device-tree-ile-gpio-platform-sürücüsü)'teki LED/buton düğümünü de kullanmak istiyorsan iki düğümü tek bir DTS'te birleştir: `am335x-boneblack-gpiodemo.dts`'in sonuna buradaki `&i2c2 { ... };` bloğunu ekle.
+
+---
+
+## <a name="c24-245-değerleri-okumak"></a>24.5 Değerleri Okumak
+
+![IIO dosyalarını okuma ve birime çevirme](../images/iio/03_iio_files.png)
+
+```text
+~ # cd /sys/bus/iio/devices/iio:device1
+iio:device1 # ls
+iio:device1 # cat in_accel_x_raw in_accel_y_raw in_accel_z_raw in_accel_scale
+iio:device1 # awk 'BEGIN { print 16360 * 0.000598550 }'
+iio:device1 # cat in_temp_raw in_temp_offset in_temp_scale
+iio:device1 # awk 'BEGIN { print (-4226 + 12420.2) * 2.941176 / 1000 }'
+```
+
+Düz dururken Z ekseni ≈ 9.8 m/s² (1 g) okur; sıcaklık [19.9](#c19-199-ham-okuma-programı)'daki 24.1 °C ile aynı. Aygıt numarası (`iio:device1`) sistemden sisteme değişebilir; doğru klasörü `name` dosyasından bul.
+
+### <a name="c24-eğim-betiği"></a>Eğim betiği
+
+[`tilt.sh`](../code/24_i2c_iio_driver/tilt.sh), [19.10](#c19-1910-eğim-açısı)'daki roll/pitch formülünü IIO dosyalarıyla hesaplar. C programına, `/dev/i2c-2`'ye ya da register adreslerine gerek kalmadı; sürücü hepsini üstlendi:
+
+```sh
+DEV=
+for d in /sys/bus/iio/devices/iio:device*; do
+	[ "$(cat "$d/name" 2>/dev/null)" = "bbb_mpu6050" ] && DEV=$d && break
+done
+...
+while true; do
+	x=$(cat "$DEV/in_accel_x_raw")
+	y=$(cat "$DEV/in_accel_y_raw")
+	z=$(cat "$DEV/in_accel_z_raw")
+	awk -v x="$x" -v y="$y" -v z="$z" 'BEGIN {
+		r2d = 180 / 3.14159265
+		printf "roll %6.1f   pitch %6.1f\n", atan2(y, z) * r2d, atan2(-x, sqrt(y*y + z*z)) * r2d
+	}'
+	sleep 1
+done
+```
+
+Açı hesaplanırken `scale` ile çarpmaya gerek yok: üç eksen aynı çarpanla çarpılacağı için oranları, yani açı değişmez.
+
+![Eğim betiği ve aygıtı silme](../images/iio/04_tilt.png)
+
+```text
+~ # chmod +x tilt.sh
+~ # ./tilt.sh
+~ # echo 0x68 > /sys/bus/i2c/devices/i2c-2/delete_device
+```
+
+> [!NOTE]
+> IIO'nun komut satırı araçları da var: kernel kaynağında `tools/iio/` altında `iio_info`, `lsiio`, `iio_generic_buffer`. Ayrıca `libiio` kütüphanesi IIO aygıtlarına C, Python ve ağ üzerinden erişim sağlar.
+
+---
+
+## <a name="c24-246-özet"></a>24.6 Özet
+
+- Linux'ta I2C'nin iki tarafı var: <b>adaptör</b> sürücüsü denetleyiciyi (`i2c-omap`), <b>istemci</b> sürücüsü hattaki aygıtı sürer. `/dev/i2c-N` (`i2c-dev`) kullanıcı alanına açılan genel kapıdır.
+- İstemci sürücüsü: `struct i2c_driver` + `module_i2c_driver()`; `probe(struct i2c_client *)` içinde `i2c_smbus_read_byte_data()`, `i2c_smbus_read_word_swapped()`, `i2c_smbus_write_byte_data()`.
+- Sensörler <b>IIO</b>'ya kaydolur: `iio_chan_spec` kanalları, `read_raw()` ve `devm_iio_device_register()`. Değerler `in_<tür>_<eksen>_raw`, birim çarpanı `in_<tür>_scale` (ivme m/s², açısal hız rad/s, sıcaklık milli °C).
+- Kernel'de kayan nokta yok: çarpanlar `IIO_VAL_INT_PLUS_MICRO/NANO` ile iki tamsayı olarak verilir.
+- Aygıtı tanıtmak: anında `echo <ad> <adres> > /sys/bus/i2c/devices/i2c-N/new_device` (`id_table`), kalıcı olarak DT'de I2C hattının altına `reg = <adres>` ile düğüm (`of_match_table`).
+- Adresi bir kernel sürücüsü aldığında `i2cdetect` `UU` gösterir ve kullanıcı alanından `I2C_SLAVE` `EBUSY` döner.
+
+## <a name="c24-247-karşılaşılabilecek-problemler"></a>24.7 Karşılaşılabilecek Problemler
+
+![Sık görülen hatalar (temsili)](../images/iio/05_errors.png)
+
+| Belirti | Sebep | Çözüm |
+|---|---|---|
+| `insmod: ... unknown symbol`, `dmesg`'te `Unknown symbol devm_iio_device_register` | IIO çekirdeği (`industrialio`) modül ve yüklü değil | `make install` + `modprobe bbb_mpu6050` ([24.4](#c24-244-aygıtı-tanıtmak)) |
+| `error -EREMOTEIO: no answer at 0x68` | Sensör cevap vermiyor: bağlantı, besleme ya da adres | [19.12](#c19-1912-karşılaşılabilecek-problemler)'deki kontroller; `i2cdetect -y -r 2` |
+| `WHO_AM_I = 0x.., not an MPU6050` | Bu adreste başka bir aygıt var (ya da MPU6050 klonu farklı bir değer dönüyor) | Datasheet'e bak; klonsa `MPU6050_WHO_AM_I_VALUE`'yu değiştir |
+| `new_device` yazıldı ama `probe` çağrılmadı | Sürücü yüklü değil ya da addaki yazım `id_table`'dan farklı | `ls /sys/bus/i2c/drivers/`; ad `bbb_mpu6050` olmalı |
+| `new_device`: `Device or resource busy` / `already in use` | O adreste zaten bir aygıt tanımlı (DT'den ya da önceki `new_device`) | `ls /sys/bus/i2c/devices/`; önce `delete_device` |
+| [Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)'un programı `I2C_SLAVE: Device or resource busy` | Adres artık `bbb_mpu6050` sürücüsünde | Sürücüyü ayır (`delete_device` ya da `rmmod`) ya da IIO dosyalarını kullan |
+| DT'li açılışta `inv-mpu6050` sürücüsü bağlandı | `compatible`'ı `invensense,mpu6050` yazdın | Bu sürücü için `bbb,mpu6050`; ikisi aynı aygıtı alamaz |
+| Değerler hep `0` | Sensör uykuda: `probe`'daki `PWR_MGMT_1` yazılmadı ya da başka bir program sensörü uyuttu | `dmesg`'te `MPU6050 ready` satırına bak; aygıtı silip yeniden tanıt |
+| `tilt.sh: bbb_mpu6050 IIO device not found` | Aygıt tanıtılmamış | [24.4](#c24-244-aygıtı-tanıtmak) |
 

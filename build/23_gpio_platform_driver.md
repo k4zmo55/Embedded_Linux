@@ -420,4 +420,4 @@ Sürücü ile aygıt arasındaki bağ sysfs'ten koparılıp yeniden kurulabilir.
 
 ---
 
-[← Bölüm 22: Karakter Aygıt Sürücüsü](22_char_driver.md) · [İçindekiler](README.md)
+[← Bölüm 22: Karakter Aygıt Sürücüsü](22_char_driver.md) · [İçindekiler](README.md) · [Bölüm 24: MPU6050 için I2C Sürücüsü (IIO) →](24_i2c_iio_driver.md)
