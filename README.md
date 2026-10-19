@@ -47,6 +47,7 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 - [Bölüm 16 — Harici LED Bağlamak](build/16_external_led.md)
 - [Bölüm 17 — 7-Segment Gösterge](build/17_seven_segment.md)
 - [Bölüm 18 — 4 Haneli 7-Segment Gösterge](build/18_four_digit_7segment.md)
+- [Bölüm 19 — MPU6050 ile Eğim Ölçmek (I2C)](build/19_mpu6050.md)
 
 ## Bu Repo Nasıl Çalışır?
 

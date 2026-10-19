@@ -424,4 +424,4 @@ Kursun sonraki konusu MPU6050 sensörü I2C ile okur; HT16K33 gibi I2C'li bir g�
 
 ---
 
-[← Bölüm 17: 7-Segment Gösterge](17_seven_segment.md) · [İçindekiler](README.md)
+[← Bölüm 17: 7-Segment Gösterge](17_seven_segment.md) · [İçindekiler](README.md) · [Bölüm 19: MPU6050 ile Eğim Ölçmek (I2C) →](19_mpu6050.md)

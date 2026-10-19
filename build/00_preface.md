@@ -54,8 +54,9 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [16. Harici LED Bağlamak](16_external_led.md) | LED'i dirençle bir GPIO'ya bağla, C ile ve device tree ile sür |
 | | [17. 7-Segment Gösterge](17_seven_segment.md) | Tek haneli göstergeyi sür, sayaç ve butonla sayma programı yaz |
 | | [18. 4 Haneli 7-Segment Gösterge](18_four_digit_7segment.md) | Çoğullama ile dört haneyi sür, sayaç ve dijital saat yaz |
+| | [19. MPU6050 ile Eğim Ölçmek (I2C)](19_mpu6050.md) | I2C ile ivmeölçer/jiroskop oku, eğim açısını hesapla |
 
-<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
