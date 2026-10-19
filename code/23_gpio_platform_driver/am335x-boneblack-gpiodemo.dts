@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * am335x-boneblack-gpiodemo.dts — BeagleBone Black + bbb-gpio-demo düğümü.
+ *
+ * Kernel kaynağında arch/arm/boot/dts/ altına kopyalanır ve
+ * am335x-boneblack-gpiodemo.dtb olarak derlenir (Bölüm 23.3).
+ *
+ * Donanım:
+ *   P9_12 (GPIO1_28) -> 470 ohm -> LED -> GND               (Bölüm 16)
+ *   3.3 V -> buton -> P9_23 (GPIO1_17), 10 kohm pull-down    (Bölüm 17)
+ */
+#include "am335x-boneblack.dts"
+
+&am33xx_pinmux {
+	gpio_demo_pins: gpio-demo-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(AM335X_PIN_GPMC_BEN1, PIN_OUTPUT_PULLDOWN, MUX_MODE7)	/* P9_12: gpio1_28, LED */
+			AM33XX_PADCONF(AM335X_PIN_GPMC_A1, PIN_INPUT_PULLDOWN, MUX_MODE7)	/* P9_23: gpio1_17, buton */
+		>;
+	};
+};
+
+/ {
+	bbb-gpio-demo {
+		compatible = "bbb,gpio-demo";
+		pinctrl-names = "default";
+		pinctrl-0 = <&gpio_demo_pins>;
+		led-gpios = <&gpio1 28 GPIO_ACTIVE_HIGH>;
+		button-gpios = <&gpio1 17 GPIO_ACTIVE_HIGH>;
+	};
+};

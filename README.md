@@ -54,6 +54,7 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 
 - [Bölüm 21 — Kernel Modülü Yazmak](build/21_kernel_module.md)
 - [Bölüm 22 — Karakter Aygıt Sürücüsü](build/22_char_driver.md)
+- [Bölüm 23 — Device Tree ile GPIO Platform Sürücüsü](build/23_gpio_platform_driver.md)
 
 ## Bu Repo Nasıl Çalışır?
 

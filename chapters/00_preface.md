@@ -57,6 +57,7 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [20. 16x2 Karakter LCD (HD44780)](20_lcd_16x2.md) | LCD'yi 4 bit modunda sür, kayan yazı ve Türkçe karakter göster |
 | <b>VII — Kernel Sürücüleri</b> | [21. Kernel Modülü Yazmak](21_kernel_module.md) | İlk modülünü yaz, kartta yükle, parametre ve sembol paylaşımını dene |
 | | [22. Karakter Aygıt Sürücüsü](22_char_driver.md) | `/dev` altında kendi aygıtını aç; read, write, ioctl'ü yaz |
+| | [23. Device Tree ile GPIO Platform Sürücüsü](23_gpio_platform_driver.md) | LED'i ve butonu DT'den tanıt, kesmeyle süren bir sürücü yaz |
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 

@@ -39,7 +39,7 @@
 | <b>Major</b> | Hangi <b>sürücü</b>? Kernel, aygıt dosyası açılınca bu numaraya bakarak sürücüyü bulur. `/proc/devices` hangi major'ın hangi sürücüye ait olduğunu listeler. |
 | <b>Minor</b> | Sürücünün yönettiği aygıtlardan <b>hangisi</b>? Ör. `ttyS0` = 4/64, `ttyS1` = 4/65: aynı sürücü, farklı UART. |
 
-Bu bölümde kendi karakter aygıtımızı yazacağız. Gerçek bir donanım sürmüyor: aygıta yazılan metni kernel belleğinde saklıyor ve okununca geri veriyor. Böylece sürücünün parçalarına donanım ayrıntısı karışmadan bakabiliriz; Sonraki bölümde aynı yapıyı gerçek bir GPIO'ya bağlayacağız.
+Bu bölümde kendi karakter aygıtımızı yazacağız. Gerçek bir donanım sürmüyor: aygıta yazılan metni kernel belleğinde saklıyor ve okununca geri veriyor. Böylece sürücünün parçalarına donanım ayrıntısı karışmadan bakabiliriz; [Bölüm 23](23_gpio_platform_driver.md)'te device tree'den tanıtılan gerçek bir LED'i ve butonu süren bir sürücü yazacağız.
 
 ---
 
@@ -370,4 +370,4 @@ Sürücü ile program aynı `bbbmsg.h`'yi kullandığı için komut numaraları 
 
 ---
 
-[← Bölüm 21: Kernel Modülü Yazmak](21_kernel_module.md) · [İçindekiler](README.md)
+[← Bölüm 21: Kernel Modülü Yazmak](21_kernel_module.md) · [İçindekiler](README.md) · [Bölüm 23: Device Tree ile GPIO Platform Sürücüsü →](23_gpio_platform_driver.md)

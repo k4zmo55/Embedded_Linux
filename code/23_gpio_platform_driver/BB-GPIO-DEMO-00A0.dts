@@ -1,0 +1,30 @@
+/*
+ * BB-GPIO-DEMO-00A0.dts — bbb-gpio-demo düğümünü ekleyen overlay.
+ *
+ * Kartta BeagleBoard'un Debian imajı çalışıyorsa ana DTB'yi değiştirmek
+ * yerine bunu kullan (Bölüm 16.6'daki gibi /boot/uEnv.txt ile yüklenir).
+ * Overlay C ön işlemcisinden geçmediği için sabitler sayı olarak yazılmıştır.
+ *
+ *   dtc -@ -I dts -O dtb -o BB-GPIO-DEMO-00A0.dtbo BB-GPIO-DEMO-00A0.dts
+ */
+/dts-v1/;
+/plugin/;
+
+&am33xx_pinmux {
+	gpio_demo_pins: gpio-demo-pins {
+		pinctrl-single,pins = <
+			0x078 0x07	/* P9_12: gpio1_28, mod 7, çıkış */
+			0x044 0x27	/* P9_23: gpio1_17, mod 7, giriş, pull-down */
+		>;
+	};
+};
+
+&{/} {
+	bbb-gpio-demo {
+		compatible = "bbb,gpio-demo";
+		pinctrl-names = "default";
+		pinctrl-0 = <&gpio_demo_pins>;
+		led-gpios = <&gpio1 28 0>;		/* 0 = GPIO_ACTIVE_HIGH */
+		button-gpios = <&gpio1 17 0>;
+	};
+};

@@ -40,7 +40,7 @@ chapters = ["14_eclipse.md", "15_gpio_sysfs.md", "16_external_led.md", "17_seven
 
 [[book.parts]]
 title = "Kernel Sürücüleri"
-chapters = ["21_kernel_module.md", "22_char_driver.md"]
+chapters = ["21_kernel_module.md", "22_char_driver.md", "23_gpio_platform_driver.md"]
 
 # ---------------------------------------------------------------------------
 
