@@ -125,6 +125,11 @@ Her bölüm aynı düzende yazıldı:
 | 5V / 2A adaptör (barrel jack) | Seri boot ve TFTP bölümlerinde karta güvenilir güç için |
 | Ethernet kablosu | TFTP ile ağdan boot için |
 | Mini USB kablo | Karta güç vermek ve USB üzerinden SSH için |
+| Breadboard, erkek-erkek / erkek-dişi kablolar | Donanım bölümlerindeki devreler ([Bölüm 16](#c16-bölüm-16--harici-led-bağlamak) – [Bölüm 20](#c20-bölüm-20--16x2-karakter-lcd-hd44780)) |
+| LED, dirençler (470 Ω, 1 kΩ, 10 kΩ), buton | Harici LED ve butonla sayma ([Bölüm 16](#c16-bölüm-16--harici-led-bağlamak), [Bölüm 17](#c17-bölüm-17--7-segment-gösterge)) |
+| Tek haneli ve 4 haneli 7-segment gösterge (5161, 5641 tipi), 4 adet PNP transistör (BC557) | [Bölüm 17](#c17-bölüm-17--7-segment-gösterge), [Bölüm 18](#c18-bölüm-18--4-haneli-7-segment-gösterge) |
+| MPU6050 modülü (GY-521) | I2C ile eğim ölçme ([Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)) |
+| 16x2 karakter LCD (HD44780) + 10 kΩ potansiyometre | [Bölüm 20](#c20-bölüm-20--16x2-karakter-lcd-hd44780) |
 
 | Yazılım | Not |
 |---|---|
@@ -134,6 +139,7 @@ Her bölüm aynı düzende yazıldı:
 | `tftpd-hpa` | TFTP sunucusu ([Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)) |
 | `nfs-kernel-server` | Rootfs'i ağdan bağlamak için NFS sunucusu ([Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)) |
 | Eclipse (Eclipse IDE for C/C++ Developers) | Uygulama geliştirme ([Bölüm 14](#c14-bölüm-14--eclipse-ile-uygulama-geliştirme)) |
+| `i2c-tools` (kartta) | I2C aygıtlarını komut satırından denemek ([Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)) |
 | Cross toolchain, U-Boot, kernel, BusyBox kaynakları | Derleme bölümlerinde kurulur ([Bölüm 9](#c9-bölüm-9--cross-toolchain-spl-ve-u-boot-derleme), [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme), [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)) |
 
 ---
@@ -147,7 +153,7 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 | Kursun ilk hazır imajları (Ångström): U-Boot / kernel | 2013.04 / 3.8.13 | 4, 6, 7, 8 |
 | Kursun seri boot imajları: SPL / U-Boot | 2017.03 / 2016.11-rc1 | 7 |
 | Kursun güncel SD kart imajları: U-Boot / kernel | 2022.04 / 5.10.168 | 4, 8 |
-| eMMC'ye yüklenen Debian imajı | `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz` | 5 |
+| eMMC'ye yüklenen Debian imajı (kursta: `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz`) | Debian 13.7 IoT, v5.10-ti: `am335x-debian-13.7-base-v5.10-ti-armhf-2026-10-09-4gb.img.xz` | 5, 14–20 |
 | Kendi derlediğimiz U-Boot | 2022.04 (`am335x_evm_defconfig`) | 9 |
 | Cross toolchain | Linaro GCC 7.5.0 (7.5-2019.12) | 9, 10, 12 |
 | Kendi derlediğimiz kernel | 5.10.162 (BeagleBoard, dal `5.10`, `bb.org_defconfig`) | 10 |
@@ -168,7 +174,7 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 | `U-Boot# komut` veya `=> komut` | Kartın U-Boot komut satırı (seri konsolda). Eski U-Boot `U-Boot#`, yenisi `=>` gösterir. |
 | `root@beaglebone:~# komut` veya `/ # komut` | Kartta açılmış Linux (seri konsol veya SSH) |
 
-<b>Ekran görüntüleri:</b> Koyu renkli terminal görüntüleri adımları göstermek için hazırlanmış <b>temsili</b> çıktılardır. Sürüm, tarih, boyut ve hız değerleri senin kartında farklı görünebilir. Kursun slaytlarından ve programların kendisinden alınan görüntüler ise olduğu gibi kullanıldı.
+<b>Ekran görüntüleri:</b> Koyu renkli terminal görüntüleri adımları göstermek için hazırlanmış <b>temsili</b> çıktılardır. Sürüm, tarih, boyut ve hız değerleri senin kartında farklı görünebilir. Kursun slaytlarından, videolarından ve başka kaynaklardan (AM335x TRM, beagleboard.org, Bootlin) alınan görseller olduğu gibi kullanıldı; her birinin altında kaynağı yazılıdır.
 
 <b>Kutular:</b>
 
@@ -430,6 +436,8 @@ sudo dmesg | grep tty
 
 ![dmesg çıktısında USB-TTL dönüştürücü](../images/{D08296A2-927C-4477-88AA-80FA9DC1250A}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 - Kernel, dönüştürücünün çipini tanıyıp sürücüsünü yükler. Bu örnekte çip <b>pl2303</b>. Senin dönüştürücünde <b>cp210x</b>, <b>ftdi_sio</b> veya <b>ch341</b> de yazabilir.
 - Satırın sonundaki <b>`ttyUSB0`</b>, Minicom'da kullanacağımız portun adıdır: <b>`/dev/ttyUSB0`</b>.
 
@@ -451,13 +459,19 @@ Yön tuşlarıyla menüde gezinebilirsin. <b>Serial port setup</b>'ı seç:
 
 ![minicom -s ana menüsü](../images/{F27FC9A5-A70D-479E-9FE1-A48AF82142C0}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Seri port ayarları ekranı açılır:
 
 ![Serial port setup ekranı](../images/{46E1CB74-A6AC-4373-91BD-4DC1CC8E5EF1}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bu ekranda her ayarın başında bir harf vardır. Değiştirmek istediğin ayarın harfine basarsın. Örneğin <b>Serial Device</b>'ı değiştirmek için <b>A</b>'ya bas. İmleç o satıra geçer:
 
 ![Serial Device ayarını düzenleme](../images/{230FE2DE-7BE6-49B2-B01E-2F294C2C15FE}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Eski değeri silip `/dev/ttyUSB0` yaz ve <b>Enter</b>'a bas.
 
@@ -465,9 +479,13 @@ Baud rate'i değiştirmek için <b>E</b>'ye bas. Hız ve veri formatı ekranı a
 
 ![Baud rate ve veri formatı ekranı](../images/{D297BD35-EB7C-4410-B431-A8B84BC48A9D}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bu ekranda da her seçeneğin bir harfi var. Örneğin <b>D</b>'ye basınca hız 38400 olur:
 
 ![Baud rate 38400 seçildi](../images/{E3A60A5C-888D-4802-8A22-C1E6AC50C300}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Biz BeagleBone Black için <b>115200</b> seçeceğiz. Bu ekrandaki harflerle hızı 115200, formatı <b>8N1</b> (8 bit, parity yok, 1 stop bit) yap ve Enter ile çık.
 
@@ -486,6 +504,8 @@ Ayarların son hali:
 Ayarları bitirince ana menüye dön ve <b>Save setup as dfl</b>'yi seç. Böylece ayarlar varsayılan olarak kaydedilir ve her seferinde yeniden yapman gerekmez. Sonra <b>Exit</b> ile ayar ekranından çık:
 
 ![Save setup as dfl](../images/{25B687AC-C882-4EAD-82C6-B4EA24B58170}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ## <a name="c2-25-minicomu-kullanmak"></a>2.5 Minicom'u Kullanmak
 
@@ -561,6 +581,8 @@ Kursun bazı derslerinde Windows'ta <b>Tera Term</b> kullanılıyor. Bu bir zoru
 
 ![Beaglebone boot aşamaları ve her aşamanın çalıştığı bellek](../images/{6F9A1EE0-B456-4D43-8C5F-C2B7869022CB}.png)
 
+*Görsel: kursun slaytı.*
+
 BeagleBone Black'e güç verildiğinde Linux tek adımda açılmaz. Açılış, birbirini yükleyen bir <b>zincir</b> şeklinde ilerler. Her aşama bir sonrakini belleğe yükler ve kontrolü ona devreder:
 
 ```
@@ -595,6 +617,8 @@ Güç → RBL (ROM) → SPL / MLO (SRAM) → U-Boot (DDR) → Linux kernel (DDR)
 
 ![RBL'in yaptığı işler](../images/{FBF63A6C-137A-46DA-9DE4-BB6336EBAF4C}.png)
 
+*Görsel: kursun slaytı.*
+
 - <b>Stack Setup:</b> RBL'in C ile yazılmış fonksiyonları çalıştırabilmesi için önce bir <b>stack</b> (yığın) alanı gerekir. Fonksiyon çağrıları ve yerel değişkenler burada tutulur. RBL stack'i dahili SRAM'de kurar.
 - <b>Watchdog Timer 1 (3 dakika):</b> Watchdog, belirli bir süre içinde "beslenmezse" (sıfırlanmazsa) sistemi <b>resetleyen</b> bir sayaçtır. Amacı, yazılım bir yerde takılırsa kartı kendiliğinden yeniden başlatmaktır. RBL bu sayacı <b>3 dakikaya</b> kurar ve açık bırakır. Bu yüzden sonraki aşamalar (SPL, U-Boot, Linux) bu watchdog'u ya kapatmalı ya da düzenli olarak beslemelidir. Yoksa kart 3 dakika sonra resetlenir.
 - <b>System clock configuration using PLL:</b> İşlemcinin ve çevre birimlerinin saatlerini PLL ile kurar (aşağıda açıklanıyor).
@@ -617,6 +641,8 @@ Bu akış şeması AM335x TRM'den (Figure 26-5) alınmıştır ve RBL'in açıl�
 ### <a name="c3-pll-phase-locked-loop-nedir"></a>PLL (Phase Locked Loop) nedir?
 
 ![PLL ile kristal frekansından yüksek frekans üretimi](../images/{F870EC8F-9699-4960-8AF1-F7CCCCDE6333}.png)
+
+*Görsel: kursun slaytı.*
 
 - Kart üzerindeki kristal osilatör <b>düşük frekanslıdır</b> (BBB'de <b>24 MHz</b>). Ama işlemci yüzlerce MHz ile çalışmak ister.
 - <b>PLL</b>, SoC içindeki bir devredir. Kristalden gelen düşük frekansı <b>çarparak</b> (ve gerektiğinde bölerek) yüksek frekanslar üretir. Şemadaki örnekte 24 MHz'lik kristalden <b>800 MHz</b>'e kadar frekans elde edilir.
@@ -651,6 +677,8 @@ Bu şema (TRM Figure 26-6), RBL'in ikinci aşama bootloader'ı (MLO) nasıl arad
 ### <a name="c3-spl-ile-mlo-arasındaki-fark"></a>SPL ile MLO arasındaki fark
 
 ![MLO = image header + SPL](../images/{C970A18C-744B-46D4-A0A8-73AF33EA031A}.png)
+
+*Görsel: kursun slaytı.*
 
 - <b>MLO = Image header + SPL</b>. Yani MLO, başına küçük bir <b>başlık (header)</b> eklenmiş SPL'dir.
 - Header'da RBL'in ihtiyaç duyduğu bilgiler bulunur:
@@ -860,6 +888,8 @@ Güç → RBL → MLO → U-Boot → Linux Kernel → Root Filesystem → login 
 
 ![SD karttan boot zinciri](../images/{5796B774-2D25-45F8-9CD2-47E21A76B361}.png)
 
+*Görsel: kursun slaytı.*
+
 <b>SD kartın son hali</b> şöyle olacak:
 
 ```
@@ -896,6 +926,8 @@ https://github.com/niekiran/EmbeddedLinuxBBB/tree/master/pre-built-images/Angstr
 
 ![Kursun hazır Ångström dosyaları](../images/{937BAE12-C277-4498-83B6-3422541AD131}.png)
 
+*Görsel: kursun GitHub reposu ([niekiran/EmbeddedLinuxBBB](https://github.com/niekiran/EmbeddedLinuxBBB)).*
+
 | İndirilen dosya | Ne? | Nereye kopyalanacak? |
 |---|---|---|
 | `MLO-beaglebone-2013.04` | MLO | BOOT → adı `MLO` olacak |
@@ -915,6 +947,8 @@ sudo dmesg
 
 ![dmesg çıktısında SD kart](../images/{E9587DCB-9493-4652-93CF-47B08EA122B9}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 - `sdb` → SD kartın adı (`/dev/sdb`). Yanında boyutu yazar (7.81 GB). Doğru cihaz olduğunu boyuttan anlarsın.
 - `sdb1` → kartta zaten var olan bölüm (partition).
 
@@ -931,6 +965,8 @@ sudo dmesg
 Kart 2 bölüme ayrılacak. <b>Karttaki tüm veriler silinir.</b>
 
 ![Planlanan bölümler](../images/{791DE154-AB54-40F6-897E-9011C17F5EFB}.png)
+
+*Görsel: kursun slaytı.*
 
 | Bölüm | Label | Dosya sistemi | Boyut | Neden? |
 |---|---|---|---|---|
@@ -949,11 +985,15 @@ sudo gparted
 
 ![GParted'da SD kartı seçme](../images/{1A89BAAC-496D-403C-B4E4-B5037CBDDC49}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 ### <a name="c4-441-unmount-et"></a>4.4.1 Unmount et
 
 Bölüm şu an sistem tarafından kullanılıyor (yanındaki 🔑 simgesi). Kullanımdayken silinemez. <b>Sağ tık → Unmount.</b>
 
 ![Unmount](../images/{F664732C-758E-43D3-8642-8651DD082B29}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ### <a name="c4-442-eski-bölümü-sil"></a>4.4.2 Eski bölümü sil
 
@@ -963,6 +1003,8 @@ Bölüm şu an sistem tarafından kullanılıyor (yanındaki 🔑 simgesi). Kull
 
 ![Kartın tamamı unallocated](../images/{0125CA5B-146A-4D42-9B02-440035AE3BE3}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 > [!NOTE]
 > GParted işlemleri hemen uygulamaz, sıraya koyar ("1 operation pending"). Hepsi en sonda [4.4.5](#c4-445-değişiklikleri-uygula)'te uygulanır. O ana kadar her şey geri alınabilir.
 
@@ -971,6 +1013,8 @@ Bölüm şu an sistem tarafından kullanılıyor (yanındaki 🔑 simgesi). Kull
 `unallocated` alana <b>sağ tık → New.</b>
 
 ![New](../images/{4CE141F8-591A-4682-A76A-BEDCC2CDCA35}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Açılan pencerede 3 ayar yap, sonra <b>Add</b>'e bas:
 
@@ -986,12 +1030,16 @@ Açılan pencerede 3 ayar yap, sonra <b>Add</b>'e bas:
 
 ![Label: BOOT](../images/{F03EC26C-791B-4AB1-89BE-72A6FAFA0E17}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 > [!NOTE]
 > fat16 seçilince boyut kendiliğinden <b>4095 MiB</b> olur, çünkü FAT16 en fazla ~4 GiB olabilir. Bunu 1013'e düşürüyoruz. Boot dosyaları zaten birkaç MB.
 
 ![Boyut 1013 MiB](../images/{5F06ECDC-BB20-47C8-B8D1-BA39D8C519AD}.png)
 
 ![BOOT bölümü planlandı](../images/{A7350810-4850-4C65-904E-84485A598EA3}-1.png)
+
+*Görseller: kursun videosundan ekran görüntüleri.*
 
 ### <a name="c4-444-rootfs-bölümünü-oluştur"></a>4.4.4 ROOTFS bölümünü oluştur
 
@@ -1007,9 +1055,13 @@ Kalan `unallocated` alana yine <b>sağ tık → New</b>, sonra <b>Add</b>:
 
 ![ROOTFS planlandı](../images/{143DC429-6748-42C3-9A4A-691238D4A073}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 Planlanan durum: 1 GB BOOT + 6.29 GiB ROOTFS.
 
 ![Planlanan durum](../images/{370CABEB-C929-493B-8996-1FB867457DED}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ### <a name="c4-445-değişiklikleri-uygula"></a>4.4.5 Değişiklikleri uygula
 
@@ -1022,6 +1074,8 @@ Planlanan durum: 1 GB BOOT + 6.29 GiB ROOTFS.
 
 ![İşlemler tamamlandı](../images/{01D7E3F3-77AF-4578-AF99-AE21A1EFE350}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 ### <a name="c4-446-boot-bölümüne-boot-bayrağı-ekle"></a>4.4.6 BOOT bölümüne `boot` bayrağı ekle
 
 Bu bayrak, bölümü "açılış bölümü" olarak işaretler. RBL, MLO'yu bu bölümde arar.
@@ -1032,9 +1086,13 @@ Bu bayrak, bölümü "açılış bölümü" olarak işaretler. RBL, MLO'yu bu b�
 
 ![boot bayrağı](../images/{5D758CCD-B40D-468F-8D1B-F2D8C97545E6}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 Flags sütununda `boot` yazıyorsa tamam. GParted'ı kapatabilirsin.
 
 ![Son durum](../images/{19CCA067-203C-4FA1-BE7A-CB2A0FF54A8B}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ---
 
@@ -1084,6 +1142,8 @@ cp MLO-beaglebone-2013.04 /media/$USER/BOOT/MLO
 
 ![MLO'yu kopyalama](../images/{9BE9E6D2-720E-4ED7-A6F6-9337BBB04BB1}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 > [!IMPORTANT]
 > <b>Neden sonda `MLO` yazıyoruz?</b> `cp` komutunda hedefin sonuna bir ad yazılırsa dosya o adla kopyalanır:
 > ```
@@ -1100,6 +1160,8 @@ cp MLO-beaglebone-2013.04 /media/$USER/BOOT/MLO
 [4.5](#c4-45-boot-prosedürü-her-testte-tekrarlanır)'teki adımlarla kartı aç. Minicom'da şunu görmelisin:
 
 ![MLO çalıştı, u-boot.img bulunamadı](../images/{E4B8C846-49BA-43F8-A7A8-B2D8B9BDA0E8}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 | Satır | Anlamı |
 |---|---|
@@ -1126,6 +1188,8 @@ cp u-boot-beaglebone-2013.04-r0.img /media/$USER/BOOT/u-boot.img
 ```
 
 ![u-boot.img'yi kopyalama](../images/{33002E3B-4D53-4327-96B8-7109DF21F826}.png)
+
+*Görsel: kursun GitHub reposu ([niekiran/EmbeddedLinuxBBB](https://github.com/niekiran/EmbeddedLinuxBBB)).*
 
 ### <a name="c4-test-et-1"></a>Test et
 
@@ -1158,6 +1222,8 @@ sudo tar -xvf Angstrom-systemd-image-eglibc-ipk-v2012.12-beagleboard.rootfs.tar.
 
 ![Rootfs arşivini açma](../images/{DA993575-2D08-4D85-AA87-3047E71E40D6}.png)
 
+*Görsel: kursun GitHub reposu ([niekiran/EmbeddedLinuxBBB](https://github.com/niekiran/EmbeddedLinuxBBB)).*
+
 <b>2) uEnv.txt'yi BOOT bölümüne kopyala</b> (adı değişmiyor, U-Boot bu adla arar):
 
 ```bash
@@ -1179,6 +1245,8 @@ Kernel mesajları akar ve sonunda <b>Ångström</b> logosu ile `beaglebone login
 
 ![Ångström login ekranı](../images/{F2BBFA98-4148-45FB-B849-710BC7F58DE9}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Sonuç: <b>RBL ✓ → MLO ✓ → U-Boot ✓ → Kernel ✓ → Rootfs ✓</b> 🎉
 
 > [!TIP]
@@ -1189,6 +1257,8 @@ Sonuç: <b>RBL ✓ → MLO ✓ → U-Boot ✓ → Kernel ✓ → Rootfs ✓</b> 
 `uEnv.txt`, U-Boot'un davranışını değiştiren ayar dosyasıdır. BBB'nin U-Boot'u açılırken BOOT bölümündeki bu dosyayı okur ve içindeki `uenvcmd` komutunu çalıştırır.
 
 ![Kursun uEnv.txt dosyası](../images/{840192A1-87BA-43CA-887C-D739774088B9}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 | Satır | Anlamı |
 |---|---|
@@ -1206,6 +1276,8 @@ Sonuç: <b>RBL ✓ → MLO ✓ → U-Boot ✓ → Kernel ✓ → Rootfs ✓</b> 
 Aynı dosya farklı yazılarak U-Boot'a kernel'i <b>ağdan (TFTP)</b>, rootfs'u da <b>bilgisayardaki bir klasörden (NFS)</b> aldırmak mümkün ([Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)):
 
 ![TFTP ve NFS için uEnv.txt örneği](../images/{F9C9F3D8-B461-4FAC-A040-0F0ECEB76A7E}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 `uEnv.txt`'nin her satırını ve U-Boot komut satırını [Bölüm 6](#c6-bölüm-6--u-boot-komut-satırı-ve-uenvtxt)'da ayrıntılı göreceğiz.
 
@@ -1289,13 +1361,13 @@ Kursun bu dersinde Windows'ta Tera Term kullanılıyor. Minicom ile de komutlar 
 
 Önce dosyanın orada olduğunu gör:
 
-```bash
+```text
 U-Boot# ls mmc 0:2 /boot
 ```
 
 Sonra DDR'e yükle:
 
-```bash
+```text
 U-Boot# load mmc 0:2 0x82000000 /boot/uImage
 ```
 
@@ -1333,7 +1405,7 @@ Bizim SD kartımız için:
 
 Örnekler:
 
-```bash
+```text
 U-Boot# ls mmc 0:1                                  # BOOT bölümünü listele
 U-Boot# ls mmc 0:2 /boot                            # ROOTFS'taki /boot klasörünü listele
 U-Boot# load mmc 0:1 0x82000000 uEnv.txt            # BOOT'taki uEnv.txt'yi DDR'e yükle
@@ -1355,7 +1427,7 @@ U-Boot# mmc part                                    # Seçili cihazın partition
 
 ### <a name="c4-4103-headerı-ekrana-dök"></a>4.10.3 Header'ı ekrana dök
 
-```bash
+```text
 U-Boot# md.b 0x82000000 40
 ```
 
@@ -1403,7 +1475,7 @@ U-Boot# md.b 0x82000000 40
 
 Elle çözdüğün değerleri U-Boot'un kendi çözümüyle karşılaştır:
 
-```bash
+```text
 U-Boot# iminfo 0x82000000
 ```
 
@@ -1413,7 +1485,7 @@ U-Boot# iminfo 0x82000000
 
 İşin bitince Linux'u normal şekilde açmak için:
 
-```bash
+```text
 U-Boot# boot
 ```
 
@@ -1479,14 +1551,14 @@ uenvcmd=run netboot
 
 ## <a name="c4-413-karşılaşılabilecek-problemler"></a>4.13 Karşılaşılabilecek Problemler
 
-| Belirti | Olası sebep |
-|---|---|
-| Minicom'da hiçbir şey yok | TX/RX çapraz bağlı mı? Baud 115200 mü? Hardware Flow Control kapalı mı? ([2.8](#c2-28-karşılaşılabilecek-problemler)) |
-| Sürekli `CCCCCCCC...` | RBL, MLO'yu bulamadı. Dosya adı tam `MLO` mu? BOOT bölümü FAT mı? `boot` bayrağı var mı? |
-| `error reading image u-boot.img` | BOOT'ta `u-boot.img` yok veya adı yanlış. |
-| Eski Linux açılıyor (Debian vb.) | Kart eMMC'den açıldı. S2 açılış anında basılı değildi. |
-| U-Boot `/boot/uImage` bulamıyor | Rootfs ROOTFS bölümüne çıkarılmamış veya yanlış klasöre çıkarılmış. |
-| `Kernel panic ... Unable to mount root fs` | ROOTFS bölümü boş veya `sync` yapılmadan kart çıkarılmış. |
+| Belirti | Sebep | Çözüm |
+|---|---|---|
+| Minicom'da hiçbir şey yok | TX/RX düz bağlı, baud yanlış ya da Hardware Flow Control açık | Bağlantıyı ve 115200 8N1 ayarını kontrol et ([2.8](#c2-28-karşılaşılabilecek-problemler)) |
+| Sürekli `CCCCCCCC...` | RBL, MLO'yu bulamadı | Dosya adı tam `MLO` mu, BOOT bölümü FAT mı, `boot` bayrağı açık mı? ([4.4](#c4-44-sd-kartı-bölümlere-ayırma-gparted)) |
+| `error reading image u-boot.img` | BOOT'ta `u-boot.img` yok veya adı yanlış | Dosyayı `u-boot.img` adıyla kopyala ([4.7](#c4-47-aşama-2-u-boot)) |
+| Eski Linux açılıyor (Debian vb.) | Kart eMMC'den açıldı; S2 açılış anında basılı değildi | Gücü kes, S2 basılıyken tekrar ver ([4.5.3](#c4-453-kartı-sd-karttan-aç-s2-butonu)) |
+| U-Boot `/boot/uImage` bulamıyor | Rootfs ROOTFS bölümüne çıkarılmamış veya yanlış klasöre çıkarılmış | `ls /media/$USER/ROOTFS/boot/` ile kontrol et, arşivi `-C` ile doğru yere çıkar |
+| `Kernel panic ... Unable to mount root fs` | ROOTFS bölümü boş veya `sync` yapılmadan kart çıkarılmış | Rootfs'i yeniden çıkar, `sync` + `umount` ile güvenli çıkar |
 
 
 <div class="page-break"></div>
@@ -1528,6 +1600,8 @@ uenvcmd=run netboot
 
 ![BBB'de eMMC, SD kart ve DDR bağlantısı](../images/{E7E4FC4C-DBAC-4C4E-8FE5-D1274DAB2D14}.png)
 
+*Görsel: kursun slaytı.*
+
 | Bileşen | AM335x'e bağlantısı | Linux'ta (genelde) |
 |---|---|---|
 | <b>4 GB eMMC</b> | <b>mmc1</b> arayüzü (8-bit) | `mmcblk1` |
@@ -1547,6 +1621,8 @@ eMMC'ye doğrudan bilgisayardan yazılamaz, çünkü kartın üzerine lehimlidir
 
 ![eMMC'ye Debian yükleme adımları](../images/{BEFA8946-6220-443D-B624-79EA686B7EC1}.png)
 
+*Görsel: kursun slaytı.*
+
 1. En güncel <b>Debian OS</b> image'ını indir.
 2. Bootable image'ı önce <b>SD karta</b> yaz.
 3. Kartı <b>SD karttan boot et</b> (güç verirken S2'ye basılı tut).
@@ -1556,6 +1632,8 @@ eMMC'ye doğrudan bilgisayardan yazılamaz, çünkü kartın üzerine lehimlidir
 ### <a name="c5-emmc-flasher-script-ne-yapar"></a>eMMC flasher script ne yapar?
 
 ![eMMC flasher script akışı](../images/{5F2184FB-5B91-43CB-8B04-0FDA7014DD3B}.png)
+
+*Görsel: kursun slaytı.*
 
 1. Script <b>SD karttan</b> çalıştırılır.
 2. eMMC iki bölüme (partition) ayrılır: <b>FAT</b> ve <b>EXT4</b>.
@@ -1577,6 +1655,8 @@ eMMC'ye doğrudan bilgisayardan yazılamaz, çünkü kartın üzerine lehimlidir
 Kartı bilgisayara bağladığın yönteme göre IP adresi değişir. Güncel liste: <https://beagleboard.org/getting-started>
 
 ![BeagleBone IP adresleri](../images/{C5156823-84C4-41B0-8EC4-B5835A0CD1A6}.png)
+
+*Görsel: beagleboard.org.*
 
 | Bağlantı | Bilgisayarın işletim sistemi | IP adresi |
 |---|---|---|
@@ -1602,6 +1682,8 @@ ssh debian@192.168.6.2
 
 ![SSH ile BeagleBone'a bağlanma](../images/{A9566984-B563-4C49-A9A1-9816B21F6E62}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bağlanınca kart karşılama mesajında varsayılan kullanıcı adını ve şifreyi gösterir. `password:` satırına şifreyi yaz:
 
 | Kullanıcı adı | Şifre |
@@ -1624,6 +1706,8 @@ lsb_release -da
 
 ![Debian sürümünü kontrol etme](../images/{636C391B-AE68-4635-A859-93F6D5533991}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bu örnekte kartta <b>Debian 10 (buster)</b> yüklü.
 
 > [!TIP]
@@ -1635,7 +1719,18 @@ Güncel image'lar: <https://beagleboard.org/latest-images>
 
 ![En güncel BeagleBone Black Debian image'ı](../images/{F642D326-33B6-4A9D-B77A-6F9932E2AF22}.png)
 
-Bu notun yazıldığı tarihte en güncel sürüm <b>Debian 13.7 (2026-10-09, IoT)</b> idi. Karttaki Debian 10'dan çok daha yeni olduğu için eMMC'yi güncellemek gerekiyor.
+*Görsel: beagleboard.org. Görselde aynı tarihli imajın v6.18.x çeşidi görünüyor; listede başlığında <b>(v5.10-ti)</b> yazanı seç.*
+
+Bu kitap yazılırken en güncel sürüm <b>Debian 13.7 (2026-10-09, IoT)</b> idi. Karttaki Debian 10'dan çok daha yeni olduğu için eMMC'yi güncellemek gerekiyor.
+
+Aynı tarihli imaj <b>üç farklı kernel</b> ile yayınlanıyor: v6.18.x, v6.12.x ve <b>v5.10-ti</b>. Bu kitapta <b>v5.10-ti</b> çeşidini indir:
+
+| Çeşit | Kernel | Bu kitapta |
+|---|---|---|
+| <b>IoT (v5.10-ti)</b> | BeagleBoard'un 5.10 LTS kernel'i | <b>Kullanılan.</b> [Bölüm 15](#c15-bölüm-15--am335x-gpioları-pin-ayarları-ve-sysfs) – [Bölüm 20](#c20-bölüm-20--16x2-karakter-lcd-hd44780)'deki GPIO numaraları, `config-pin` ve cape-universal bu kernel'e göre. [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme)'da derlediğimiz kernel de 5.10. |
+| IoT (v6.12.x / v6.18.x) | Daha yeni kernel'ler | GPIO numaraları 512'den başlar ([15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)); donanım bölümlerindeki `echo 60 > export` gibi komutlar başka pine gider. |
+
+İndireceğin dosya: `am335x-debian-13.7-base-v5.10-ti-armhf-2026-10-09-4gb.img.xz` ([imajın sayfası](https://www.beagleboard.org/distros/beaglebone-black-debian-13-7-2026-10-09-iot-v5-10-ti)).
 
 - <b>Image</b> butonu ile `.img.xz` dosyasını indir.
 - İstersen <b>sha256</b> ile indirdiğin dosyanın bozulmadığını kontrol edebilirsin:
@@ -1652,6 +1747,8 @@ Bu notun yazıldığı tarihte en güncel sürüm <b>Debian 13.7 (2026-10-09, Io
 Bu image doğrudan eMMC'ye yazılamaz. Önce <b>SD karta</b> yazılır, ardından kart SD karttan açılıp eMMC'ye aktarılır ([5.3](#c5-53-emmcye-debian-yükleme-teori)). SD karta yazmak için bir programa ihtiyacımız var: <b>balenaEtcher</b> (<https://etcher.balena.io>).
 
 ![balenaEtcher](../images/{A7E04BE8-B7AF-43AA-A284-2D62653B27FF}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 #### <a name="c5-neden-dosyayı-sd-karta-kopyalamak-yetmiyor"></a>Neden dosyayı SD karta kopyalamak yetmiyor?
 
@@ -1670,11 +1767,15 @@ Dosyayı sürükle-bırak ile kopyalarsan SD kartta sadece tek bir büyük `.img
 
 ![balenaEtcher image ve hedef seçimi](../images/{89A9E107-ACD1-4ABC-8E08-3421A12E07A1}.png)
 
-1. <b>Flash from file</b> ile indirdiğin image dosyasını seç (kursta: `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz`).
+*Görsel: kursun videosundan ekran görüntüsü.*
+
+1. <b>Flash from file</b> ile indirdiğin image dosyasını seç (`am335x-debian-13.7-base-v5.10-ti-armhf-2026-10-09-4gb.img.xz`; kursta `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz`).
 2. <b>Select target</b> ile SD kartı seç. Kart okuyucu bilgisayarda bir USB depolama aygıtı olarak görünür.
 3. <b>Flash!</b> butonuna bas. Yazma ve doğrulama (verify) bitene kadar bekle.
 
 ![balenaEtcher hedef listesi](../images/{2B998CAA-4FFD-45B2-B007-FC0D16591C0A}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Bu örnekte iki aygıt görünüyor:
 
@@ -1693,6 +1794,8 @@ sudo dmesg | tail -20
 
 ![dmesg çıktısında SD kart](../images/{234B1B38-C164-43DF-806A-DEDC74BC56D7}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Son satırlarda yeni takılan aygıtın adı ve boyutu görünür. Bu örnekte `[sdc] ... (15.9 GB/14.8 GiB)` satırı, SD kartın <b>`/dev/sdc`</b> olduğunu gösteriyor.
 
 > [!TIP]
@@ -1710,6 +1813,8 @@ Son satırlarda yeni takılan aygıtın adı ve boyutu görünür. Bu örnekte `
 
 ![Bilgisayarda BEAGLEBONE sürücüsünün görünmesi](../images/{2FE13611-4F3E-470D-A47B-6F11660D9A1E}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bilgisayarında <b>BEAGLEBONE</b> adında bir sürücü göründüyse kart açılmıştır. Şimdi [5.4.2](#c5-542-ssh-ile-karta-bağlan)'deki SSH komutuyla tekrar bağlan:
 
 ```bash
@@ -1724,6 +1829,27 @@ ssh debian@192.168.6.2
 
 ### <a name="c5-547-emmc-flasher-scriptini-çalıştır"></a>5.4.7 eMMC flasher script'ini çalıştır
 
+Flasher'ın adı ve yeri imajın yaşına göre değişir:
+
+| İmaj | Flasher |
+|---|---|
+| Güncel imajlar (Debian 11 ve sonrası, ör. 13.7) | `beagle-flasher` paketi |
+| Kursun imajı (Debian 10.3) | `/opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh` |
+
+#### <a name="c5-güncel-imajlarda-beagle-flasher"></a>Güncel imajlarda: `beagle-flasher`
+
+```bash
+sudo enable-beagle-flasher      # bir sonraki açılışta SD karttaki sistemi eMMC'ye yazar
+sudo reboot
+```
+
+`enable-beagle-flasher`, SD kartı bir sonraki açılışta flasher olarak çalışacak şekilde ayarlar. Kart yeniden açılınca kopyalama kendiliğinden başlar, bitince kart kapanır. Aynı paketteki `sudo beagle-flasher` komutu ise kopyalamayı hemen, çalışan sistemin içinden yapar. Daha hızlıdır ama kaynak sistem kopyalanırken çalıştığı için önerilen yol `enable-beagle-flasher`'dır.
+
+> [!NOTE]
+> Komut bulunamazsa paketini ara ve kur: `sudo apt update && apt search beagle-flasher`, ardından listede çıkan paketi `sudo apt install <paket>` ile kur.
+
+#### <a name="c5-kursun-imajında-init-emmc-flasher-v3sh"></a>Kursun imajında: `init-eMMC-flasher-v3.sh`
+
 Flasher script'leri `/opt/scripts/tools/eMMC` klasöründe bulunur:
 
 ```bash
@@ -1735,6 +1861,8 @@ ls
 
 ![eMMC klasöründeki flasher script'leri](../images/{5EA08989-D8DE-4213-8D3E-F2E49B150C0F}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 Listede birçok script var. BeagleBone Black için kullanılan <b>`init-eMMC-flasher-v3.sh`</b>:
 
 ```bash
@@ -1744,12 +1872,11 @@ sudo ./init-eMMC-flasher-v3.sh
 > [!CAUTION]
 > Bu script eMMC'deki <b>her şeyi siler</b> ve yerine SD karttaki sistemi yazar. eMMC'de saklamak istediğin dosya varsa önce yedekle.
 
-> [!NOTE]
-> Bu klasör ve script adı kursta kullanılan <b>Debian 10.3</b> image'ına göredir. Daha yeni image'larda flasher farklı bir yerde veya farklı bir adla olabilir. Klasör yoksa image'ın açıklamasına bakarak flasher yöntemini kontrol et.
-
 Script çalışırken [5.3](#c5-emmc-flasher-script-ne-yapar)'te anlatılan adımları sırayla yapar: bölümlendirme → formatlama → kopyalama. Bu birkaç dakika sürer.
 
 ![Flash işleminin başarıyla bitmesi](../images/{AD5A6E4A-82A3-42BB-AF46-ED6CD3D8F487}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Flash işlemi başarılıysa şu mesajı görürsün:
 
@@ -1777,7 +1904,8 @@ Ardından kart kendini kapatır ve SSH bağlantısı kopar (`Connection to 192.1
 ## <a name="c5-55-özet"></a>5.5 Özet
 
 - eMMC kartın kalıcı, dahili deposudur (MMC1). DDR ise geçici çalışma belleğidir.
-- eMMC'ye doğrudan yazılamaz: imaj önce <b>balenaEtcher</b> ile SD karta yazılır, kart <b>S2</b> ile SD karttan açılır, <b>flasher script</b> SD karttaki sistemi eMMC'ye kopyalar.
+- eMMC'ye doğrudan yazılamaz: imaj önce <b>balenaEtcher</b> ile SD karta yazılır, kart <b>S2</b> ile SD karttan açılır, <b>flasher</b> (`enable-beagle-flasher`; eski imajlarda `init-eMMC-flasher-v3.sh`) SD karttaki sistemi eMMC'ye kopyalar.
+- Bu kitapta Debian 13.7'in <b>v5.10-ti</b> çeşidi kullanılıyor; donanım bölümlerindeki GPIO numaraları bu kernel'e göre.
 - USB üzerinden kartın adresi Linux'ta `192.168.6.2`, Windows'ta `192.168.7.2`. Bağlantı: `ssh debian@192.168.6.2`.
 
 ## <a name="c5-56-karşılaşılabilecek-problemler"></a>5.6 Karşılaşılabilecek Problemler
@@ -1787,7 +1915,8 @@ Ardından kart kendini kapatır ve SSH bağlantısı kopar (`Connection to 192.1
 | `ping 192.168.6.2` cevap vermiyor | Kart henüz açılmadı ya da Windows'tasın | 1–2 dakika bekle. Windows'ta adres `192.168.7.2`. `beaglebone.local` da denenebilir. |
 | `REMOTE HOST IDENTIFICATION HAS CHANGED!` | Kart farklı bir sistemden açıldı | `ssh-keygen -R 192.168.6.2` |
 | Şifre kabul edilmiyor | Yeni image'da varsayılan şifre yok | SD karttaki `sysconf.txt` ile kullanıcı/şifre belirle ([5.4.4](#c5-544-en-güncel-imageı-indir)) |
-| `/opt/scripts/tools/eMMC` yok | Image sürümü farklı | Image'ın açıklamasındaki flasher yöntemini kullan |
+| `/opt/scripts/tools/eMMC` yok | Güncel imaj; flasher artık `beagle-flasher` paketinde | `sudo enable-beagle-flasher` ([5.4.7](#c5-547-emmc-flasher-scriptini-çalıştır)) |
+| Donanım bölümlerinde `echo 60 > /sys/class/gpio/export` hata veriyor ya da başka pin değişiyor | İmajın v6.x çeşidi yüklendi; GPIO numaraları 512'den başlıyor | v5.10-ti çeşidini yükle ya da numarayı `cat /sys/kernel/debug/gpio` ile bul ([15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)) |
 | Kart flash'tan sonra yine eski sistemle açılıyor | SD kart hâlâ takılı ve S2'ye basıldı / flash yarıda kaldı | SD kartı çıkar, S2'ye basmadan aç. Gerekirse flash'ı tekrarla. |
 
 
@@ -1849,7 +1978,7 @@ bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000 u
 | `ipaddr=192.168.27.1` | Kartın kendi statik IP adresi. |
 
 > [!WARNING]
-> Bu örnekte kart `192.168.27.x`, sunucu `192.168.1.x` ağında. Ağ geçidi (`gatewayip`) tanımlanmadığı sürece TFTP/NFS çalışmaz. Ağdan boot yapacaksan iki adresi <b>aynı alt ağda</b> seç ([Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)). SD karttan boot için bu iki satır kullanılmaz.
+> Bu örnekte kart `192.168.27.x`, sunucu `192.168.1.x` ağında. Ağ geçidi (`gatewayip`) tanımlanmadığı sürece TFTP/NFS çalışmaz. Ağdan boot yapacaksan iki adresi <b>aynı alt ağda</b> seç ([Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)). Ayrıca kitabın ağ ayarlarında `192.168.27.1` <b>bilgisayarın</b> adresidir; kursun dosyasındaki `ipaddr=192.168.27.1` onunla çakışır, kart için `192.168.27.2` kullan. SD karttan boot için bu iki satır kullanılmaz.
 
 ### <a name="c6-bootargs--kernele-verilen-parametreler"></a>`bootargs` — kernel'e verilen parametreler
 
@@ -2002,8 +2131,8 @@ bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000 u
 <b>3) Doğrula.</b> U-Boot'u durdurup dosyaların orada olduğunu gör, sonra boot et:
 
 ```text
-=> ls mmc 0:1
-=> boot
+U-Boot# ls mmc 0:1
+U-Boot# boot
 ```
 
 Ekranda `**********Booting from memory**********` yazısından sonra `reading uImage` görüyorsan imajlar SD karttan geliyor.
@@ -2322,6 +2451,8 @@ mount | grep -E ' / | /proc | /sys | /dev '   # gerçek ve sanal bağlamalar
 
 ![IP ağı ve UART üzerinden dosya transfer protokolleri](../images/{CD17FB50-958F-4863-B8A4-DED33A61A342}.png)
 
+*Görsel: kursun slaytı.*
+
 Bilgisayardan karta dosya göndermenin iki yolu var:
 
 | Bağlantı | Protokoller | Ne zaman kullanılır? |
@@ -2342,6 +2473,8 @@ UART sadece ham baytları taşır; "dosya nerede başlıyor, nerede bitiyor, ver
 
 ![Boot dosyaları bilgisayarda, UART0 ile karta seri bağlantı](../images/{E3C79A57-76F0-41F6-B314-EE88AB46B638}.png)
 
+*Görsel: kursun slaytı.*
+
 Bütün boot dosyaları — <b>SPL, U-Boot, Linux kernel (uImage), DTB ve dosya sistemi</b> — kartta değil, <b>bilgisayarda (HOST)</b> durur. Kart ile bilgisayar arasındaki tek bağlantı, J1 header'daki <b>UART0</b> pinlerine bağlı USB-TTL seri kablodur. Kart açılırken her dosyayı bu kablo üzerinden sırayla göndeririz.
 
 Bu yöntem şu durumlarda işe yarar:
@@ -2353,6 +2486,8 @@ Bu yöntem şu durumlarda işe yarar:
 ## <a name="c7-73-kartı-uart-boot-moduna-sokmak"></a>7.3 Kartı UART Boot Moduna Sokmak
 
 ![Seri boot nasıl çalışır: S2 basılı tutulur, S3 ile açılır, SD kart takılı olmaz](../images/{A0655836-7172-4895-8690-5553D0FF2841}.png)
+
+*Görsel: kursun slaytı.*
 
 Kartı UART'tan boot ettirmek için SD karttan boot ederken yaptığımızın aynısını yaparız:
 
@@ -2392,11 +2527,15 @@ AM335x Technical Reference Manual'ın (TRM) <b>26.1.8.6 USB Boot Procedure</b> b
 
 ![Silicon Errata Advisory 1.0.25: Ethernet boot başarısız olursa sistem 4.5 dakika bekler](../images/{17AE38E2-B3D5-4F02-ADA3-822CF3DD8D76}.png)
 
+*Görsel: TI, AM335x Sitara Processors Silicon Errata (SPRZ360).*
+
 Errata'daki <b>Advisory 1.0.25</b>'te Ethernet denilmiş, ancak bu durum USB için de geçerli. Çünkü AM335x'in ROM kodu USB boot'u, USB kablosu üzerinden <b>sanal bir Ethernet bağlantısı (RNDIS)</b> kurarak yapar. Yani USB boot aslında "USB üzerinden Ethernet boot"tur ve aynı 4.5 dakikalık beklemeye takılır.
 
 ### <a name="c7-çözüm-kartı-harici-adaptörle-beslemek"></a>Çözüm: Kartı harici adaptörle beslemek
 
 ![SD kart ve P4 mini USB kablosu takılı olmamalı, kart güç adaptörüyle beslenmeli](../images/{8D57F348-9C21-4AF9-9546-9BBA20F8C501}.png)
+
+*Görsel: kursun slaytı.*
 
 Peki bu bekleme süresinden nasıl kurtulabiliriz? Beslemeyi <b>P4 mini USB portundan değil</b>, harici bir <b>5V - 2A adaptör</b> yardımıyla (DC jack) yapacağız. USB kablosu takılı olmayınca ROM kodu USB0'da hiçbir şey bulamaz, hiç beklemeden UART0 sekansına geçer ve image yüklemesini oradan yaparız.
 
@@ -2437,6 +2576,8 @@ TRM'nin <b>26.1.9.5 UART Boot Procedure</b> bölümüne göre:
 
 ![Önerilen DDR RAM yükleme adresleri](../images/{41B45262-4937-487E-BD2D-CC0D2D385CBF}.png)
 
+*Görsel: kursun slaytı.*
+
 U-Boot'a geldikten sonra kernel, DTB ve dosya sistemini RAM'e (DDR, `0x80000000`'dan başlar) yükleyeceğiz. Dosyaların birbirinin üzerine yazmaması için bu adresler kullanılır:
 
 | Dosya | Adres |
@@ -2449,16 +2590,18 @@ Seri boot'ta SD kart ve eMMC kullanılmadığı için rootfs'i bağlayacak bir d
 
 ---
 
-## <a name="c7-76-özet-seri-boot-adımları"></a>7.6 Özet: Seri Boot Adımları
+## <a name="c7-76-seri-boot-adımlarına-genel-bakış"></a>7.6 Seri Boot Adımlarına Genel Bakış
 
-![Özet: UART boot modu, SPL, U-Boot ve diğer image'lar](../images/{0208A16B-4B49-45CB-9126-49CCBFA1CF0F}.png)
+![Seri boot adımları: UART boot modu, SPL, U-Boot ve diğer image'lar](../images/{0208A16B-4B49-45CB-9126-49CCBFA1CF0F}.png)
+
+*Görsel: kursun slaytı.*
 
 ```
 Bilgisayar (HOST)                          BeagleBone Black
 ──────────────────                         ────────────────────────────────────────
                                            ROM kodu (S2 basılı, SD kart yok) → UART0
 u-boot-spl.bin ──── Xmodem ──────────────► SPL çalışır (DDR'ı hazırlar)
-u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → => komut satırı komut satırı
+u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → => komut satırı
 uImage         ──── loadx / loady ───────► 0x82000000
 .dtb           ──── loadx / loady ───────► 0x88000000
 initramfs      ──── loadx / loady ───────► 0x88080000
@@ -2534,18 +2677,18 @@ cd ..
 mkimage -A arm -O linux -T ramdisk -C gzip -n initramfs -d initramfs.cpio.gz initramfs
 ```
 
-Son satırdaki `mkimage` önemli: `bootm` komutu ramdisk'in başında <b>U-Boot başlığı</b> görmek ister. Ham `initramfs.cpio.gz` gönderirsen `Wrong Ramdisk Image Format` hatası alırsın ([7.9 (g)](#c7-g-bootm-hataları)).
+Son satırdaki `mkimage` önemli: `bootm` komutu ramdisk'in başında <b>U-Boot başlığı</b> görmek ister. Ham `initramfs.cpio.gz` gönderirsen `Wrong Ramdisk Image Format` hatası alırsın ([7.10 (g)](#c7-g-bootm-hataları)).
 
 #### <a name="c7-yol-3--buildroot-ile-hepsini-tek-seferde"></a>Yol 3 — Buildroot ile hepsini tek seferde
 
-Buildroot toolchain'i, U-Boot'u, kernel'i, DTB'yi ve rootfs'i senin yerine indirip derler:
+Buildroot toolchain'i, U-Boot'u, kernel'i, DTB'yi ve rootfs'i senin yerine indirip derler. Kurulumu ve ayrıntıları [Bölüm 13](#c13-bölüm-13--buildroot)'te:
 
 ```bash
-git clone https://gitlab.com/buildroot.org/buildroot.git
-cd buildroot
+wget https://buildroot.org/downloads/buildroot-2026.02.3.tar.gz
+tar -xzf buildroot-2026.02.3.tar.gz && cd buildroot-2026.02.3
 make beaglebone_defconfig
 make menuconfig
-make                     # ilk derleme 30 dk - 1 saat sürebilir
+make                     # ilk derleme 30 dk - 2 saat sürebilir
 ls -1 output/images/
 ```
 
@@ -2695,14 +2838,14 @@ Boot etmeden önce kernel'e <b>rootfs'in nerede olduğunu</b> `bootargs` ile bil
 
 | Parametre | Anlamı |
 |---|---|
-| `console=ttyO0,115200` | Kernel mesajlarını UART0'a, 115200 baud ile bas (kursun kernel'i 3.8.13 için `ttyO0`; [7.9 (h)](#c7-h-starting-kernel--yazıp-donuyor)). |
+| `console=ttyO0,115200` | Kernel mesajlarını UART0'a, 115200 baud ile bas (kursun kernel'i 3.8.13 için `ttyO0`; [7.10 (h)](#c7-h-starting-kernel--yazıp-donuyor)). |
 | `root=/dev/ram0` | Kök dosya sistemi (rootfs) bir disk değil, <b>RAM</b>'de duruyor. |
 | `rw` | Rootfs okunur-yazılır bağlansın. |
-| `initrd=0x88080000` | initramfs'i RAM'de <b>`0x88080000`</b> adresine yüklediğimizi kernel'e bildirir (Adım 5'teki `loadx` adresiyle aynı olmalı). |
+| `initrd=0x88080000` | Kursun komutunda var ama bu haliyle <b>etkisizdir</b>: ARM kernel'i bu parametreyi sadece `initrd=<adres>,<boyut>` biçiminde kabul eder; boyut yoksa yok sayar. initramfs'in yerini kernel'e asıl `bootm` bildirir (aşağıdaki not). |
 | `bootm <kernel> <initramfs> <dtb>` | Sıra önemli: <b>kernel – ramdisk – DTB</b>. Ramdisk yoksa ortaya `-` yazılır (`bootm 0x82000000 - 0x88000000`). |
 
 > [!NOTE]
-> `bootm`'in ikinci parametresi (`0x88080000`) de initramfs'in adresini ve boyutunu kernel'e DTB'nin `/chosen` düğümü üzerinden bildirir. Yani adres iki yerden veriliyor; `bootargs`'taki `initrd=` ile `bootm`'deki adresin <b>aynı</b> olduğuna dikkat et. `printenv bootargs` ile yazdığını kontrol edebilirsin.
+> `bootm`'in ikinci parametresi (`0x88080000`), initramfs'in U-Boot başlığından boyutunu okur ve adresiyle birlikte kernel'e DTB'nin `/chosen` düğümü üzerinden (`linux,initrd-start`, `linux,initrd-end`) bildirir. Kernel initramfs'i buradan bulur. Bu yüzden `bootargs`'taki `initrd=` satırı olmasa da açılış aynıdır; kursla aynı kalsın diye komutta bırakıldı.
 
 ![bootm ile kernel, initramfs ve DTB'den boot](../images/serial_boot/09_bootm.png)
 
@@ -2733,7 +2876,15 @@ Minicom: Ctrl-A S -> ymodem -> u-boot.img
 
 ---
 
-## <a name="c7-79-karşılaşılabilecek-problemler"></a>7.9 Karşılaşılabilecek Problemler
+## <a name="c7-79-özet"></a>7.9 Özet
+
+- UART boot için kart <b>SD kartsız</b>, <b>mini USB kablosu takılı değilken</b> (yoksa ROM USB0'da 4.5 dakika bekler), DC jack'ten beslenerek ve <b>S2 basılıyken</b> açılır. Ekrandaki `CCCC...` ROM kodunun Xmodem ile dosya beklediğini gösterir.
+- Sıra: ROM ← <b>`u-boot-spl.bin`</b> (Xmodem; `MLO` değil, başlıksız ve 109 KB'tan küçük) → SPL ← <b>`u-boot.img`</b> (Ymodem) → U-Boot'ta `loadx` ile kernel, DTB ve initramfs.
+- RAM adresleri: kernel `0x82000000`, DTB `0x88000000`, initramfs `0x88080000`. initramfs'in başında `mkimage -T ramdisk` ile eklenmiş U-Boot başlığı olmalı.
+- Açılış: `setenv bootargs console=... root=/dev/ram0 rw` → `bootm <kernel> <initramfs> <dtb>`. Rootfs RAM'de olduğu için kart kapanınca her şey silinir.
+- 115200 baud'da transfer yavaştır (~11 KB/s). Günlük geliştirmede TFTP ([Bölüm 8](#c8-bölüm-8--tftp-ile-ağdan-boot)) kullanılır; UART boot bozuk bir kartı kurtarmak ve yeni bir SPL/U-Boot'u karta yazmadan denemek içindir.
+
+## <a name="c7-710-karşılaşılabilecek-problemler"></a>7.10 Karşılaşılabilecek Problemler
 
 ![Sık görülen hata çıktıları (temsili)](../images/serial_boot/11_hatalar.png)
 
@@ -2840,9 +2991,13 @@ Host bilgisayar <b>TFTP sunucusu</b>, BeagleBone Black ise <b>TFTP istemcisi</b>
 
 ![Host PC (TFTP sunucu) ile BBB (TFTP istemci) Ethernet ile bağlı](../images/{620FFBBE-4366-4EF5-A39A-249B1E305F30}.png)
 
+*Görsel: kursun slaytı.*
+
 Dosyalar iki gruba ayrılır:
 
 ![Host PC'de dtb, uImage, initramfs; SD kartta SPL, u-boot.img, uEnv.txt](../images/{7656F595-68A7-41D9-B830-F647EF669264}.png)
+
+*Görsel: kursun slaytı.*
 
 | Nerede? | Dosyalar |
 |---|---|
@@ -2854,6 +3009,8 @@ Kart önce SD karttan U-Boot'a kadar açılır. Sonra U-Boot, uEnv.txt'deki `tft
 ![U-Boot TFTP komutuyla dtb, uImage ve dosya sistemini host'tan çeker](../images/{B63514F3-1414-44B0-9ED0-67D141EF6F4E}.png)
 
 ![Özet](../images/{5831DAB2-E3ED-4587-A75C-C006E2D88880}.png)
+
+*Görseller: kursun slaytları.*
 
 ---
 
@@ -3440,7 +3597,7 @@ Bir adımı elle denemek istersen U-Boot'u durdurup `uEnv.txt`'yi yükle (`run l
 | `ping failed; host ... is not alive` | Host'un o arayüzde IP'si yok / kablo takılı değil | `ip -br a` ile kontrol et, Ethernet ışıklarına bak |
 | Kart U-Boot'a gelmeden eMMC'den açılıyor | S2'ye basılmadı | Güç verirken S2'yi basılı tut |
 | Kart SD'den hiç açılmıyor | SPL dosyasının adı yanlış / BOOT bölümü FAT değil | Dosya adı `MLO` olmalı; 1. bölüm FAT ve boot bayrağı açık olmalı |
-| `bootm` sonrası `Wrong Ramdisk Image Format` | initramfs'te U-Boot başlığı yok | `mkimage -A arm -T ramdisk -C gzip -d initramfs.cpio.gz initramfs` ([7.9 (g)](#c7-g-bootm-hataları)) |
+| `bootm` sonrası `Wrong Ramdisk Image Format` | initramfs'te U-Boot başlığı yok | `mkimage -A arm -T ramdisk -C gzip -d initramfs.cpio.gz initramfs` ([7.10 (g)](#c7-g-bootm-hataları)) |
 | `## Error: "loadfromtftp" not defined` | `uenvcmd` içinde çağrılan makro adı, tanımlanan adla aynı değil | `uEnv.txt`'de iki adı birebir aynı yaz |
 | `Running uenvcmd ...` hiç çıkmıyor | `uEnv.txt` okunmadı: BOOT bölümünde değil, adı yanlış (`uenv.txt`) veya kart eMMC'den açıldı | Dosyayı 1. bölüme koy, S2'ye basılı tutarak aç |
 | `Starting kernel ...` sonrası ekran boş | `bootargs` ayarlanmamış (ör. `booargs` yazım hatası) ya da `console` yanlış | U-Boot'ta `printenv bootargs` ile kontrol et |
@@ -3637,6 +3794,8 @@ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig     # isteğe bağl�
 
 ![U-Boot menuconfig ekranı](../images/{F68E97EF-71C8-47C1-AB23-8CEC39146A69}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 | Ekranda | Anlamı |
 |---|---|
 | `U-Boot 2022.04 Configuration` | Derlenen U-Boot sürümü. Başka sürüm indirdiysen burada o yazar. |
@@ -3700,7 +3859,7 @@ Kartı S2'ye basılı tutarak aç. İlk satırlardaki <b>tarih ve saat senin der
 > [!NOTE]
 > Yeni U-Boot sürümlerinde komut satırı `U-Boot#` yerine `=>` olarak görünür. Önceki bölümlerdeki komutlar aynı şekilde çalışır.
 >
-> Bir fark var: Ethernet aygıtının adı değişti. Kursun hazır U-Boot'unda (2013.04) `cpsw` olan aygıt 2022.04'te `ethernet@4a100000` olarak görünür (`Net:` satırına bak). TFTP bölümündeki `setenv ethact cpsw` yerine `setenv ethact ethernet@4a100000` yazman gerekir ([8.5](#c8-85-yol-1--komutları-elle-yazarak-tftp-ile-boot)). Çoğu zaman varsayılan zaten doğrudur, emin olmak için `printenv ethact` ile bak.
+> Bir fark var: Ethernet aygıtının adı değişti. Kursun hazır U-Boot'unda (2013.04) `cpsw` olan aygıt 2022.04'te `ethernet@4a100000` olarak görünür (`Net:` satırına bak). Bu yüzden TFTP bölümünde `setenv ethact ethernet@4a100000` kullanılıyor ([8.5](#c8-85-yol-1--komutları-elle-yazarak-tftp-ile-boot)); eski bir U-Boot kullanıyorsan `cpsw` yaz. Çoğu zaman varsayılan zaten doğrudur, emin olmak için `printenv ethact` ile bak.
 
 ### <a name="c9-komutların-kısa-özeti"></a>Komutların kısa özeti
 
@@ -4218,7 +4377,9 @@ Bu yöntemin sorunları:
 - Kartta küçük bir değişiklik (ör. LED'in başka pine taşınması) bile <b>kernel'i yeniden derlemeyi</b> gerektiriyordu.
 - Her kart için ayrı bir kernel image'ı gerekiyordu. <b>Tek bir kernel, birden fazla kartta çalışamıyordu.</b>
 
-![Linus Torvalds'ın ARM board file karmaşası hakkındaki e-postası](../images/{142EA865-24C8-4CD5-AA3D-0C747F50EB5D}.png)
+![Board file döneminde her kart için ayrı board-config.c dosyası ve ayrı kernel imajı; bir kartın imajı diğerinde çalışmaz](../images/{142EA865-24C8-4CD5-AA3D-0C747F50EB5D}.png)
+
+*Görsel: kursun slaytı. Her kartın kendi `boardN-config.c` dosyası ve kendi kernel imajı var; Board-1 için derlenen imaj diğer kartlarda çalışmaz.*
 
 2011'de Linus Torvalds ARM tarafındaki bu karmaşadan açıkça şikayet etti. Bunun üzerine ARM dünyası, PowerPC'de zaten kullanılan <b>Device Tree</b>'ye geçti (kernel 3.x serisi). Bugün yeni ARM32 ve ARM64 kartları için Device Tree zorunludur.
 
@@ -4593,15 +4754,15 @@ Kernel'in içindeki `.dts` dosyaları elle `dtc` çağırmak yerine kernel'in bu
 # Tüm DTB'leri derle (kernel kaynak klasöründe)
 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- dtbs
 
-# Sadece BBB'nin DTB'sini derle (kernel 6.5+ yol yapısı)
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- ti/omap/am335x-boneblack.dtb
+# Sadece BBB'nin DTB'sini derle (kernel 5.10)
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- am335x-boneblack.dtb
 
 # Çıktı:
-#   arch/arm/boot/dts/ti/omap/am335x-boneblack.dtb
+#   arch/arm/boot/dts/am335x-boneblack.dtb
 ```
 
 > [!NOTE]
-> Kernel 6.5'ten eski sürümlerde hedef sadece `am335x-boneblack.dtb`'dir ve çıktı `arch/arm/boot/dts/am335x-boneblack.dtb` konumuna yazılır.
+> Kernel 6.5 ve sonrasında ([Bölüm 13](#c13-bölüm-13--buildroot)'teki 6.18.1 gibi) hedef `ti/omap/am335x-boneblack.dtb`'dir ve çıktı `arch/arm/boot/dts/ti/omap/am335x-boneblack.dtb` konumuna yazılır.
 
 ---
 
@@ -4628,7 +4789,7 @@ Driver'lar compatible ile eşleşir ve probe edilir
 
 [SD karttan boot](#c4-bölüm-4--sd-karttan-boot) bölümündeki `uEnv.txt` ile birebir aynı mantık:
 
-```bash
+```text
 fdtaddr=0x88000000                                    # DTB'nin RAM'deki adresi
 load mmc 0:2 ${fdtaddr} /boot/am335x-boneblack.dtb    # DTB'yi RAM'e yükle
 bootm ${loadaddr} - ${fdtaddr}                        # kernel'i başlat ve DTB adresini ver
@@ -4731,7 +4892,7 @@ BeagleBone'a <b>cape</b> (P8/P9 header'larına takılan eklenti kart) takıldı�
 - Ana DTB'nin de `-@` ile derlenmiş olması gerekir (label'ların bulunabilmesi için).
 - Genellikle U-Boot tarafından boot sırasında uygulanır.
 
-Basit bir overlay örneği (P9 header'ındaki I2C2'yi açar):
+Basit bir overlay örneği. Yapıyı göstermek için I2C2'nin ayarını değiştiriyor; BBB'de I2C2 aslında zaten açıktır ([19.4](#c19-194-i2cye-kısa-bakış)):
 
 ```dts
 /dts-v1/;
@@ -5662,7 +5823,7 @@ Kursun "Testing buildroot RFS and ssh support on BBB" dersi. Önce `menuconfig`'
 
 | Menü | Ayar | Neden? |
 |---|---|---|
-| Target packages → Networking applications | `[*] dropbear` | SSH sunucusu ([12.10](#c12-1210-challenge-1-ssh-ve-tftp-desteği)'deki Dropbear, bu sefer Buildroot derliyor ve açılışta başlatıyor) |
+| Target packages → Networking applications | `[*] dropbear` | SSH sunucusu ([12.10](#c12-1210-challenge-1-ssh-ve-tftp-desteği)'daki Dropbear, bu sefer Buildroot derliyor ve açılışta başlatıyor) |
 | System configuration → Root password | Bir şifre | Dropbear şifresiz root girişine izin vermez |
 | System configuration → Root filesystem overlay directories | `board/bbb/overlay` | Rootfs'e kendi dosyalarını eklemek için (aşağıda) |
 
@@ -5768,7 +5929,7 @@ Kursta Buildroot'un içinde BeagleBoard'un kernel'i ve `bb.org_defconfig` kullan
 | Build options → Force all downloads to have a valid hash | <b>Kapat</b> (`beaglebone_defconfig` bunu açıyor; git dalının önceden bilinen bir hash'i yok) |
 
 > [!WARNING]
-> Eski bir kernel'i (5.10) Buildroot'un yeni toolchain'iyle derlemek, [9.2](#c9-92-sürüm-uyumu-hangi-toolchain)'teki "eski kaynak + yeni GCC" sorununa yol açabilir. Derleme hata verirse Buildroot'un varsayılan kernel'ine (6.18.1) dön; o, bu toolchain ile test edilmiştir.
+> Eski bir kernel'i (5.10) Buildroot'un yeni toolchain'iyle derlemek, [9.2](#c9-92-sürüm-uyumu-hangi-toolchain)'deki "eski kaynak + yeni GCC" sorununa yol açabilir. Derleme hata verirse Buildroot'un varsayılan kernel'ine (6.18.1) dön; o, bu toolchain ile test edilmiştir.
 
 ### <a name="c13-kendi-defconfigini-kaydet"></a>Kendi defconfig'ini kaydet
 
@@ -6039,14 +6200,17 @@ git clone https://github.com/niekiran/EmbeddedLinuxBBB.git
 
 <b>4) Temiz derle:</b> <i>Project → Clean...</i>, sonra <i>Build Project</i>. Repoda eğitmenin derlediği eski `Debug/` dosyaları da var; temizlemek bunları siler.
 
-| Proje | Ne yapar? | Kursta |
+| Proje | Ne yapar? | Kitapta |
 |---|---|---|
-| `BBB_led_control` | Kartın USR3 LED'ini sysfs ile kontrol eder | AM335x GPIO ve sysfs |
-| `counter_7seg`, `button_counter_7seg` | Tek haneli 7-segment gösterge, sayıcı | 7-segment gösterge |
-| `4digitcount` | 4 haneli 7-segment sayıcı | 4 haneli 7-segment |
-| `MPU6050_raw_read` | I2C ile ivmeölçer/jiroskop okuma | MPU6050 |
-| `lcd_text`, `lcd_scrollable_text`, `lcd_news` | 16x2 LCD'ye yazı yazma | 16x2 LCD |
-| `Drivers/gpio`, `Drivers/lcd` | Projelerin ortak kullandığı GPIO ve LCD fonksiyonları | — |
+| `BBB_led_control` | Kartın USR3 LED'ini sysfs ile kontrol eder | [Bölüm 15](#c15-bölüm-15--am335x-gpioları-pin-ayarları-ve-sysfs) |
+| `counter_7seg`, `button_counter_7seg` | Tek haneli 7-segment gösterge, sayıcı | [Bölüm 17](#c17-bölüm-17--7-segment-gösterge) |
+| `4digitcount` | 4 haneli 7-segment sayıcı | [Bölüm 18](#c18-bölüm-18--4-haneli-7-segment-gösterge) |
+| `MPU6050_raw_read` | I2C ile ivmeölçer/jiroskop okuma | [Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c) |
+| `lcd_text`, `lcd_scrollable_text`, `lcd_news` | 16x2 LCD'ye yazı yazma | [Bölüm 20](#c20-bölüm-20--16x2-karakter-lcd-hd44780) |
+| `Drivers/gpio`, `Drivers/lcd` | Projelerin ortak kullandığı GPIO ve LCD fonksiyonları | [Bölüm 16](#c16-bölüm-16--harici-led-bağlamak), [Bölüm 20](#c20-bölüm-20--16x2-karakter-lcd-hd44780) |
+
+> [!IMPORTANT]
+> Kursun projelerinde hatalar var (ör. LED programında ham bayt yazımı, LCD'de eksik başlatma dizisi). Kitaptaki bölümler her projenin hatalarını anlatıp düzeltilmiş halini repodaki `code/` klasöründe veriyor; kendi çalışmanda o sürümleri kullan.
 
 > [!NOTE]
 > Repodaki `.metadata` ve `RemoteSystemsTempFiles` klasörleri eğitmenin Eclipse çalışma alanına ait. İçe aktarırken bunları seçme.
@@ -6411,7 +6575,7 @@ Kartta (root olarak):
 | `brightness` yazılıyor ama LED hemen eski haline dönüyor | Tetikleyici (`heartbeat`, `mmc1`) aktif | Önce `echo none > trigger` |
 | Kursun programı `trigger value write error` basıyor | Değer metin değil, ham bayt olarak yazılıyor | [15.7](#c15-157-c-programıyla-user-led-kontrolü)'deki düzeltilmiş kod |
 | `/sys/kernel/debug` boş | debugfs bağlı değil | `mount -t debugfs none /sys/kernel/debug` |
-| `gpioset: invalid option -- 'c'` / `unable to request lines` | libgpiod 1.x ile 2.x sözdizimi karıştı | `gpioset --version` ile sürüme bak, [15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)'teki tabloya göre yaz |
+| `gpioset: invalid option -- 'c'` / `unable to request lines` | libgpiod 1.x ile 2.x sözdizimi karıştı | `gpioset --version` ile sürüme bak, [15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)'daki tabloya göre yaz |
 
 
 <div class="page-break"></div>
@@ -6495,7 +6659,7 @@ Register değerinin son hanesi `7` (mod 7) ise pin GPIO'dur. `config-pin` Beagle
 
 ## <a name="c16-163-komut-satırından-test"></a>16.3 Komut Satırından Test
 
-Kursun "Interfacing external LED - Part 1" dersi. [15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)'teki komutlarla:
+Kursun "Interfacing external LED - Part 1" dersi. [15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)'daki komutlarla:
 
 ![Harici LED'i sysfs ve libgpiod ile yakıp söndürme](../images/ext_led/02_cmdline_test.png)
 
@@ -7179,7 +7343,7 @@ Program çalışırken `top`'a bakarsan CPU kullanımının ~%0 olduğunu görü
 | Tek basışta sayı 2–3 artıyor | Kontak sekmesi | Yazılımla debounce ([17.7](#c17-177-ek-butonla-sayma)) ya da 100 nF kondansatör |
 | Program başlar başlamaz bir basış sayıyor (kursun kodu) | İlk `poll()`'dan önce `value` okunmamış | `poll()` döngüsünden önce `lseek` + `read` |
 | `poll()` sürekli dönüyor, CPU %100 | Olaydan sonra `value` okunmuyor | Her olaydan sonra `lseek(fd, 0, SEEK_SET)` + `read()` |
-| GPIO numaraları yeni kernel'de çalışmıyor | Kernel 6.x'te GPIO numaraları 512'den başlayabilir | [15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)'teki uyarı; `ls /sys/class/gpio/` ile bankaların ilk numarasını bul |
+| GPIO numaraları yeni kernel'de çalışmıyor | Kernel 6.x'te GPIO numaraları 512'den başlayabilir | [15.6](#c15-156-gpioları-kullanıcı-alanından-kontrol-etmek)'daki uyarı; `ls /sys/class/gpio/` ile bankaların ilk numarasını bul |
 
 
 <div class="page-break"></div>

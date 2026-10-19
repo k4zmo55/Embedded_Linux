@@ -48,7 +48,9 @@ Bu yöntemin sorunları:
 - Kartta küçük bir değişiklik (ör. LED'in başka pine taşınması) bile <b>kernel'i yeniden derlemeyi</b> gerektiriyordu.
 - Her kart için ayrı bir kernel image'ı gerekiyordu. <b>Tek bir kernel, birden fazla kartta çalışamıyordu.</b>
 
-![Linus Torvalds'ın ARM board file karmaşası hakkındaki e-postası](../images/{142EA865-24C8-4CD5-AA3D-0C747F50EB5D}.png)
+![Board file döneminde her kart için ayrı board-config.c dosyası ve ayrı kernel imajı; bir kartın imajı diğerinde çalışmaz](../images/{142EA865-24C8-4CD5-AA3D-0C747F50EB5D}.png)
+
+*Görsel: kursun slaytı. Her kartın kendi `boardN-config.c` dosyası ve kendi kernel imajı var; Board-1 için derlenen imaj diğer kartlarda çalışmaz.*
 
 2011'de Linus Torvalds ARM tarafındaki bu karmaşadan açıkça şikayet etti. Bunun üzerine ARM dünyası, PowerPC'de zaten kullanılan <b>Device Tree</b>'ye geçti (kernel 3.x serisi). Bugün yeni ARM32 ve ARM64 kartları için Device Tree zorunludur.
 
@@ -423,15 +425,15 @@ Kernel'in içindeki `.dts` dosyaları elle `dtc` çağırmak yerine kernel'in bu
 # Tüm DTB'leri derle (kernel kaynak klasöründe)
 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- dtbs
 
-# Sadece BBB'nin DTB'sini derle (kernel 6.5+ yol yapısı)
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- ti/omap/am335x-boneblack.dtb
+# Sadece BBB'nin DTB'sini derle (kernel 5.10)
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- am335x-boneblack.dtb
 
 # Çıktı:
-#   arch/arm/boot/dts/ti/omap/am335x-boneblack.dtb
+#   arch/arm/boot/dts/am335x-boneblack.dtb
 ```
 
 > [!NOTE]
-> Kernel 6.5'ten eski sürümlerde hedef sadece `am335x-boneblack.dtb`'dir ve çıktı `arch/arm/boot/dts/am335x-boneblack.dtb` konumuna yazılır.
+> Kernel 6.5 ve sonrasında ([Bölüm 13](13_buildroot.md)'teki 6.18.1 gibi) hedef `ti/omap/am335x-boneblack.dtb`'dir ve çıktı `arch/arm/boot/dts/ti/omap/am335x-boneblack.dtb` konumuna yazılır.
 
 ---
 
@@ -458,7 +460,7 @@ Driver'lar compatible ile eşleşir ve probe edilir
 
 [SD karttan boot](04_sd_card_boot.md) bölümündeki `uEnv.txt` ile birebir aynı mantık:
 
-```bash
+```text
 fdtaddr=0x88000000                                    # DTB'nin RAM'deki adresi
 load mmc 0:2 ${fdtaddr} /boot/am335x-boneblack.dtb    # DTB'yi RAM'e yükle
 bootm ${loadaddr} - ${fdtaddr}                        # kernel'i başlat ve DTB adresini ver
@@ -561,7 +563,7 @@ BeagleBone'a <b>cape</b> (P8/P9 header'larına takılan eklenti kart) takıldı�
 - Ana DTB'nin de `-@` ile derlenmiş olması gerekir (label'ların bulunabilmesi için).
 - Genellikle U-Boot tarafından boot sırasında uygulanır.
 
-Basit bir overlay örneği (P9 header'ındaki I2C2'yi açar):
+Basit bir overlay örneği. Yapıyı göstermek için I2C2'nin ayarını değiştiriyor; BBB'de I2C2 aslında zaten açıktır ([19.4](19_mpu6050.md#194-i2cye-kısa-bakış)):
 
 ```dts
 /dts-v1/;

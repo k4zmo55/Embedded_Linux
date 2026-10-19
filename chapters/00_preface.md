@@ -77,6 +77,11 @@ Her bölüm aynı düzende yazıldı:
 | 5V / 2A adaptör (barrel jack) | Seri boot ve TFTP bölümlerinde karta güvenilir güç için |
 | Ethernet kablosu | TFTP ile ağdan boot için |
 | Mini USB kablo | Karta güç vermek ve USB üzerinden SSH için |
+| Breadboard, erkek-erkek / erkek-dişi kablolar | Donanım bölümlerindeki devreler ([Bölüm 16](16_external_led.md) – [Bölüm 20](20_lcd_16x2.md)) |
+| LED, dirençler (470 Ω, 1 kΩ, 10 kΩ), buton | Harici LED ve butonla sayma ([Bölüm 16](16_external_led.md), [Bölüm 17](17_seven_segment.md)) |
+| Tek haneli ve 4 haneli 7-segment gösterge (5161, 5641 tipi), 4 adet PNP transistör (BC557) | [Bölüm 17](17_seven_segment.md), [Bölüm 18](18_four_digit_7segment.md) |
+| MPU6050 modülü (GY-521) | I2C ile eğim ölçme ([Bölüm 19](19_mpu6050.md)) |
+| 16x2 karakter LCD (HD44780) + 10 kΩ potansiyometre | [Bölüm 20](20_lcd_16x2.md) |
 
 | Yazılım | Not |
 |---|---|
@@ -86,6 +91,7 @@ Her bölüm aynı düzende yazıldı:
 | `tftpd-hpa` | TFTP sunucusu ([Bölüm 8](08_tftp_boot.md)) |
 | `nfs-kernel-server` | Rootfs'i ağdan bağlamak için NFS sunucusu ([Bölüm 12](12_busybox_rootfs.md)) |
 | Eclipse ({{eclipse.package}}) | Uygulama geliştirme ([Bölüm 14](14_eclipse.md)) |
+| `i2c-tools` (kartta) | I2C aygıtlarını komut satırından denemek ([Bölüm 19](19_mpu6050.md)) |
 | Cross toolchain, U-Boot, kernel, BusyBox kaynakları | Derleme bölümlerinde kurulur ([Bölüm 9](09_uboot_build.md), [Bölüm 10](10_linux_kernel.md), [Bölüm 12](12_busybox_rootfs.md)) |
 
 ---
@@ -99,7 +105,7 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 | Kursun ilk hazır imajları (Ångström): U-Boot / kernel | {{prebuilt.uboot_version}} / {{prebuilt.kernel_version}} | 4, 6, 7, 8 |
 | Kursun seri boot imajları: SPL / U-Boot | {{prebuilt.serial_spl_version}} / {{prebuilt.serial_uboot_version}} | 7 |
 | Kursun güncel SD kart imajları: U-Boot / kernel | {{prebuilt.sd_uboot_version}} / {{prebuilt.sd_kernel_version}} | 4, 8 |
-| eMMC'ye yüklenen Debian imajı | `{{prebuilt.debian_image}}` | 5 |
+| eMMC'ye yüklenen Debian imajı (kursta: `{{prebuilt.debian_image}}`) | Debian {{debian.version}} IoT, {{debian.kernel_flavor}}: `{{debian.image}}` | 5, 14–20 |
 | Kendi derlediğimiz U-Boot | {{build.uboot_version}} (`{{build.uboot_defconfig}}`) | 9 |
 | Cross toolchain | Linaro GCC {{build.gcc_version}} ({{build.linaro_release}}) | 9, 10, 12 |
 | Kendi derlediğimiz kernel | {{kernel.version}} (BeagleBoard, dal `{{kernel.branch}}`, `{{kernel.defconfig}}`) | 10 |
@@ -120,7 +126,7 @@ Komutlarda ve ekran görüntülerinde geçen sürümler şunlardır. Kendi kurul
 | `U-Boot# komut` veya `=> komut` | Kartın U-Boot komut satırı (seri konsolda). Eski U-Boot `U-Boot#`, yenisi `=>` gösterir. |
 | `root@beaglebone:~# komut` veya `/ # komut` | Kartta açılmış Linux (seri konsol veya SSH) |
 
-<b>Ekran görüntüleri:</b> Koyu renkli terminal görüntüleri adımları göstermek için hazırlanmış <b>temsili</b> çıktılardır. Sürüm, tarih, boyut ve hız değerleri senin kartında farklı görünebilir. Kursun slaytlarından ve programların kendisinden alınan görüntüler ise olduğu gibi kullanıldı.
+<b>Ekran görüntüleri:</b> Koyu renkli terminal görüntüleri adımları göstermek için hazırlanmış <b>temsili</b> çıktılardır. Sürüm, tarih, boyut ve hız değerleri senin kartında farklı görünebilir. Kursun slaytlarından, videolarından ve başka kaynaklardan (AM335x TRM, beagleboard.org, Bootlin) alınan görseller olduğu gibi kullanıldı; her birinin altında kaynağı yazılıdır.
 
 <b>Kutular:</b>
 

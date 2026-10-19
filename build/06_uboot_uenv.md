@@ -51,7 +51,7 @@ bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000 u
 | `ipaddr=192.168.27.1` | Kartın kendi statik IP adresi. |
 
 > [!WARNING]
-> Bu örnekte kart `192.168.27.x`, sunucu `192.168.1.x` ağında. Ağ geçidi (`gatewayip`) tanımlanmadığı sürece TFTP/NFS çalışmaz. Ağdan boot yapacaksan iki adresi <b>aynı alt ağda</b> seç ([Bölüm 8](08_tftp_boot.md)). SD karttan boot için bu iki satır kullanılmaz.
+> Bu örnekte kart `192.168.27.x`, sunucu `192.168.1.x` ağında. Ağ geçidi (`gatewayip`) tanımlanmadığı sürece TFTP/NFS çalışmaz. Ağdan boot yapacaksan iki adresi <b>aynı alt ağda</b> seç ([Bölüm 8](08_tftp_boot.md)). Ayrıca kitabın ağ ayarlarında `192.168.27.1` <b>bilgisayarın</b> adresidir; kursun dosyasındaki `ipaddr=192.168.27.1` onunla çakışır, kart için `192.168.27.2` kullan. SD karttan boot için bu iki satır kullanılmaz.
 
 ### `bootargs` — kernel'e verilen parametreler
 
@@ -204,8 +204,8 @@ bootcmd=echo "**********Booting from memory**********";load mmc 0:1 0x82000000 u
 <b>3) Doğrula.</b> U-Boot'u durdurup dosyaların orada olduğunu gör, sonra boot et:
 
 ```text
-=> ls mmc 0:1
-=> boot
+U-Boot# ls mmc 0:1
+U-Boot# boot
 ```
 
 Ekranda `**********Booting from memory**********` yazısından sonra `reading uImage` görüyorsan imajlar SD karttan geliyor.

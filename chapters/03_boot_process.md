@@ -11,6 +11,8 @@
 
 ![Beaglebone boot aşamaları ve her aşamanın çalıştığı bellek](../images/{6F9A1EE0-B456-4D43-8C5F-C2B7869022CB}.png)
 
+*Görsel: kursun slaytı.*
+
 {{board.name}}'e güç verildiğinde Linux tek adımda açılmaz. Açılış, birbirini yükleyen bir <b>zincir</b> şeklinde ilerler. Her aşama bir sonrakini belleğe yükler ve kontrolü ona devreder:
 
 ```
@@ -45,6 +47,8 @@ Güç → RBL (ROM) → SPL / MLO (SRAM) → U-Boot (DDR) → Linux kernel (DDR)
 
 ![RBL'in yaptığı işler](../images/{FBF63A6C-137A-46DA-9DE4-BB6336EBAF4C}.png)
 
+*Görsel: kursun slaytı.*
+
 - <b>Stack Setup:</b> RBL'in C ile yazılmış fonksiyonları çalıştırabilmesi için önce bir <b>stack</b> (yığın) alanı gerekir. Fonksiyon çağrıları ve yerel değişkenler burada tutulur. RBL stack'i dahili SRAM'de kurar.
 - <b>Watchdog Timer 1 (3 dakika):</b> Watchdog, belirli bir süre içinde "beslenmezse" (sıfırlanmazsa) sistemi <b>resetleyen</b> bir sayaçtır. Amacı, yazılım bir yerde takılırsa kartı kendiliğinden yeniden başlatmaktır. RBL bu sayacı <b>3 dakikaya</b> kurar ve açık bırakır. Bu yüzden sonraki aşamalar (SPL, U-Boot, Linux) bu watchdog'u ya kapatmalı ya da düzenli olarak beslemelidir. Yoksa kart 3 dakika sonra resetlenir.
 - <b>System clock configuration using PLL:</b> İşlemcinin ve çevre birimlerinin saatlerini PLL ile kurar (aşağıda açıklanıyor).
@@ -67,6 +71,8 @@ Bu akış şeması AM335x TRM'den (Figure 26-5) alınmıştır ve RBL'in açıl�
 ### PLL (Phase Locked Loop) nedir?
 
 ![PLL ile kristal frekansından yüksek frekans üretimi](../images/{F870EC8F-9699-4960-8AF1-F7CCCCDE6333}.png)
+
+*Görsel: kursun slaytı.*
 
 - Kart üzerindeki kristal osilatör <b>düşük frekanslıdır</b> (BBB'de <b>24 MHz</b>). Ama işlemci yüzlerce MHz ile çalışmak ister.
 - <b>PLL</b>, SoC içindeki bir devredir. Kristalden gelen düşük frekansı <b>çarparak</b> (ve gerektiğinde bölerek) yüksek frekanslar üretir. Şemadaki örnekte 24 MHz'lik kristalden <b>800 MHz</b>'e kadar frekans elde edilir.
@@ -101,6 +107,8 @@ Bu şema (TRM Figure 26-6), RBL'in ikinci aşama bootloader'ı (MLO) nasıl arad
 ### SPL ile MLO arasındaki fark
 
 ![MLO = image header + SPL](../images/{C970A18C-744B-46D4-A0A8-73AF33EA031A}.png)
+
+*Görsel: kursun slaytı.*
 
 - <b>MLO = Image header + SPL</b>. Yani MLO, başına küçük bir <b>başlık (header)</b> eklenmiş SPL'dir.
 - Header'da RBL'in ihtiyaç duyduğu bilgiler bulunur:

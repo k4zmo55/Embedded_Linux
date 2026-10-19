@@ -237,7 +237,7 @@ Kursun "Testing buildroot RFS and ssh support on BBB" dersi. Önce `menuconfig`'
 
 | Menü | Ayar | Neden? |
 |---|---|---|
-| Target packages → Networking applications | `[*] dropbear` | SSH sunucusu ([12.10](12_busybox_rootfs.md#1210-challenge-1-ssh-ve-tftp-desteği)'deki Dropbear, bu sefer Buildroot derliyor ve açılışta başlatıyor) |
+| Target packages → Networking applications | `[*] dropbear` | SSH sunucusu ([12.10](12_busybox_rootfs.md#1210-challenge-1-ssh-ve-tftp-desteği)'daki Dropbear, bu sefer Buildroot derliyor ve açılışta başlatıyor) |
 | System configuration → Root password | Bir şifre | Dropbear şifresiz root girişine izin vermez |
 | System configuration → Root filesystem overlay directories | `board/bbb/overlay` | Rootfs'e kendi dosyalarını eklemek için (aşağıda) |
 
@@ -343,7 +343,7 @@ Kursta Buildroot'un içinde BeagleBoard'un kernel'i ve `bb.org_defconfig` kullan
 | Build options → Force all downloads to have a valid hash | <b>Kapat</b> (`{{buildroot.defconfig}}` bunu açıyor; git dalının önceden bilinen bir hash'i yok) |
 
 > [!WARNING]
-> Eski bir kernel'i (5.10) Buildroot'un yeni toolchain'iyle derlemek, [9.2](09_uboot_build.md#92-sürüm-uyumu-hangi-toolchain)'teki "eski kaynak + yeni GCC" sorununa yol açabilir. Derleme hata verirse Buildroot'un varsayılan kernel'ine ({{buildroot.kernel_version}}) dön; o, bu toolchain ile test edilmiştir.
+> Eski bir kernel'i (5.10) Buildroot'un yeni toolchain'iyle derlemek, [9.2](09_uboot_build.md#92-sürüm-uyumu-hangi-toolchain)'deki "eski kaynak + yeni GCC" sorununa yol açabilir. Derleme hata verirse Buildroot'un varsayılan kernel'ine ({{buildroot.kernel_version}}) dön; o, bu toolchain ile test edilmiştir.
 
 ### Kendi defconfig'ini kaydet
 

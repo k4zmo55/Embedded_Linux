@@ -13,6 +13,8 @@
 
 ![IP ağı ve UART üzerinden dosya transfer protokolleri](../images/{CD17FB50-958F-4863-B8A4-DED33A61A342}.png)
 
+*Görsel: kursun slaytı.*
+
 Bilgisayardan karta dosya göndermenin iki yolu var:
 
 | Bağlantı | Protokoller | Ne zaman kullanılır? |
@@ -33,6 +35,8 @@ UART sadece ham baytları taşır; "dosya nerede başlıyor, nerede bitiyor, ver
 
 ![Boot dosyaları bilgisayarda, UART0 ile karta seri bağlantı](../images/{E3C79A57-76F0-41F6-B314-EE88AB46B638}.png)
 
+*Görsel: kursun slaytı.*
+
 Bütün boot dosyaları — <b>SPL, U-Boot, Linux kernel (uImage), DTB ve dosya sistemi</b> — kartta değil, <b>bilgisayarda (HOST)</b> durur. Kart ile bilgisayar arasındaki tek bağlantı, J1 header'daki <b>UART0</b> pinlerine bağlı USB-TTL seri kablodur. Kart açılırken her dosyayı bu kablo üzerinden sırayla göndeririz.
 
 Bu yöntem şu durumlarda işe yarar:
@@ -44,6 +48,8 @@ Bu yöntem şu durumlarda işe yarar:
 ## 7.3 Kartı UART Boot Moduna Sokmak
 
 ![Seri boot nasıl çalışır: S2 basılı tutulur, S3 ile açılır, SD kart takılı olmaz](../images/{A0655836-7172-4895-8690-5553D0FF2841}.png)
+
+*Görsel: kursun slaytı.*
 
 Kartı UART'tan boot ettirmek için SD karttan boot ederken yaptığımızın aynısını yaparız:
 
@@ -83,11 +89,15 @@ AM335x Technical Reference Manual'ın (TRM) <b>26.1.8.6 USB Boot Procedure</b> b
 
 ![Silicon Errata Advisory 1.0.25: Ethernet boot başarısız olursa sistem 4.5 dakika bekler](../images/{17AE38E2-B3D5-4F02-ADA3-822CF3DD8D76}.png)
 
+*Görsel: TI, AM335x Sitara Processors Silicon Errata (SPRZ360).*
+
 Errata'daki <b>Advisory 1.0.25</b>'te Ethernet denilmiş, ancak bu durum USB için de geçerli. Çünkü AM335x'in ROM kodu USB boot'u, USB kablosu üzerinden <b>sanal bir Ethernet bağlantısı (RNDIS)</b> kurarak yapar. Yani USB boot aslında "USB üzerinden Ethernet boot"tur ve aynı 4.5 dakikalık beklemeye takılır.
 
 ### Çözüm: Kartı harici adaptörle beslemek
 
 ![SD kart ve P4 mini USB kablosu takılı olmamalı, kart güç adaptörüyle beslenmeli](../images/{8D57F348-9C21-4AF9-9546-9BBA20F8C501}.png)
+
+*Görsel: kursun slaytı.*
 
 Peki bu bekleme süresinden nasıl kurtulabiliriz? Beslemeyi <b>P4 mini USB portundan değil</b>, harici bir <b>5V - 2A adaptör</b> yardımıyla (DC jack) yapacağız. USB kablosu takılı olmayınca ROM kodu USB0'da hiçbir şey bulamaz, hiç beklemeden UART0 sekansına geçer ve image yüklemesini oradan yaparız.
 
@@ -128,6 +138,8 @@ TRM'nin <b>26.1.9.5 UART Boot Procedure</b> bölümüne göre:
 
 ![Önerilen DDR RAM yükleme adresleri](../images/{41B45262-4937-487E-BD2D-CC0D2D385CBF}.png)
 
+*Görsel: kursun slaytı.*
+
 U-Boot'a geldikten sonra kernel, DTB ve dosya sistemini RAM'e (DDR, `0x80000000`'dan başlar) yükleyeceğiz. Dosyaların birbirinin üzerine yazmaması için bu adresler kullanılır:
 
 | Dosya | Adres |
@@ -140,16 +152,18 @@ Seri boot'ta SD kart ve eMMC kullanılmadığı için rootfs'i bağlayacak bir d
 
 ---
 
-## 7.6 Özet: Seri Boot Adımları
+## 7.6 Seri Boot Adımlarına Genel Bakış
 
-![Özet: UART boot modu, SPL, U-Boot ve diğer image'lar](../images/{0208A16B-4B49-45CB-9126-49CCBFA1CF0F}.png)
+![Seri boot adımları: UART boot modu, SPL, U-Boot ve diğer image'lar](../images/{0208A16B-4B49-45CB-9126-49CCBFA1CF0F}.png)
+
+*Görsel: kursun slaytı.*
 
 ```
 Bilgisayar (HOST)                          BeagleBone Black
 ──────────────────                         ────────────────────────────────────────
                                            ROM kodu (S2 basılı, SD kart yok) → UART0
 u-boot-spl.bin ──── Xmodem ──────────────► SPL çalışır (DDR'ı hazırlar)
-u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → => komut satırı komut satırı
+u-boot.img     ──── Ymodem ──────────────► U-Boot çalışır → => komut satırı
 uImage         ──── loadx / loady ───────► 0x82000000
 .dtb           ──── loadx / loady ───────► 0x88000000
 initramfs      ──── loadx / loady ───────► 0x88080000
@@ -211,8 +225,8 @@ make ARCH=arm CROSS_COMPILE={{build.cross_compile}} {{build.uboot_defconfig}}
 make ARCH=arm CROSS_COMPILE={{build.cross_compile}} -j4
 
 # Kernel + DTB  -> arch/arm/boot/uImage ve .../dts/am335x-boneblack.dtb
-make ARCH=arm CROSS_COMPILE={{build.cross_compile}} bb.org_defconfig
-make ARCH=arm CROSS_COMPILE={{build.cross_compile}} uImage dtbs LOADADDR=0x80008000
+make ARCH=arm CROSS_COMPILE={{build.cross_compile}} {{kernel.defconfig}}
+make ARCH=arm CROSS_COMPILE={{build.cross_compile}} uImage dtbs LOADADDR={{kernel.loadaddr}}
 
 # BusyBox  -> _install/ klasörü (rootfs'in temeli)
 make ARCH=arm CROSS_COMPILE={{build.cross_compile}} defconfig
@@ -225,18 +239,18 @@ cd ..
 mkimage -A arm -O linux -T ramdisk -C gzip -n initramfs -d initramfs.cpio.gz initramfs
 ```
 
-Son satırdaki `mkimage` önemli: `bootm` komutu ramdisk'in başında <b>U-Boot başlığı</b> görmek ister. Ham `initramfs.cpio.gz` gönderirsen `Wrong Ramdisk Image Format` hatası alırsın ([7.9 (g)](#g-bootm-hataları)).
+Son satırdaki `mkimage` önemli: `bootm` komutu ramdisk'in başında <b>U-Boot başlığı</b> görmek ister. Ham `initramfs.cpio.gz` gönderirsen `Wrong Ramdisk Image Format` hatası alırsın ([7.10 (g)](#g-bootm-hataları)).
 
 #### Yol 3 — Buildroot ile hepsini tek seferde
 
-Buildroot toolchain'i, U-Boot'u, kernel'i, DTB'yi ve rootfs'i senin yerine indirip derler:
+Buildroot toolchain'i, U-Boot'u, kernel'i, DTB'yi ve rootfs'i senin yerine indirip derler. Kurulumu ve ayrıntıları [Bölüm 13](13_buildroot.md)'te:
 
 ```bash
-git clone https://gitlab.com/buildroot.org/buildroot.git
-cd buildroot
-make beaglebone_defconfig
+wget {{buildroot.url}}
+tar -xzf buildroot-{{buildroot.version}}.tar.gz && cd {{buildroot.dir}}
+make {{buildroot.defconfig}}
 make menuconfig
-make                     # ilk derleme 30 dk - 1 saat sürebilir
+make                     # ilk derleme 30 dk - 2 saat sürebilir
 ls -1 output/images/
 ```
 
@@ -386,14 +400,14 @@ Boot etmeden önce kernel'e <b>rootfs'in nerede olduğunu</b> `bootargs` ile bil
 
 | Parametre | Anlamı |
 |---|---|
-| `console={{prebuilt.console}},115200` | Kernel mesajlarını UART0'a, 115200 baud ile bas (kursun kernel'i {{prebuilt.kernel_version}} için `{{prebuilt.console}}`; [7.9 (h)](#h-starting-kernel--yazıp-donuyor)). |
+| `console={{prebuilt.console}},115200` | Kernel mesajlarını UART0'a, 115200 baud ile bas (kursun kernel'i {{prebuilt.kernel_version}} için `{{prebuilt.console}}`; [7.10 (h)](#h-starting-kernel--yazıp-donuyor)). |
 | `root=/dev/ram0` | Kök dosya sistemi (rootfs) bir disk değil, <b>RAM</b>'de duruyor. |
 | `rw` | Rootfs okunur-yazılır bağlansın. |
-| `initrd=0x88080000` | initramfs'i RAM'de <b>`0x88080000`</b> adresine yüklediğimizi kernel'e bildirir (Adım 5'teki `loadx` adresiyle aynı olmalı). |
+| `initrd=0x88080000` | Kursun komutunda var ama bu haliyle <b>etkisizdir</b>: ARM kernel'i bu parametreyi sadece `initrd=<adres>,<boyut>` biçiminde kabul eder; boyut yoksa yok sayar. initramfs'in yerini kernel'e asıl `bootm` bildirir (aşağıdaki not). |
 | `bootm <kernel> <initramfs> <dtb>` | Sıra önemli: <b>kernel – ramdisk – DTB</b>. Ramdisk yoksa ortaya `-` yazılır (`bootm 0x82000000 - 0x88000000`). |
 
 > [!NOTE]
-> `bootm`'in ikinci parametresi (`0x88080000`) de initramfs'in adresini ve boyutunu kernel'e DTB'nin `/chosen` düğümü üzerinden bildirir. Yani adres iki yerden veriliyor; `bootargs`'taki `initrd=` ile `bootm`'deki adresin <b>aynı</b> olduğuna dikkat et. `printenv bootargs` ile yazdığını kontrol edebilirsin.
+> `bootm`'in ikinci parametresi (`0x88080000`), initramfs'in U-Boot başlığından boyutunu okur ve adresiyle birlikte kernel'e DTB'nin `/chosen` düğümü üzerinden (`linux,initrd-start`, `linux,initrd-end`) bildirir. Kernel initramfs'i buradan bulur. Bu yüzden `bootargs`'taki `initrd=` satırı olmasa da açılış aynıdır; kursla aynı kalsın diye komutta bırakıldı.
 
 ![bootm ile kernel, initramfs ve DTB'den boot](../images/serial_boot/09_bootm.png)
 
@@ -424,7 +438,15 @@ Minicom: Ctrl-A S -> ymodem -> u-boot.img
 
 ---
 
-## 7.9 Karşılaşılabilecek Problemler
+## 7.9 Özet
+
+- UART boot için kart <b>SD kartsız</b>, <b>mini USB kablosu takılı değilken</b> (yoksa ROM USB0'da 4.5 dakika bekler), DC jack'ten beslenerek ve <b>S2 basılıyken</b> açılır. Ekrandaki `CCCC...` ROM kodunun Xmodem ile dosya beklediğini gösterir.
+- Sıra: ROM ← <b>`u-boot-spl.bin`</b> (Xmodem; `MLO` değil, başlıksız ve 109 KB'tan küçük) → SPL ← <b>`u-boot.img`</b> (Ymodem) → U-Boot'ta `loadx` ile kernel, DTB ve initramfs.
+- RAM adresleri: kernel `0x82000000`, DTB `0x88000000`, initramfs `0x88080000`. initramfs'in başında `mkimage -T ramdisk` ile eklenmiş U-Boot başlığı olmalı.
+- Açılış: `setenv bootargs console=... root=/dev/ram0 rw` → `bootm <kernel> <initramfs> <dtb>`. Rootfs RAM'de olduğu için kart kapanınca her şey silinir.
+- 115200 baud'da transfer yavaştır (~11 KB/s). Günlük geliştirmede TFTP ([Bölüm 8](08_tftp_boot.md)) kullanılır; UART boot bozuk bir kartı kurtarmak ve yeni bir SPL/U-Boot'u karta yazmadan denemek içindir.
+
+## 7.10 Karşılaşılabilecek Problemler
 
 ![Sık görülen hata çıktıları (temsili)](../images/serial_boot/11_hatalar.png)
 

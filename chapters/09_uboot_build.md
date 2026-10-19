@@ -187,6 +187,8 @@ make ARCH=arm CROSS_COMPILE={{build.cross_compile}} menuconfig     # isteğe ba�
 
 ![U-Boot menuconfig ekranı](../images/{F68E97EF-71C8-47C1-AB23-8CEC39146A69}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 | Ekranda | Anlamı |
 |---|---|
 | `U-Boot 2022.04 Configuration` | Derlenen U-Boot sürümü. Başka sürüm indirdiysen burada o yazar. |
@@ -250,7 +252,7 @@ Kartı S2'ye basılı tutarak aç. İlk satırlardaki <b>tarih ve saat senin der
 > [!NOTE]
 > Yeni U-Boot sürümlerinde komut satırı `U-Boot#` yerine `=>` olarak görünür. Önceki bölümlerdeki komutlar aynı şekilde çalışır.
 >
-> Bir fark var: Ethernet aygıtının adı değişti. Kursun hazır U-Boot'unda ({{prebuilt.uboot_version}}) `cpsw` olan aygıt {{build.uboot_version}}'te `{{build.eth_device}}` olarak görünür (`Net:` satırına bak). TFTP bölümündeki `setenv ethact cpsw` yerine `setenv ethact {{build.eth_device}}` yazman gerekir ([8.5](08_tftp_boot.md#85-yol-1--komutları-elle-yazarak-tftp-ile-boot)). Çoğu zaman varsayılan zaten doğrudur, emin olmak için `printenv ethact` ile bak.
+> Bir fark var: Ethernet aygıtının adı değişti. Kursun hazır U-Boot'unda ({{prebuilt.uboot_version}}) `cpsw` olan aygıt {{build.uboot_version}}'te `{{build.eth_device}}` olarak görünür (`Net:` satırına bak). Bu yüzden TFTP bölümünde `setenv ethact {{build.eth_device}}` kullanılıyor ([8.5](08_tftp_boot.md#85-yol-1--komutları-elle-yazarak-tftp-ile-boot)); eski bir U-Boot kullanıyorsan `cpsw` yaz. Çoğu zaman varsayılan zaten doğrudur, emin olmak için `printenv ethact` ile bak.
 
 ### Komutların kısa özeti
 

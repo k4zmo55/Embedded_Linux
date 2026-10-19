@@ -28,6 +28,8 @@ Güç → RBL → MLO → U-Boot → Linux Kernel → Root Filesystem → login 
 
 ![SD karttan boot zinciri](../images/{5796B774-2D25-45F8-9CD2-47E21A76B361}.png)
 
+*Görsel: kursun slaytı.*
+
 <b>SD kartın son hali</b> şöyle olacak:
 
 ```
@@ -64,6 +66,8 @@ Her testte kart aynı şekilde açılır. Bu işlem [4.5](#45-boot-prosedürü-h
 
 ![Kursun hazır Ångström dosyaları](../images/{937BAE12-C277-4498-83B6-3422541AD131}.png)
 
+*Görsel: kursun GitHub reposu ([niekiran/EmbeddedLinuxBBB]({{course.repo}})).*
+
 | İndirilen dosya | Ne? | Nereye kopyalanacak? |
 |---|---|---|
 | `{{prebuilt.mlo_file}}` | MLO | BOOT → adı `MLO` olacak |
@@ -83,6 +87,8 @@ sudo dmesg
 
 ![dmesg çıktısında SD kart](../images/{E9587DCB-9493-4652-93CF-47B08EA122B9}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 - `sdb` → SD kartın adı (`/dev/sdb`). Yanında boyutu yazar (7.81 GB). Doğru cihaz olduğunu boyuttan anlarsın.
 - `sdb1` → kartta zaten var olan bölüm (partition).
 
@@ -99,6 +105,8 @@ sudo dmesg
 Kart 2 bölüme ayrılacak. <b>Karttaki tüm veriler silinir.</b>
 
 ![Planlanan bölümler](../images/{791DE154-AB54-40F6-897E-9011C17F5EFB}.png)
+
+*Görsel: kursun slaytı.*
 
 | Bölüm | Label | Dosya sistemi | Boyut | Neden? |
 |---|---|---|---|---|
@@ -117,11 +125,15 @@ sudo gparted
 
 ![GParted'da SD kartı seçme](../images/{1A89BAAC-496D-403C-B4E4-B5037CBDDC49}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 ### 4.4.1 Unmount et
 
 Bölüm şu an sistem tarafından kullanılıyor (yanındaki 🔑 simgesi). Kullanımdayken silinemez. <b>Sağ tık → Unmount.</b>
 
 ![Unmount](../images/{F664732C-758E-43D3-8642-8651DD082B29}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ### 4.4.2 Eski bölümü sil
 
@@ -131,6 +143,8 @@ Bölüm şu an sistem tarafından kullanılıyor (yanındaki 🔑 simgesi). Kull
 
 ![Kartın tamamı unallocated](../images/{0125CA5B-146A-4D42-9B02-440035AE3BE3}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 > [!NOTE]
 > GParted işlemleri hemen uygulamaz, sıraya koyar ("1 operation pending"). Hepsi en sonda [4.4.5](#445-değişiklikleri-uygula)'te uygulanır. O ana kadar her şey geri alınabilir.
 
@@ -139,6 +153,8 @@ Bölüm şu an sistem tarafından kullanılıyor (yanındaki 🔑 simgesi). Kull
 `unallocated` alana <b>sağ tık → New.</b>
 
 ![New](../images/{4CE141F8-591A-4682-A76A-BEDCC2CDCA35}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Açılan pencerede 3 ayar yap, sonra <b>Add</b>'e bas:
 
@@ -154,12 +170,16 @@ Açılan pencerede 3 ayar yap, sonra <b>Add</b>'e bas:
 
 ![Label: BOOT](../images/{F03EC26C-791B-4AB1-89BE-72A6FAFA0E17}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 > [!NOTE]
 > fat16 seçilince boyut kendiliğinden <b>4095 MiB</b> olur, çünkü FAT16 en fazla ~4 GiB olabilir. Bunu 1013'e düşürüyoruz. Boot dosyaları zaten birkaç MB.
 
 ![Boyut 1013 MiB](../images/{5F06ECDC-BB20-47C8-B8D1-BA39D8C519AD}.png)
 
 ![BOOT bölümü planlandı](../images/{A7350810-4850-4C65-904E-84485A598EA3}-1.png)
+
+*Görseller: kursun videosundan ekran görüntüleri.*
 
 ### 4.4.4 ROOTFS bölümünü oluştur
 
@@ -175,9 +195,13 @@ Kalan `unallocated` alana yine <b>sağ tık → New</b>, sonra <b>Add</b>:
 
 ![ROOTFS planlandı](../images/{143DC429-6748-42C3-9A4A-691238D4A073}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 Planlanan durum: 1 GB BOOT + 6.29 GiB ROOTFS.
 
 ![Planlanan durum](../images/{370CABEB-C929-493B-8996-1FB867457DED}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ### 4.4.5 Değişiklikleri uygula
 
@@ -190,6 +214,8 @@ Planlanan durum: 1 GB BOOT + 6.29 GiB ROOTFS.
 
 ![İşlemler tamamlandı](../images/{01D7E3F3-77AF-4578-AF99-AE21A1EFE350}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 ### 4.4.6 BOOT bölümüne `boot` bayrağı ekle
 
 Bu bayrak, bölümü "açılış bölümü" olarak işaretler. RBL, MLO'yu bu bölümde arar.
@@ -200,9 +226,13 @@ Bu bayrak, bölümü "açılış bölümü" olarak işaretler. RBL, MLO'yu bu b�
 
 ![boot bayrağı](../images/{5D758CCD-B40D-468F-8D1B-F2D8C97545E6}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 Flags sütununda `boot` yazıyorsa tamam. GParted'ı kapatabilirsin.
 
 ![Son durum](../images/{19CCA067-203C-4FA1-BE7A-CB2A0FF54A8B}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ---
 
@@ -252,6 +282,8 @@ cp {{prebuilt.mlo_file}} /media/$USER/BOOT/MLO
 
 ![MLO'yu kopyalama](../images/{9BE9E6D2-720E-4ED7-A6F6-9337BBB04BB1}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 > [!IMPORTANT]
 > <b>Neden sonda `MLO` yazıyoruz?</b> `cp` komutunda hedefin sonuna bir ad yazılırsa dosya o adla kopyalanır:
 > ```
@@ -268,6 +300,8 @@ cp {{prebuilt.mlo_file}} /media/$USER/BOOT/MLO
 [4.5](#45-boot-prosedürü-her-testte-tekrarlanır)'teki adımlarla kartı aç. Minicom'da şunu görmelisin:
 
 ![MLO çalıştı, u-boot.img bulunamadı](../images/{E4B8C846-49BA-43F8-A7A8-B2D8B9BDA0E8}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 | Satır | Anlamı |
 |---|---|
@@ -294,6 +328,8 @@ cp {{prebuilt.uboot_file}} /media/$USER/BOOT/u-boot.img
 ```
 
 ![u-boot.img'yi kopyalama](../images/{33002E3B-4D53-4327-96B8-7109DF21F826}.png)
+
+*Görsel: kursun GitHub reposu ([niekiran/EmbeddedLinuxBBB]({{course.repo}})).*
 
 ### Test et
 
@@ -326,6 +362,8 @@ sudo tar -xvf {{prebuilt.rootfs_file}} -C /media/$USER/ROOTFS
 
 ![Rootfs arşivini açma](../images/{DA993575-2D08-4D85-AA87-3047E71E40D6}.png)
 
+*Görsel: kursun GitHub reposu ([niekiran/EmbeddedLinuxBBB]({{course.repo}})).*
+
 <b>2) uEnv.txt'yi BOOT bölümüne kopyala</b> (adı değişmiyor, U-Boot bu adla arar):
 
 ```bash
@@ -347,6 +385,8 @@ Kernel mesajları akar ve sonunda <b>Ångström</b> logosu ile `beaglebone login
 
 ![Ångström login ekranı](../images/{F2BBFA98-4148-45FB-B849-710BC7F58DE9}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Sonuç: <b>RBL ✓ → MLO ✓ → U-Boot ✓ → Kernel ✓ → Rootfs ✓</b> 🎉
 
 > [!TIP]
@@ -357,6 +397,8 @@ Sonuç: <b>RBL ✓ → MLO ✓ → U-Boot ✓ → Kernel ✓ → Rootfs ✓</b> 
 `uEnv.txt`, U-Boot'un davranışını değiştiren ayar dosyasıdır. BBB'nin U-Boot'u açılırken BOOT bölümündeki bu dosyayı okur ve içindeki `uenvcmd` komutunu çalıştırır.
 
 ![Kursun uEnv.txt dosyası](../images/{840192A1-87BA-43CA-887C-D739774088B9}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 | Satır | Anlamı |
 |---|---|
@@ -374,6 +416,8 @@ Sonuç: <b>RBL ✓ → MLO ✓ → U-Boot ✓ → Kernel ✓ → Rootfs ✓</b> 
 Aynı dosya farklı yazılarak U-Boot'a kernel'i <b>ağdan (TFTP)</b>, rootfs'u da <b>bilgisayardaki bir klasörden (NFS)</b> aldırmak mümkün ([Bölüm 8](08_tftp_boot.md)):
 
 ![TFTP ve NFS için uEnv.txt örneği](../images/{F9C9F3D8-B461-4FAC-A040-0F0ECEB76A7E}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 `uEnv.txt`'nin her satırını ve U-Boot komut satırını [Bölüm 6](06_uboot_uenv.md)'da ayrıntılı göreceğiz.
 
@@ -457,13 +501,13 @@ Kursun bu dersinde Windows'ta Tera Term kullanılıyor. Minicom ile de komutlar 
 
 Önce dosyanın orada olduğunu gör:
 
-```bash
+```text
 U-Boot# ls mmc 0:2 /boot
 ```
 
 Sonra DDR'e yükle:
 
-```bash
+```text
 U-Boot# load mmc 0:2 0x82000000 /boot/uImage
 ```
 
@@ -501,7 +545,7 @@ Bizim SD kartımız için:
 
 Örnekler:
 
-```bash
+```text
 U-Boot# ls mmc 0:1                                  # BOOT bölümünü listele
 U-Boot# ls mmc 0:2 /boot                            # ROOTFS'taki /boot klasörünü listele
 U-Boot# load mmc 0:1 0x82000000 uEnv.txt            # BOOT'taki uEnv.txt'yi DDR'e yükle
@@ -523,7 +567,7 @@ U-Boot# mmc part                                    # Seçili cihazın partition
 
 ### 4.10.3 Header'ı ekrana dök
 
-```bash
+```text
 U-Boot# md.b 0x82000000 40
 ```
 
@@ -571,7 +615,7 @@ U-Boot# md.b 0x82000000 40
 
 Elle çözdüğün değerleri U-Boot'un kendi çözümüyle karşılaştır:
 
-```bash
+```text
 U-Boot# iminfo 0x82000000
 ```
 
@@ -581,7 +625,7 @@ U-Boot# iminfo 0x82000000
 
 İşin bitince Linux'u normal şekilde açmak için:
 
-```bash
+```text
 U-Boot# boot
 ```
 
@@ -647,11 +691,11 @@ uenvcmd=run netboot
 
 ## 4.13 Karşılaşılabilecek Problemler
 
-| Belirti | Olası sebep |
-|---|---|
-| Minicom'da hiçbir şey yok | TX/RX çapraz bağlı mı? Baud 115200 mü? Hardware Flow Control kapalı mı? ([2.8](02_serial_console.md#28-karşılaşılabilecek-problemler)) |
-| Sürekli `CCCCCCCC...` | RBL, MLO'yu bulamadı. Dosya adı tam `MLO` mu? BOOT bölümü FAT mı? `boot` bayrağı var mı? |
-| `error reading image u-boot.img` | BOOT'ta `u-boot.img` yok veya adı yanlış. |
-| Eski Linux açılıyor (Debian vb.) | Kart eMMC'den açıldı. S2 açılış anında basılı değildi. |
-| U-Boot `/boot/uImage` bulamıyor | Rootfs ROOTFS bölümüne çıkarılmamış veya yanlış klasöre çıkarılmış. |
-| `Kernel panic ... Unable to mount root fs` | ROOTFS bölümü boş veya `sync` yapılmadan kart çıkarılmış. |
+| Belirti | Sebep | Çözüm |
+|---|---|---|
+| Minicom'da hiçbir şey yok | TX/RX düz bağlı, baud yanlış ya da Hardware Flow Control açık | Bağlantıyı ve 115200 8N1 ayarını kontrol et ([2.8](02_serial_console.md#28-karşılaşılabilecek-problemler)) |
+| Sürekli `CCCCCCCC...` | RBL, MLO'yu bulamadı | Dosya adı tam `MLO` mu, BOOT bölümü FAT mı, `boot` bayrağı açık mı? ([4.4](#44-sd-kartı-bölümlere-ayırma-gparted)) |
+| `error reading image u-boot.img` | BOOT'ta `u-boot.img` yok veya adı yanlış | Dosyayı `u-boot.img` adıyla kopyala ([4.7](#47-aşama-2-u-boot)) |
+| Eski Linux açılıyor (Debian vb.) | Kart eMMC'den açıldı; S2 açılış anında basılı değildi | Gücü kes, S2 basılıyken tekrar ver ([4.5.3](#453-kartı-sd-karttan-aç-s2-butonu)) |
+| U-Boot `/boot/uImage` bulamıyor | Rootfs ROOTFS bölümüne çıkarılmamış veya yanlış klasöre çıkarılmış | `ls /media/$USER/ROOTFS/boot/` ile kontrol et, arşivi `-C` ile doğru yere çıkar |
+| `Kernel panic ... Unable to mount root fs` | ROOTFS bölümü boş veya `sync` yapılmadan kart çıkarılmış | Rootfs'i yeniden çıkar, `sync` + `umount` ile güvenli çıkar |

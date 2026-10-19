@@ -330,7 +330,7 @@ Kartta (root olarak):
 | `brightness` yazılıyor ama LED hemen eski haline dönüyor | Tetikleyici (`heartbeat`, `mmc1`) aktif | Önce `echo none > trigger` |
 | Kursun programı `trigger value write error` basıyor | Değer metin değil, ham bayt olarak yazılıyor | [15.7](#157-c-programıyla-user-led-kontrolü)'deki düzeltilmiş kod |
 | `/sys/kernel/debug` boş | debugfs bağlı değil | `mount -t debugfs none /sys/kernel/debug` |
-| `gpioset: invalid option -- 'c'` / `unable to request lines` | libgpiod 1.x ile 2.x sözdizimi karıştı | `gpioset --version` ile sürüme bak, [15.6](#156-gpioları-kullanıcı-alanından-kontrol-etmek)'teki tabloya göre yaz |
+| `gpioset: invalid option -- 'c'` / `unable to request lines` | libgpiod 1.x ile 2.x sözdizimi karıştı | `gpioset --version` ile sürüme bak, [15.6](#156-gpioları-kullanıcı-alanından-kontrol-etmek)'daki tabloya göre yaz |
 
 ---
 

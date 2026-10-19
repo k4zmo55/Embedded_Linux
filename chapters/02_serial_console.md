@@ -40,6 +40,8 @@ sudo dmesg | grep tty
 
 ![dmesg çıktısında USB-TTL dönüştürücü](../images/{D08296A2-927C-4477-88AA-80FA9DC1250A}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 - Kernel, dönüştürücünün çipini tanıyıp sürücüsünü yükler. Bu örnekte çip <b>pl2303</b>. Senin dönüştürücünde <b>cp210x</b>, <b>ftdi_sio</b> veya <b>ch341</b> de yazabilir.
 - Satırın sonundaki <b>`ttyUSB0`</b>, Minicom'da kullanacağımız portun adıdır: <b>`/dev/ttyUSB0`</b>.
 
@@ -61,13 +63,19 @@ Yön tuşlarıyla menüde gezinebilirsin. <b>Serial port setup</b>'ı seç:
 
 ![minicom -s ana menüsü](../images/{F27FC9A5-A70D-479E-9FE1-A48AF82142C0}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Seri port ayarları ekranı açılır:
 
 ![Serial port setup ekranı](../images/{46E1CB74-A6AC-4373-91BD-4DC1CC8E5EF1}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bu ekranda her ayarın başında bir harf vardır. Değiştirmek istediğin ayarın harfine basarsın. Örneğin <b>Serial Device</b>'ı değiştirmek için <b>A</b>'ya bas. İmleç o satıra geçer:
 
 ![Serial Device ayarını düzenleme](../images/{230FE2DE-7BE6-49B2-B01E-2F294C2C15FE}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Eski değeri silip `/dev/ttyUSB0` yaz ve <b>Enter</b>'a bas.
 
@@ -75,9 +83,13 @@ Baud rate'i değiştirmek için <b>E</b>'ye bas. Hız ve veri formatı ekranı a
 
 ![Baud rate ve veri formatı ekranı](../images/{D297BD35-EB7C-4410-B431-A8B84BC48A9D}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bu ekranda da her seçeneğin bir harfi var. Örneğin <b>D</b>'ye basınca hız 38400 olur:
 
 ![Baud rate 38400 seçildi](../images/{E3A60A5C-888D-4802-8A22-C1E6AC50C300}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Biz {{board.name}} için <b>115200</b> seçeceğiz. Bu ekrandaki harflerle hızı 115200, formatı <b>8N1</b> (8 bit, parity yok, 1 stop bit) yap ve Enter ile çık.
 
@@ -96,6 +108,8 @@ Ayarların son hali:
 Ayarları bitirince ana menüye dön ve <b>Save setup as dfl</b>'yi seç. Böylece ayarlar varsayılan olarak kaydedilir ve her seferinde yeniden yapman gerekmez. Sonra <b>Exit</b> ile ayar ekranından çık:
 
 ![Save setup as dfl](../images/{25B687AC-C882-4EAD-82C6-B4EA24B58170}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 ## 2.5 Minicom'u Kullanmak
 

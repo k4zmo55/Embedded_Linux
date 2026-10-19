@@ -16,9 +16,13 @@ Host bilgisayar <b>TFTP sunucusu</b>, {{board.name}} ise <b>TFTP istemcisi</b> o
 
 ![Host PC (TFTP sunucu) ile BBB (TFTP istemci) Ethernet ile bağlı](../images/{620FFBBE-4366-4EF5-A39A-249B1E305F30}.png)
 
+*Görsel: kursun slaytı.*
+
 Dosyalar iki gruba ayrılır:
 
 ![Host PC'de dtb, uImage, initramfs; SD kartta SPL, u-boot.img, uEnv.txt](../images/{7656F595-68A7-41D9-B830-F647EF669264}.png)
+
+*Görsel: kursun slaytı.*
 
 | Nerede? | Dosyalar |
 |---|---|
@@ -30,6 +34,8 @@ Kart önce SD karttan U-Boot'a kadar açılır. Sonra U-Boot, uEnv.txt'deki `tft
 ![U-Boot TFTP komutuyla dtb, uImage ve dosya sistemini host'tan çeker](../images/{B63514F3-1414-44B0-9ED0-67D141EF6F4E}.png)
 
 ![Özet](../images/{5831DAB2-E3ED-4587-A75C-C006E2D88880}.png)
+
+*Görseller: kursun slaytları.*
 
 ---
 
@@ -616,7 +622,7 @@ Bir adımı elle denemek istersen U-Boot'u durdurup `uEnv.txt`'yi yükle (`run l
 | `ping failed; host ... is not alive` | Host'un o arayüzde IP'si yok / kablo takılı değil | `ip -br a` ile kontrol et, Ethernet ışıklarına bak |
 | Kart U-Boot'a gelmeden eMMC'den açılıyor | S2'ye basılmadı | Güç verirken S2'yi basılı tut |
 | Kart SD'den hiç açılmıyor | SPL dosyasının adı yanlış / BOOT bölümü FAT değil | Dosya adı `MLO` olmalı; 1. bölüm FAT ve boot bayrağı açık olmalı |
-| `bootm` sonrası `Wrong Ramdisk Image Format` | initramfs'te U-Boot başlığı yok | `mkimage -A arm -T ramdisk -C gzip -d initramfs.cpio.gz initramfs` ([7.9 (g)](07_uart_boot.md#g-bootm-hataları)) |
+| `bootm` sonrası `Wrong Ramdisk Image Format` | initramfs'te U-Boot başlığı yok | `mkimage -A arm -T ramdisk -C gzip -d initramfs.cpio.gz initramfs` ([7.10 (g)](07_uart_boot.md#g-bootm-hataları)) |
 | `## Error: "loadfromtftp" not defined` | `uenvcmd` içinde çağrılan makro adı, tanımlanan adla aynı değil | `uEnv.txt`'de iki adı birebir aynı yaz |
 | `Running uenvcmd ...` hiç çıkmıyor | `uEnv.txt` okunmadı: BOOT bölümünde değil, adı yanlış (`uenv.txt`) veya kart eMMC'den açıldı | Dosyayı 1. bölüme koy, S2'ye basılı tutarak aç |
 | `Starting kernel ...` sonrası ekran boş | `bootargs` ayarlanmamış (ör. `booargs` yazım hatası) ya da `console` yanlış | U-Boot'ta `printenv bootargs` ile kontrol et |

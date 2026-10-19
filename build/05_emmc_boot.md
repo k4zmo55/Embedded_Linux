@@ -36,6 +36,8 @@
 
 ![BBB'de eMMC, SD kart ve DDR bağlantısı](../images/{E7E4FC4C-DBAC-4C4E-8FE5-D1274DAB2D14}.png)
 
+*Görsel: kursun slaytı.*
+
 | Bileşen | AM335x'e bağlantısı | Linux'ta (genelde) |
 |---|---|---|
 | <b>4 GB eMMC</b> | <b>mmc1</b> arayüzü (8-bit) | `mmcblk1` |
@@ -55,6 +57,8 @@ eMMC'ye doğrudan bilgisayardan yazılamaz, çünkü kartın üzerine lehimlidir
 
 ![eMMC'ye Debian yükleme adımları](../images/{BEFA8946-6220-443D-B624-79EA686B7EC1}.png)
 
+*Görsel: kursun slaytı.*
+
 1. En güncel <b>Debian OS</b> image'ını indir.
 2. Bootable image'ı önce <b>SD karta</b> yaz.
 3. Kartı <b>SD karttan boot et</b> (güç verirken S2'ye basılı tut).
@@ -64,6 +68,8 @@ eMMC'ye doğrudan bilgisayardan yazılamaz, çünkü kartın üzerine lehimlidir
 ### eMMC flasher script ne yapar?
 
 ![eMMC flasher script akışı](../images/{5F2184FB-5B91-43CB-8B04-0FDA7014DD3B}.png)
+
+*Görsel: kursun slaytı.*
 
 1. Script <b>SD karttan</b> çalıştırılır.
 2. eMMC iki bölüme (partition) ayrılır: <b>FAT</b> ve <b>EXT4</b>.
@@ -85,6 +91,8 @@ eMMC'ye doğrudan bilgisayardan yazılamaz, çünkü kartın üzerine lehimlidir
 Kartı bilgisayara bağladığın yönteme göre IP adresi değişir. Güncel liste: <https://beagleboard.org/getting-started>
 
 ![BeagleBone IP adresleri](../images/{C5156823-84C4-41B0-8EC4-B5835A0CD1A6}.png)
+
+*Görsel: beagleboard.org.*
 
 | Bağlantı | Bilgisayarın işletim sistemi | IP adresi |
 |---|---|---|
@@ -110,6 +118,8 @@ ssh debian@192.168.6.2
 
 ![SSH ile BeagleBone'a bağlanma](../images/{A9566984-B563-4C49-A9A1-9816B21F6E62}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bağlanınca kart karşılama mesajında varsayılan kullanıcı adını ve şifreyi gösterir. `password:` satırına şifreyi yaz:
 
 | Kullanıcı adı | Şifre |
@@ -132,6 +142,8 @@ lsb_release -da
 
 ![Debian sürümünü kontrol etme](../images/{636C391B-AE68-4635-A859-93F6D5533991}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bu örnekte kartta <b>Debian 10 (buster)</b> yüklü.
 
 > [!TIP]
@@ -143,7 +155,18 @@ Güncel image'lar: <https://beagleboard.org/latest-images>
 
 ![En güncel BeagleBone Black Debian image'ı](../images/{F642D326-33B6-4A9D-B77A-6F9932E2AF22}.png)
 
-Bu notun yazıldığı tarihte en güncel sürüm <b>Debian 13.7 (2026-10-09, IoT)</b> idi. Karttaki Debian 10'dan çok daha yeni olduğu için eMMC'yi güncellemek gerekiyor.
+*Görsel: beagleboard.org. Görselde aynı tarihli imajın v6.18.x çeşidi görünüyor; listede başlığında <b>(v5.10-ti)</b> yazanı seç.*
+
+Bu kitap yazılırken en güncel sürüm <b>Debian 13.7 (2026-10-09, IoT)</b> idi. Karttaki Debian 10'dan çok daha yeni olduğu için eMMC'yi güncellemek gerekiyor.
+
+Aynı tarihli imaj <b>üç farklı kernel</b> ile yayınlanıyor: v6.18.x, v6.12.x ve <b>v5.10-ti</b>. Bu kitapta <b>v5.10-ti</b> çeşidini indir:
+
+| Çeşit | Kernel | Bu kitapta |
+|---|---|---|
+| <b>IoT (v5.10-ti)</b> | BeagleBoard'un 5.10 LTS kernel'i | <b>Kullanılan.</b> [Bölüm 15](15_gpio_sysfs.md) – [Bölüm 20](20_lcd_16x2.md)'deki GPIO numaraları, `config-pin` ve cape-universal bu kernel'e göre. [Bölüm 10](10_linux_kernel.md)'da derlediğimiz kernel de 5.10. |
+| IoT (v6.12.x / v6.18.x) | Daha yeni kernel'ler | GPIO numaraları 512'den başlar ([15.6](15_gpio_sysfs.md#156-gpioları-kullanıcı-alanından-kontrol-etmek)); donanım bölümlerindeki `echo 60 > export` gibi komutlar başka pine gider. |
+
+İndireceğin dosya: `am335x-debian-13.7-base-v5.10-ti-armhf-2026-10-09-4gb.img.xz` ([imajın sayfası](https://www.beagleboard.org/distros/beaglebone-black-debian-13-7-2026-10-09-iot-v5-10-ti)).
 
 - <b>Image</b> butonu ile `.img.xz` dosyasını indir.
 - İstersen <b>sha256</b> ile indirdiğin dosyanın bozulmadığını kontrol edebilirsin:
@@ -160,6 +183,8 @@ Bu notun yazıldığı tarihte en güncel sürüm <b>Debian 13.7 (2026-10-09, Io
 Bu image doğrudan eMMC'ye yazılamaz. Önce <b>SD karta</b> yazılır, ardından kart SD karttan açılıp eMMC'ye aktarılır ([5.3](#53-emmcye-debian-yükleme-teori)). SD karta yazmak için bir programa ihtiyacımız var: <b>balenaEtcher</b> (<https://etcher.balena.io>).
 
 ![balenaEtcher](../images/{A7E04BE8-B7AF-43AA-A284-2D62653B27FF}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 #### Neden dosyayı SD karta kopyalamak yetmiyor?
 
@@ -178,11 +203,15 @@ Dosyayı sürükle-bırak ile kopyalarsan SD kartta sadece tek bir büyük `.img
 
 ![balenaEtcher image ve hedef seçimi](../images/{89A9E107-ACD1-4ABC-8E08-3421A12E07A1}.png)
 
-1. <b>Flash from file</b> ile indirdiğin image dosyasını seç (kursta: `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz`).
+*Görsel: kursun videosundan ekran görüntüsü.*
+
+1. <b>Flash from file</b> ile indirdiğin image dosyasını seç (`am335x-debian-13.7-base-v5.10-ti-armhf-2026-10-09-4gb.img.xz`; kursta `bone-debian-10.3-iot-armhf-2020-04-06-4gb.img.xz`).
 2. <b>Select target</b> ile SD kartı seç. Kart okuyucu bilgisayarda bir USB depolama aygıtı olarak görünür.
 3. <b>Flash!</b> butonuna bas. Yazma ve doğrulama (verify) bitene kadar bekle.
 
 ![balenaEtcher hedef listesi](../images/{2B998CAA-4FFD-45B2-B007-FC0D16591C0A}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Bu örnekte iki aygıt görünüyor:
 
@@ -201,6 +230,8 @@ sudo dmesg | tail -20
 
 ![dmesg çıktısında SD kart](../images/{234B1B38-C164-43DF-806A-DEDC74BC56D7}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Son satırlarda yeni takılan aygıtın adı ve boyutu görünür. Bu örnekte `[sdc] ... (15.9 GB/14.8 GiB)` satırı, SD kartın <b>`/dev/sdc`</b> olduğunu gösteriyor.
 
 > [!TIP]
@@ -218,6 +249,8 @@ Son satırlarda yeni takılan aygıtın adı ve boyutu görünür. Bu örnekte `
 
 ![Bilgisayarda BEAGLEBONE sürücüsünün görünmesi](../images/{2FE13611-4F3E-470D-A47B-6F11660D9A1E}.png)
 
+*Görsel: kursun videosundan ekran görüntüsü.*
+
 Bilgisayarında <b>BEAGLEBONE</b> adında bir sürücü göründüyse kart açılmıştır. Şimdi [5.4.2](#542-ssh-ile-karta-bağlan)'deki SSH komutuyla tekrar bağlan:
 
 ```bash
@@ -232,6 +265,27 @@ ssh debian@192.168.6.2
 
 ### 5.4.7 eMMC flasher script'ini çalıştır
 
+Flasher'ın adı ve yeri imajın yaşına göre değişir:
+
+| İmaj | Flasher |
+|---|---|
+| Güncel imajlar (Debian 11 ve sonrası, ör. 13.7) | `beagle-flasher` paketi |
+| Kursun imajı (Debian 10.3) | `/opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh` |
+
+#### Güncel imajlarda: `beagle-flasher`
+
+```bash
+sudo enable-beagle-flasher      # bir sonraki açılışta SD karttaki sistemi eMMC'ye yazar
+sudo reboot
+```
+
+`enable-beagle-flasher`, SD kartı bir sonraki açılışta flasher olarak çalışacak şekilde ayarlar. Kart yeniden açılınca kopyalama kendiliğinden başlar, bitince kart kapanır. Aynı paketteki `sudo beagle-flasher` komutu ise kopyalamayı hemen, çalışan sistemin içinden yapar. Daha hızlıdır ama kaynak sistem kopyalanırken çalıştığı için önerilen yol `enable-beagle-flasher`'dır.
+
+> [!NOTE]
+> Komut bulunamazsa paketini ara ve kur: `sudo apt update && apt search beagle-flasher`, ardından listede çıkan paketi `sudo apt install <paket>` ile kur.
+
+#### Kursun imajında: `init-eMMC-flasher-v3.sh`
+
 Flasher script'leri `/opt/scripts/tools/eMMC` klasöründe bulunur:
 
 ```bash
@@ -243,6 +297,8 @@ ls
 
 ![eMMC klasöründeki flasher script'leri](../images/{5EA08989-D8DE-4213-8D3E-F2E49B150C0F}.png)
 
+*Görseller: kursun videosundan ekran görüntüleri.*
+
 Listede birçok script var. BeagleBone Black için kullanılan <b>`init-eMMC-flasher-v3.sh`</b>:
 
 ```bash
@@ -252,12 +308,11 @@ sudo ./init-eMMC-flasher-v3.sh
 > [!CAUTION]
 > Bu script eMMC'deki <b>her şeyi siler</b> ve yerine SD karttaki sistemi yazar. eMMC'de saklamak istediğin dosya varsa önce yedekle.
 
-> [!NOTE]
-> Bu klasör ve script adı kursta kullanılan <b>Debian 10.3</b> image'ına göredir. Daha yeni image'larda flasher farklı bir yerde veya farklı bir adla olabilir. Klasör yoksa image'ın açıklamasına bakarak flasher yöntemini kontrol et.
-
 Script çalışırken [5.3](#emmc-flasher-script-ne-yapar)'te anlatılan adımları sırayla yapar: bölümlendirme → formatlama → kopyalama. Bu birkaç dakika sürer.
 
 ![Flash işleminin başarıyla bitmesi](../images/{AD5A6E4A-82A3-42BB-AF46-ED6CD3D8F487}.png)
+
+*Görsel: kursun videosundan ekran görüntüsü.*
 
 Flash işlemi başarılıysa şu mesajı görürsün:
 
@@ -285,7 +340,8 @@ Ardından kart kendini kapatır ve SSH bağlantısı kopar (`Connection to 192.1
 ## 5.5 Özet
 
 - eMMC kartın kalıcı, dahili deposudur (MMC1). DDR ise geçici çalışma belleğidir.
-- eMMC'ye doğrudan yazılamaz: imaj önce <b>balenaEtcher</b> ile SD karta yazılır, kart <b>S2</b> ile SD karttan açılır, <b>flasher script</b> SD karttaki sistemi eMMC'ye kopyalar.
+- eMMC'ye doğrudan yazılamaz: imaj önce <b>balenaEtcher</b> ile SD karta yazılır, kart <b>S2</b> ile SD karttan açılır, <b>flasher</b> (`enable-beagle-flasher`; eski imajlarda `init-eMMC-flasher-v3.sh`) SD karttaki sistemi eMMC'ye kopyalar.
+- Bu kitapta Debian 13.7'in <b>v5.10-ti</b> çeşidi kullanılıyor; donanım bölümlerindeki GPIO numaraları bu kernel'e göre.
 - USB üzerinden kartın adresi Linux'ta `192.168.6.2`, Windows'ta `192.168.7.2`. Bağlantı: `ssh debian@192.168.6.2`.
 
 ## 5.6 Karşılaşılabilecek Problemler
@@ -295,7 +351,8 @@ Ardından kart kendini kapatır ve SSH bağlantısı kopar (`Connection to 192.1
 | `ping 192.168.6.2` cevap vermiyor | Kart henüz açılmadı ya da Windows'tasın | 1–2 dakika bekle. Windows'ta adres `192.168.7.2`. `beaglebone.local` da denenebilir. |
 | `REMOTE HOST IDENTIFICATION HAS CHANGED!` | Kart farklı bir sistemden açıldı | `ssh-keygen -R 192.168.6.2` |
 | Şifre kabul edilmiyor | Yeni image'da varsayılan şifre yok | SD karttaki `sysconf.txt` ile kullanıcı/şifre belirle ([5.4.4](#544-en-güncel-imageı-indir)) |
-| `/opt/scripts/tools/eMMC` yok | Image sürümü farklı | Image'ın açıklamasındaki flasher yöntemini kullan |
+| `/opt/scripts/tools/eMMC` yok | Güncel imaj; flasher artık `beagle-flasher` paketinde | `sudo enable-beagle-flasher` ([5.4.7](#547-emmc-flasher-scriptini-çalıştır)) |
+| Donanım bölümlerinde `echo 60 > /sys/class/gpio/export` hata veriyor ya da başka pin değişiyor | İmajın v6.x çeşidi yüklendi; GPIO numaraları 512'den başlıyor | v5.10-ti çeşidini yükle ya da numarayı `cat /sys/kernel/debug/gpio` ile bul ([15.6](15_gpio_sysfs.md#156-gpioları-kullanıcı-alanından-kontrol-etmek)) |
 | Kart flash'tan sonra yine eski sistemle açılıyor | SD kart hâlâ takılı ve S2'ye basıldı / flash yarıda kaldı | SD kartı çıkar, S2'ye basmadan aç. Gerekirse flash'ı tekrarla. |
 
 ---

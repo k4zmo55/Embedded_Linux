@@ -224,14 +224,17 @@ git clone {{course.repo}}.git
 
 <b>4) Temiz derle:</b> <i>Project → Clean...</i>, sonra <i>Build Project</i>. Repoda eğitmenin derlediği eski `Debug/` dosyaları da var; temizlemek bunları siler.
 
-| Proje | Ne yapar? | Kursta |
+| Proje | Ne yapar? | Kitapta |
 |---|---|---|
-| `BBB_led_control` | Kartın USR3 LED'ini sysfs ile kontrol eder | AM335x GPIO ve sysfs |
-| `counter_7seg`, `button_counter_7seg` | Tek haneli 7-segment gösterge, sayıcı | 7-segment gösterge |
-| `4digitcount` | 4 haneli 7-segment sayıcı | 4 haneli 7-segment |
-| `MPU6050_raw_read` | I2C ile ivmeölçer/jiroskop okuma | MPU6050 |
-| `lcd_text`, `lcd_scrollable_text`, `lcd_news` | 16x2 LCD'ye yazı yazma | 16x2 LCD |
-| `Drivers/gpio`, `Drivers/lcd` | Projelerin ortak kullandığı GPIO ve LCD fonksiyonları | — |
+| `BBB_led_control` | Kartın USR3 LED'ini sysfs ile kontrol eder | [Bölüm 15](15_gpio_sysfs.md) |
+| `counter_7seg`, `button_counter_7seg` | Tek haneli 7-segment gösterge, sayıcı | [Bölüm 17](17_seven_segment.md) |
+| `4digitcount` | 4 haneli 7-segment sayıcı | [Bölüm 18](18_four_digit_7segment.md) |
+| `MPU6050_raw_read` | I2C ile ivmeölçer/jiroskop okuma | [Bölüm 19](19_mpu6050.md) |
+| `lcd_text`, `lcd_scrollable_text`, `lcd_news` | 16x2 LCD'ye yazı yazma | [Bölüm 20](20_lcd_16x2.md) |
+| `Drivers/gpio`, `Drivers/lcd` | Projelerin ortak kullandığı GPIO ve LCD fonksiyonları | [Bölüm 16](16_external_led.md), [Bölüm 20](20_lcd_16x2.md) |
+
+> [!IMPORTANT]
+> Kursun projelerinde hatalar var (ör. LED programında ham bayt yazımı, LCD'de eksik başlatma dizisi). Kitaptaki bölümler her projenin hatalarını anlatıp düzeltilmiş halini repodaki `code/` klasöründe veriyor; kendi çalışmanda o sürümleri kullan.
 
 > [!NOTE]
 > Repodaki `.metadata` ve `RemoteSystemsTempFiles` klasörleri eğitmenin Eclipse çalışma alanına ait. İçe aktarırken bunları seçme.

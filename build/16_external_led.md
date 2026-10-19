@@ -78,7 +78,7 @@ Register değerinin son hanesi `7` (mod 7) ise pin GPIO'dur. `config-pin` Beagle
 
 ## 16.3 Komut Satırından Test
 
-Kursun "Interfacing external LED - Part 1" dersi. [15.6](15_gpio_sysfs.md#156-gpioları-kullanıcı-alanından-kontrol-etmek)'teki komutlarla:
+Kursun "Interfacing external LED - Part 1" dersi. [15.6](15_gpio_sysfs.md#156-gpioları-kullanıcı-alanından-kontrol-etmek)'daki komutlarla:
 
 ![Harici LED'i sysfs ve libgpiod ile yakıp söndürme](../images/ext_led/02_cmdline_test.png)
 

@@ -65,6 +65,16 @@ serial_uboot_version = "2016.11-rc1"
 sd_uboot_version = "2022.04"
 sd_kernel_version = "5.10.168"
 
+# Kartın eMMC'sine yüklenen güncel BeagleBoard Debian imajı (eMMC bölümü).
+# Donanım bölümleri (15-20) kernel 5.10'un sabit GPIO numaralarına göre
+# yazıldığı için imajın v5.10-ti çeşidi seçilir.
+[vars.debian]
+version = "13.7"
+date = "2026-10-09"
+kernel_flavor = "v5.10-ti"
+image = "am335x-debian-{{debian.version}}-base-{{debian.kernel_flavor}}-armhf-{{debian.date}}-4gb.img.xz"
+page = "https://www.beagleboard.org/distros/beaglebone-black-debian-13-7-2026-10-09-iot-v5-10-ti"
+
 # Linux kernel (Linux kernel bölümü)
 [vars.kernel]
 branch = "5.10"

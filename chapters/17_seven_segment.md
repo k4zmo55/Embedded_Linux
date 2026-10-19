@@ -475,4 +475,4 @@ Program çalışırken `top`'a bakarsan CPU kullanımının ~%0 olduğunu görü
 | Tek basışta sayı 2–3 artıyor | Kontak sekmesi | Yazılımla debounce ([17.7](#177-ek-butonla-sayma)) ya da 100 nF kondansatör |
 | Program başlar başlamaz bir basış sayıyor (kursun kodu) | İlk `poll()`'dan önce `value` okunmamış | `poll()` döngüsünden önce `lseek` + `read` |
 | `poll()` sürekli dönüyor, CPU %100 | Olaydan sonra `value` okunmuyor | Her olaydan sonra `lseek(fd, 0, SEEK_SET)` + `read()` |
-| GPIO numaraları yeni kernel'de çalışmıyor | Kernel 6.x'te GPIO numaraları 512'den başlayabilir | [15.6](15_gpio_sysfs.md#156-gpioları-kullanıcı-alanından-kontrol-etmek)'teki uyarı; `ls /sys/class/gpio/` ile bankaların ilk numarasını bul |
+| GPIO numaraları yeni kernel'de çalışmıyor | Kernel 6.x'te GPIO numaraları 512'den başlayabilir | [15.6](15_gpio_sysfs.md#156-gpioları-kullanıcı-alanından-kontrol-etmek)'daki uyarı; `ls /sys/class/gpio/` ile bankaların ilk numarasını bul |
