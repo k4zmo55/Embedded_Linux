@@ -54,8 +54,7 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [17. 7-Segment Gösterge](17_seven_segment.md) | Tek haneli göstergeyi sür, sayaç ve butonla sayma programı yaz |
 | | [18. 4 Haneli 7-Segment Gösterge](18_four_digit_7segment.md) | Çoğullama ile dört haneyi sür, sayaç ve dijital saat yaz |
 | | [19. MPU6050 ile Eğim Ölçmek (I2C)](19_mpu6050.md) | I2C ile ivmeölçer/jiroskop oku, eğim açısını hesapla |
-
-<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: 16x2 LCD.
+| | [20. 16x2 Karakter LCD (HD44780)](20_lcd_16x2.md) | LCD'yi 4 bit modunda sür, kayan yazı ve Türkçe karakter göster |
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
