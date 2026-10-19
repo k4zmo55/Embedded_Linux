@@ -50,6 +50,11 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 - [Bölüm 19 — MPU6050 ile Eğim Ölçmek (I2C)](build/19_mpu6050.md)
 - [Bölüm 20 — 16x2 Karakter LCD (HD44780)](build/20_lcd_16x2.md)
 
+**Kısım VII — Kernel Sürücüleri**
+
+- [Bölüm 21 — Kernel Modülü Yazmak](build/21_kernel_module.md)
+- [Bölüm 22 — Karakter Aygıt Sürücüsü](build/22_char_driver.md)
+
 ## Bu Repo Nasıl Çalışır?
 
 | Yer | Ne var? |

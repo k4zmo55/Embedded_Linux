@@ -56,6 +56,8 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [18. 4 Haneli 7-Segment Gösterge](18_four_digit_7segment.md) | Çoğullama ile dört haneyi sür, sayaç ve dijital saat yaz |
 | | [19. MPU6050 ile Eğim Ölçmek (I2C)](19_mpu6050.md) | I2C ile ivmeölçer/jiroskop oku, eğim açısını hesapla |
 | | [20. 16x2 Karakter LCD (HD44780)](20_lcd_16x2.md) | LCD'yi 4 bit modunda sür, kayan yazı ve Türkçe karakter göster |
+| <b>VII — Kernel Sürücüleri</b> | [21. Kernel Modülü Yazmak](21_kernel_module.md) | İlk modülünü yaz, kartta yükle, parametre ve sembol paylaşımını dene |
+| | [22. Karakter Aygıt Sürücüsü](22_char_driver.md) | `/dev` altında kendi aygıtını aç; read, write, ioctl'ü yaz |
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 

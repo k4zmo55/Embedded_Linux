@@ -44,6 +44,11 @@
 - [Bölüm 19 — MPU6050 ile Eğim Ölçmek (I2C)](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)
 - [Bölüm 20 — 16x2 Karakter LCD (HD44780)](#c20-bölüm-20--16x2-karakter-lcd-hd44780)
 
+**Kısım VII — Kernel Sürücüleri**
+
+- [Bölüm 21 — Kernel Modülü Yazmak](#c21-bölüm-21--kernel-modülü-yazmak)
+- [Bölüm 22 — Karakter Aygıt Sürücüsü](#c22-bölüm-22--karakter-aygıt-sürücüsü)
+
 <div class="page-break"></div>
 
 # <a name="c0-önsöz"></a>Önsöz
@@ -103,6 +108,8 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [18. 4 Haneli 7-Segment Gösterge](#c18-bölüm-18--4-haneli-7-segment-gösterge) | Çoğullama ile dört haneyi sür, sayaç ve dijital saat yaz |
 | | [19. MPU6050 ile Eğim Ölçmek (I2C)](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c) | I2C ile ivmeölçer/jiroskop oku, eğim açısını hesapla |
 | | [20. 16x2 Karakter LCD (HD44780)](#c20-bölüm-20--16x2-karakter-lcd-hd44780) | LCD'yi 4 bit modunda sür, kayan yazı ve Türkçe karakter göster |
+| <b>VII — Kernel Sürücüleri</b> | [21. Kernel Modülü Yazmak](#c21-bölüm-21--kernel-modülü-yazmak) | İlk modülünü yaz, kartta yükle, parametre ve sembol paylaşımını dene |
+| | [22. Karakter Aygıt Sürücüsü](#c22-bölüm-22--karakter-aygıt-sürücüsü) | `/dev` altında kendi aygıtını aç; read, write, ioctl'ü yaz |
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
@@ -8688,4 +8695,777 @@ arm-linux-gnueabihf-gcc -Wall -Ilib -I20_lcd -o lcd_turkish 20_lcd/lcd_turkish.c
 | `Permission denied` / `LCD init failed` | Root değilsin ya da pin başka yerde kullanılıyor | `sudo`; `cat /sys/kernel/debug/gpio` |
 | `lcd_scrollable_text` derlenmiyor (kursun kodu) | Kaynakta `LCD_CMD_CLEAR_DISPLAY yo` yazım hatası | `lcd_scroll.c` |
 | Kart açılırken LCD'de rastgele karakterler | Pinler açılışta tanımsız; E'de oluşan darbeler LCD'ye bir şey yazar | Normal; program başlayınca `lcd_init()` düzeltir. R/W'nin GND'de olduğundan emin ol |
+
+
+<div class="page-break"></div>
+
+<div class="part-title">Kısım VII<br>Kernel Sürücüleri</div>
+
+<div class="page-break"></div>
+
+# <a name="c21-bölüm-21--kernel-modülü-yazmak"></a>Bölüm 21 — Kernel Modülü Yazmak
+
+> <b>Bu bölümde:</b>
+> - Kernel modülünün ne olduğunu, kullanıcı programından farkını ve neden modül yazıldığını öğreneceksin.
+> - İlk modülünü yazıp kernel ağacının dışında (out-of-tree) cross compile edeceksin.
+> - Modülü kartta `insmod`, `lsmod`, `rmmod`, `modinfo` ve `dmesg` ile yükleyip izleyeceksin.
+> - Modüle parametre verecek ve bu parametreleri çalışırken sysfs'ten değiştireceksin.
+> - Bir modülün dışa açtığı fonksiyonu başka bir modülde kullanacak, bağımlılığı `modprobe`'a çözdüreceksin.
+>
+> <b>Ön koşul:</b> [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme) — kernel'i ve modülleri derlemek, [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem) — kendi kernel'in ve BusyBox rootfs'inle (tercihen NFS) açılan kart.
+
+> [!NOTE]
+> Bu bölüm kursta yok; kitabın kursun ötesine geçen kısmının ilk bölümü. Kart, [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme)'da derlediğin kernel 5.10.162 ile ve [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)'deki BusyBox rootfs'iyle açılıyor; komutlar kartta root olarak çalıştırılır. Terminal görüntüleri temsilidir.
+
+---
+
+## <a name="c21-211-kernel-modülü-nedir"></a>21.1 Kernel Modülü Nedir?
+
+Şimdiye kadar yazdığımız programlar (LED, 7-segment, LCD) <b>kullanıcı alanında</b> (user space) çalıştı. Donanıma kernel'in açtığı dosyalar (`/sys/class/gpio`, `/dev/i2c-2`) üzerinden ulaştılar. Bu dosyaların arkasında kernel'in içindeki <b>sürücüler</b> çalışıyordu.
+
+<b>Kernel modülü</b>, kernel çalışırken içine eklenip çıkarılabilen bir kod parçasıdır (`.ko` dosyası, *kernel object*). Yüklendiği anda kernel'in bir parçası olur:
+
+| | Kullanıcı programı | Kernel modülü |
+|---|---|---|
+| Nerede çalışır? | Kullanıcı alanı, kendi korumalı belleğinde | Kernel alanı, kernel ile aynı bellekte |
+| Başlangıç noktası | `main()` | `module_init()` ile belirtilen fonksiyon |
+| Kütüphane | glibc (`printf`, `malloc`...) | Sadece kernel'in fonksiyonları (`printk`, `kmalloc`...) |
+| Hata yaparsa | Program çöker (`Segmentation fault`), sistem çalışmaya devam eder | <b>Bütün sistem</b> çökebilir (`Oops`, kernel panic) |
+| Donanıma erişim | Kernel'in açtığı arayüzler üzerinden | Doğrudan (register'lar, kesmeler) |
+| Çalıştırma | `./program` | `insmod modul.ko` |
+
+```
+ Kullanıcı alanı     ./led_blink  ./lcd_text        (Bölüm 16–20)
+ ──────────────────────── open / read / write / ioctl ─────────────
+ Kernel alanı        kernel  +  hello.ko  +  gpio-omap  +  i2c-omap ...
+                             ▲
+                             └── insmod ile eklendi, rmmod ile çıkarılır
+```
+
+<b>Neden modül?</b>
+
+- Kernel'i yeniden derleyip kartı yeniden başlatmadan sürücü eklemek ve denemek için. Sürücü geliştirirken döngü "derle → `insmod` → dene → `rmmod`" olur.
+- Her donanımın sürücüsünü kernel imajına gömmek imajı büyütür. Dağıtımlar sürücülerin çoğunu modül olarak verir; sadece donanımda olan yüklenir ([10.7](#c10-107-kernel-yapılandırması-kconfig-config-menuconfig)'deki `m` seçeneği).
+
+> [!WARNING]
+> Modül kernel'in içinde çalıştığı için bir hata (NULL işaretçi, taşma) bütün sistemi kilitleyebilir. Modülleri geliştirme kartında dene; NFS rootfs ile çalışmak, kart kilitlendiğinde dosyalarının bilgisayarda güvende olması demektir.
+
+---
+
+## <a name="c21-212-hazırlık-hangi-kernele-karşı-derleniyor"></a>21.2 Hazırlık: Hangi Kernel'e Karşı Derleniyor?
+
+Bir modül, <b>belirli bir kernel için</b> derlenir. Derlenirken o kernel'in başlık dosyaları, `.config`'i ve sembol listesi (`Module.symvers`) kullanılır. Bu yüzden:
+
+1. Elinde kartta çalışan kernel'in <b>derlenmiş kaynak ağacı</b> olmalı: [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme)'daki `~/bbb/linux`. Orada `make ... modules` de çalıştırılmış olmalı; `Module.symvers` dosyası bu adımda üretilir.
+2. Kartta <b>aynı kaynaktan, aynı ayarlarla</b> derlenmiş kernel çalışmalı. Modülün içine yazılan <b>vermagic</b> (kernel sürümü + bazı ayarlar) yükleme anında çalışan kernel'le karşılaştırılır; uyuşmazsa modül reddedilir ([21.10](#c21-2110-karşılaşılabilecek-problemler)).
+
+```bash
+ls ~/bbb/linux/Module.symvers ~/bbb/linux/.config     # ikisi de olmalı
+```
+
+Kartta:
+
+```text
+~ # uname -r
+5.10.162
+```
+
+> [!NOTE]
+> <b>Kartta eMMC'deki Debian (v5.10-ti) çalışıyorsa</b> modülü Debian'ın kernel'ine karşı derlemen gerekir; [Bölüm 10](#c10-bölüm-10--linux-kernel-kaynak-ağacı-ve-derleme)'daki ağaç o kernel'in birebir aynısı değildir. En kolayı kartın kendisinde derlemek: `sudo apt install linux-headers-$(uname -r) build-essential`, sonra bu bölümün `code/` klasörünü karta kopyalayıp orada `make KDIR=/lib/modules/$(uname -r)/build` çalıştır. Debian armhf'te derleyicinin adı da `arm-linux-gnueabihf-gcc` olduğu için Makefile değişmeden çalışır.
+
+---
+
+## <a name="c21-213-i̇lk-modül-helloc"></a>21.3 İlk Modül: `hello.c`
+
+Bölümün kodu: [`code/21_kernel_module/`](../code/21_kernel_module/hello.c). En küçük modül iki fonksiyondan oluşur: biri yüklenirken, biri çıkarılırken çalışır.
+
+```c
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt     /* her mesajın başına "hello: " */
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/utsname.h>
+
+static char *name = "BeagleBone";
+module_param(name, charp, 0444);
+MODULE_PARM_DESC(name, "Name to greet");
+
+static int count = 1;
+module_param(count, int, 0644);
+MODULE_PARM_DESC(count, "How many times to greet (1-10)");
+
+static int __init hello_init(void)
+{
+	int i;
+
+	if (count < 1 || count > 10) {
+		pr_err("count must be 1-10, got %d\n", count);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < count; i++)
+		pr_info("Hello %s! (%d/%d)\n", name, i + 1, count);
+
+	pr_info("running on Linux %s (%s)\n", utsname()->release, utsname()->machine);
+	return 0;
+}
+
+static void __exit hello_exit(void)
+{
+	pr_info("Goodbye %s, count was %d\n", name, count);
+}
+
+module_init(hello_init);
+module_exit(hello_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Embedded Linux kitabı");
+MODULE_DESCRIPTION("First kernel module: hello with parameters");
+```
+
+| Parça | Anlamı |
+|---|---|
+| `module_init(hello_init)` | `insmod` sırasında çağrılacak fonksiyon. <b>`0` dönerse</b> modül yüklenir; negatif bir hata kodu (`-EINVAL`, `-ENOMEM`...) dönerse yükleme iptal olur ve modül bellekten atılır. |
+| `module_exit(hello_exit)` | `rmmod` sırasında çağrılır. Init'te alınan her kaynak (bellek, GPIO, kesme...) burada bırakılmalıdır. |
+| `__init` / `__exit` | Fonksiyonları özel bölümlere koyar. `__init` kodu yükleme bittikten sonra bellekten atılır; `__exit` kodu modül kernel'e gömülü derlenirse hiç derlenmez (gömülü kod çıkarılamaz). |
+| `pr_info()`, `pr_err()` | Kernel log'una yazar: `printk(KERN_INFO ...)` kısaltması ([21.8](#c21-218-printk-ve-log-seviyeleri)). Çıktı ekrana değil, `dmesg`'e gider. |
+| `pr_fmt` | Bütün `pr_*` mesajlarının başına eklenecek metin. `KBUILD_MODNAME` derlemede modülün adıyla (`hello`) değiştirilir. |
+| `MODULE_LICENSE("GPL")` | Lisans. GPL dışı bir lisans kernel'i "tainted" (lekeli) yapar ve modül `EXPORT_SYMBOL_GPL` ile açılmış fonksiyonları kullanamaz. |
+| `MODULE_AUTHOR`, `MODULE_DESCRIPTION` | `modinfo` çıktısında görünen bilgiler |
+| `utsname()` | Çalışan kernel'in adı ve sürümü (`uname` komutunun kernel'deki karşılığı) |
+
+> [!IMPORTANT]
+> Kernel kodunda `printf`, `malloc`, `<stdio.h>` yoktur; glibc kullanıcı alanının kütüphanesidir. Kernel'in kendi karşılıkları vardır: `printk`/`pr_info`, `kmalloc`/`kfree`, `<linux/...>` başlıkları. Kernel'de kayan nokta (`float`, `double`) da kullanılmaz.
+
+Kernel mesajlarında Türkçe karakter kullanmadık: kernel log'u seri konsola da gider ve orada bozuk görünebilir ([8.8](#c8-88-challenge-her-kaynaktan-boot-edebilen-genel-uenvtxt)'deki U-Boot mesajları gibi).
+
+---
+
+## <a name="c21-214-ağaç-dışında-derlemek-makefile-ve-kbuild"></a>21.4 Ağaç Dışında Derlemek: Makefile ve kbuild
+
+Modül kernel kaynağının içine konmadan, kendi klasöründe derlenir (<b>out-of-tree</b>). Derlemeyi yine kernel'in derleme sistemi (<b>kbuild</b>) yapar; biz sadece hangi dosyaların modül olacağını söyleriz:
+
+```make
+ifneq ($(KERNELRELEASE),)
+
+obj-m := hello.o hello_lib.o hello_user.o
+
+else
+
+KDIR ?= $(HOME)/bbb/linux
+ARCH ?= arm
+CROSS_COMPILE ?= arm-linux-gnueabihf-
+
+KMAKE = $(MAKE) -C $(KDIR) M=$(CURDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+
+all:
+	$(KMAKE) modules
+
+clean:
+	$(KMAKE) clean
+
+install:
+	$(KMAKE) INSTALL_MOD_PATH=$(INSTALL_MOD_PATH) modules_install
+
+endif
+```
+
+| Parça | Anlamı |
+|---|---|
+| `obj-m := hello.o` | `hello.c`'den `hello.ko` modülü üret (`m` = modül; kernel'e gömülü olsaydı `obj-y`) |
+| `-C $(KDIR)` | `make`'i kernel kaynak klasöründe çalıştır; derleme kuralları, `.config` ve başlıklar oradan gelir |
+| `M=$(CURDIR)` | Derlenecek modülün klasörü (bu klasör) |
+| `ARCH`, `CROSS_COMPILE` | Kernel'i derlerken verdiğin değerlerin aynısı ([10.8](#c10-108-adım-adım-kerneli-derleme)) |
+| `ifneq ($(KERNELRELEASE),)` | Makefile iki kez okunur: önce senin `make` komutunla, sonra kbuild tarafından. kbuild okurken `KERNELRELEASE` tanımlıdır ve sadece `obj-m` kısmı kullanılır. |
+
+> [!TIP]
+> Kernel kaynağın başka bir yerdeyse `make KDIR=/yol/linux` yaz. Bir modül birden fazla `.c` dosyasından oluşacaksa: `obj-m := surucu.o` ve `surucu-objs := a.o b.o`.
+
+### <a name="c21-derle"></a>Derle
+
+![Modülleri derleme ve modinfo ile inceleme](../images/kmod/01_build.png)
+
+```bash
+cd ~/code/21_kernel_module        # repodaki code/21_kernel_module klasörü
+make
+file hello.ko
+modinfo hello.ko
+```
+
+Çıktıdaki adımlar:
+
+| Satır | Ne oluyor? |
+|---|---|
+| `CC [M] hello.o` | C kodu ARM için derleniyor (`[M]` = modül) |
+| `MODPOST Module.symvers` | Modülün kullandığı kernel fonksiyonları kernel'in `Module.symvers`'ındaki listeyle eşleştiriliyor. Kernel'de olmayan bir fonksiyon kullanırsan uyarı burada çıkar. |
+| `CC [M] hello.mod.o` | Modülün kimlik bilgileri (vermagic, bağımlılıklar, parametreler) ayrı bir dosyada derleniyor |
+| `LD [M] hello.ko` | Hepsi `hello.ko`'da birleştiriliyor |
+
+`modinfo` host'ta da çalışır ve modülün içine gömülü bilgileri gösterir. En önemlisi `vermagic`: modülün hangi kernel için derlendiği.
+
+---
+
+## <a name="c21-215-kartta-yüklemek-insmod-lsmod-dmesg-rmmod"></a>21.5 Kartta Yüklemek: insmod, lsmod, dmesg, rmmod
+
+Rootfs NFS'ten geliyorsa ([12.8](#c12-128-rootfsi-nfs-ile-bilgisayardan-bağlamak)) modülleri NFS klasörüne kopyalamak yeterli; kart hemen görür. SD kart kullanıyorsan `scp` ya da SD kartı bilgisayara takıp kopyala.
+
+![Modülü kartta yükleme, log'u okuma ve çıkarma](../images/kmod/02_insmod.png)
+
+Host'ta:
+
+```bash
+sudo cp *.ko /srv/nfs/bbb/root/
+```
+
+Kartta:
+
+```text
+~ # insmod hello.ko name=Mehmet count=3
+~ # dmesg | tail -5
+~ # lsmod
+~ # rmmod hello
+~ # dmesg | tail -1
+```
+
+| Komut | Görevi |
+|---|---|
+| `insmod dosya.ko [parametre=değer ...]` | Modülü verilen dosyadan yükler. Bağımlılıklara bakmaz. |
+| `lsmod` | Yüklü modüller, boyutları ve kaç modül/kullanıcının onları kullandığı (`/proc/modules`'un okunaklı hali) |
+| `rmmod ad` | Modülü çıkarır (`.ko` değil, modülün <b>adı</b> yazılır) |
+| `modinfo dosya.ko` | Modülün bilgileri. Host'taki `modinfo` ARM modüllerini de okur; BusyBox'ın `modinfo`'su daha sınırlıdır, host'ta kullan. |
+| `dmesg` | Kernel log'u. `pr_info()` mesajları burada. |
+
+`dmesg`'teki ilk satır dikkat çekici: `loading out-of-tree module taints kernel.` Kernel, kendi kaynağında olmayan bir modül yüklendiğini not eder (<b>taint</b>, "leke"). Bu bir hata değildir; kernel bir hata raporu (Oops) basarsa geliştiricilere "sisteme dışarıdan kod yüklenmişti" bilgisini verir. `lsmod`'daki `Tainted: G` ve `/proc/sys/kernel/tainted` de bunu gösterir.
+
+Modül yüklüyken `/sys/module/hello/` klasörü oluşur. Kernel her modül için burada bilgi açar: `refcnt` (kaç kullanıcısı var), `parameters/` ([21.6](#c21-216-modül-parametreleri)), `sections/`.
+
+---
+
+## <a name="c21-216-modül-parametreleri"></a>21.6 Modül Parametreleri
+
+Kullanıcı programına komut satırı argümanı verir gibi modüle de değer verebilirsin. `module_param(isim, tür, izin)`:
+
+| Tür | C türü |
+|---|---|
+| `int`, `uint`, `long`, `ulong`, `short`, `ushort` | Tamsayılar |
+| `bool`, `invbool` | `true`/`false` (`1`/`0`, `y`/`n`) |
+| `charp` | Metin (`char *`); kernel değeri kendi belleğine kopyalar |
+
+Üçüncü argüman, parametrenin `/sys/module/<modül>/parameters/` altındaki dosyasının izinleridir:
+
+| İzin | Anlamı |
+|---|---|
+| `0` | sysfs'te dosya yok; değer sadece yüklerken verilir |
+| `0444` | Herkes okuyabilir, kimse değiştiremez (`name`) |
+| `0644` | Herkes okur, root çalışırken değiştirebilir (`count`) |
+
+![Parametreleri sysfs'ten okuma ve değiştirme](../images/kmod/03_params.png)
+
+```text
+~ # insmod hello.ko
+~ # cat /sys/module/hello/parameters/name /sys/module/hello/parameters/count
+~ # echo 5 > /sys/module/hello/parameters/count
+~ # echo Ali > /sys/module/hello/parameters/name        # Permission denied: 0444
+~ # rmmod hello; dmesg | tail -1                         # count was 5
+```
+
+> [!IMPORTANT]
+> sysfs'ten yazılan değer değişkene <b>hemen</b> yazılır ama modül bundan haberdar edilmez. `count` init'te kontrol edildi; çalışırken `echo 50 > count` yazılırsa bu kontrol tekrar yapılmaz. Değerin değişince bir şey tetiklemesi ya da doğrulanması gerekiyorsa `module_param_cb()` ile kendi set fonksiyonunu yazarsın.
+
+Modül kernel'e gömülü derlenmişse aynı parametreler kernel komut satırından (`bootargs`) `modül.parametre=değer` biçiminde verilir (ör. `hello.count=3`).
+
+---
+
+## <a name="c21-217-modüller-arası-sembol-paylaşımı-ve-modprobe"></a>21.7 Modüller Arası Sembol Paylaşımı ve modprobe
+
+Kernel'in fonksiyonları modüllere kendiliğinden açık değildir; sadece <b>`EXPORT_SYMBOL()`</b> ya da <b>`EXPORT_SYMBOL_GPL()`</b> ile işaretlenenler kullanılabilir. Bir modül de kendi fonksiyonunu böyle dışa açabilir. Örnekte iki modül var:
+
+| Modül | Ne yapar? |
+|---|---|
+| [`hello_lib.c`](../code/21_kernel_module/hello_lib.c) | `hello_lib_add()` fonksiyonunu `EXPORT_SYMBOL_GPL` ile dışa açar |
+| [`hello_user.c`](../code/21_kernel_module/hello_user.c) | Yüklenirken `hello_lib_add(2, 3)`'ü çağırır |
+
+```c
+/* hello_lib.c */
+int hello_lib_add(int a, int b)
+{
+	calls++;
+	pr_info("hello_lib_add(%d, %d) called, %d call(s) so far\n", a, b, calls);
+	return a + b;
+}
+EXPORT_SYMBOL_GPL(hello_lib_add);
+
+/* hello_user.c */
+static int __init hello_user_init(void)
+{
+	pr_info("2 + 3 = %d\n", hello_lib_add(2, 3));
+	return 0;
+}
+```
+
+`hello_user.ko`, `hello_lib.ko`'ya <b>bağımlıdır</b>: `modinfo hello_user.ko` çıktısında `depends: hello_lib` yazar. `insmod` bağımlılıklara bakmaz; `hello_lib` yüklü değilse `Unknown symbol` hatası verir. Bağımlılıkları <b>`modprobe`</b> çözer:
+
+1. Modüller `/lib/modules/$(uname -r)/` altına kurulur.
+2. `depmod` bütün modüllerin bağımlılıklarını `modules.dep` dosyasına yazar.
+3. `modprobe hello_user` bu dosyaya bakar, önce `hello_lib`'i, sonra `hello_user`'ı yükler. `modprobe -r` tersini yapar.
+
+![insmod'un bağımlılık hatası ve modprobe ile yükleme](../images/kmod/04_depends.png)
+
+Host'ta, modülleri [Bölüm 12](#c12-bölüm-12--busybox-ile-minimal-root-filesystem)'deki rootfs klasörüne kur ve NFS klasörüne kopyala:
+
+```bash
+make install INSTALL_MOD_PATH=~/bbb/rootfs
+grep hello ~/bbb/rootfs/lib/modules/5.10.162/modules.dep
+sudo cp -a ~/bbb/rootfs/lib/modules/5.10.162 /srv/nfs/bbb/lib/modules/
+```
+
+`modules_install`, dışarıdan derlenen modülleri `lib/modules/<sürüm>/extra/` altına koyar ve `depmod`'u kendisi çalıştırır. `make install`'ı <b>`sudo` olmadan</b> çalıştır: `sudo` altında `HOME` ve `PATH` değişir; Makefile kernel kaynağını (`$(HOME)/bbb/linux`) ve cross derleyiciyi bulamaz.
+
+Kartta:
+
+```text
+~ # insmod hello_user.ko        # Unknown symbol: hello_lib yüklü değil
+~ # modprobe hello_user         # önce hello_lib, sonra hello_user
+~ # lsmod
+~ # modprobe -r hello_user      # ikisini de çıkarır
+```
+
+`lsmod`'da `hello_lib`'in "Used by" sütununda `1 hello_user` görünür. Bir modülü kullanan başka modül varken onu `rmmod` ile çıkaramazsın.
+
+> [!TIP]
+> Bir modülün açılışta otomatik yüklenmesi için [12.7](#c12-127-usb-üzerinden-ethernet-ve-sürücüleri-açılışta-yüklemek)'deki `S02module` betiğine `modprobe hello_user` satırını eklemen yeterli.
+
+---
+
+## <a name="c21-218-printk-ve-log-seviyeleri"></a>21.8 printk ve Log Seviyeleri
+
+`pr_info()` gibi makrolar `printk()`'ya bir <b>log seviyesi</b> ekler:
+
+| Makro | Seviye | Ne zaman? |
+|---|---|---|
+| `pr_emerg` | 0 `KERN_EMERG` | Sistem kullanılamaz |
+| `pr_alert` | 1 `KERN_ALERT` | Hemen müdahale gerekli |
+| `pr_crit` | 2 `KERN_CRIT` | Kritik durum |
+| `pr_err` | 3 `KERN_ERR` | Hata |
+| `pr_warn` | 4 `KERN_WARNING` | Uyarı |
+| `pr_notice` | 5 `KERN_NOTICE` | Önemli ama normal |
+| `pr_info` | 6 `KERN_INFO` | Bilgi |
+| `pr_debug` | 7 `KERN_DEBUG` | Hata ayıklama; sadece dosyanın başında `#define DEBUG` varsa (ya da dinamik debug açıksa) derlenir |
+
+Bütün mesajlar `dmesg`'e gider. Hangilerinin <b>seri konsola da</b> basılacağını konsol log seviyesi belirler: seviyesi bu değerden küçük olanlar konsolda da görünür.
+
+```text
+~ # cat /proc/sys/kernel/printk       # ilk sayı: konsol log seviyesi
+~ # dmesg -n 8                        # her şeyi konsolda da göster
+~ # dmesg -n 1                        # konsolu sustur (sadece panik mesajları)
+~ # dmesg -c                          # log'u gösterip temizle
+```
+
+Kernel komut satırına (`bootargs`) `loglevel=8` eklemek açılıştan itibaren aynı etkiyi yapar; `quiet` ise konsolu susturur.
+
+> [!TIP]
+> Modül yüklerken mesajları görmek için seri konsolda `dmesg -n 8` yapabilir ya da ikinci bir terminalde (SSH) `dmesg -w` ile log'u canlı izleyebilirsin.
+
+---
+
+## <a name="c21-219-özet"></a>21.9 Özet
+
+- Kernel modülü (`.ko`) kernel çalışırken eklenip çıkarılan koddur; kernel ile aynı bellekte, aynı yetkiyle çalışır. Hatası bütün sistemi çökertebilir.
+- En küçük modül: `module_init()` (0 dönerse yüklenir), `module_exit()`, `MODULE_LICENSE("GPL")`. Çıktı `pr_info()` ile `dmesg`'e yazılır.
+- Out-of-tree derleme: `obj-m := x.o` + `make -C <kernel ağacı> M=$(PWD) ARCH=arm CROSS_COMPILE=... modules`. Ağaç, kartta çalışan kernel'in derlenmiş kaynağı olmalı (vermagic).
+- Kartta: `insmod x.ko param=değer`, `lsmod`, `rmmod x`, `dmesg`. Parametreler `/sys/module/x/parameters/` altında.
+- `EXPORT_SYMBOL[_GPL]` ile modüller birbirinin fonksiyonunu kullanır. `modules_install` + `depmod` → `modprobe` bağımlılıkları kendisi yükler.
+- Log seviyeleri `pr_err`…`pr_debug`; konsolda neyin görüneceğini `dmesg -n` belirler.
+
+## <a name="c21-2110-karşılaşılabilecek-problemler"></a>21.10 Karşılaşılabilecek Problemler
+
+![Sık görülen modül hataları (temsili)](../images/kmod/05_errors.png)
+
+| Belirti | Sebep | Çözüm |
+|---|---|---|
+| `insmod: can't insert ...: invalid module format`, `dmesg`'te `version magic '...' should be '...'` | Modül, kartta çalışan kernel'den farklı bir kernel için derlenmiş | Kartta çalışan kernel'in kaynağıyla derle ([21.2](#c21-212-hazırlık-hangi-kernele-karşı-derleniyor)); kernel'i yeniden derlediysen kartı da yeni kernel'le aç |
+| `invalid module format`, vermagic doğru | Modül x86 için derlenmiş (`ARCH`/`CROSS_COMPILE` unutuldu) | `file hello.ko` → ARM yazmalı |
+| `make: *** /home/.../bbb/linux: No such file or directory` | `KDIR` yanlış | `make KDIR=<kernel kaynağının yolu>` |
+| `WARNING: Module.symvers is missing` | Kernel ağacında `make modules` hiç çalıştırılmamış | Kernel klasöründe `make ARCH=arm CROSS_COMPILE=... modules` ([10.8](#c10-108-adım-adım-kerneli-derleme)) |
+| `insmod: ... unknown symbol in module`, `dmesg`'te `Unknown symbol xxx` | Kullanılan fonksiyonu açan modül yüklü değil ya da fonksiyon dışa açılmamış | `modprobe` kullan; kendi kodunda `EXPORT_SYMBOL` eksik mi bak |
+| `Unknown symbol`, ama sembolü açan modül yüklü | Modülün lisansı GPL değil; `EXPORT_SYMBOL_GPL` ile açılan semboller ona görünmez | `MODULE_LICENSE("GPL")` |
+| `insmod: ... Invalid argument` | Init fonksiyonu `-EINVAL` döndü (ör. `count=20`) ya da parametre türü yanlış | `dmesg`'teki mesaja bak |
+| `insmod: ... File exists` | Modül zaten yüklü | `lsmod`; önce `rmmod` |
+| `rmmod: can't unload module ...: Resource temporarily unavailable` | Modülü başka bir modül ya da açık bir dosya kullanıyor | `lsmod`'da "Used by"a bak; önce kullananı çıkar ya da `modprobe -r` |
+| `modprobe: module hello_user not found in modules.dep` | Modül kurulmamış ya da `depmod` çalışmamış | [21.7](#c21-217-modüller-arası-sembol-paylaşımı-ve-modprobe)'deki `make install`; kartta `depmod` |
+| `pr_info()` mesajları konsolda görünmüyor | Konsol log seviyesi düşük | `dmesg` ile oku ya da `dmesg -n 8` |
+| `module verification failed: signature and/or required key missing - tainting kernel` | Kernel imzalı modül bekliyor ama zorunlu kılmıyor | Uyarıdır, modül yüklenir |
+
+
+<div class="page-break"></div>
+
+# <a name="c22-bölüm-22--karakter-aygıt-sürücüsü"></a>Bölüm 22 — Karakter Aygıt Sürücüsü
+
+> <b>Bu bölümde:</b>
+> - `/dev` altındaki dosyaların ne olduğunu, karakter ve blok aygıtlarını, major/minor numaralarını öğreneceksin.
+> - Bir programın `open()`/`read()`/`write()` çağrısının sürücüdeki fonksiyonlara nasıl ulaştığını göreceksin.
+> - `/dev/bbbmsg` adında, kendiliğinden oluşan bir aygıt dosyası açan karakter sürücüsü yazacaksın.
+> - Kullanıcı belleğiyle güvenli veri alışverişini (`copy_to_user`, `copy_from_user`), dosya konumunu, mutex'i ve `ioctl`'ü öğreneceksin.
+> - Sürücüyü kabuktan ve bir C programından deneyeceksin.
+>
+> <b>Ön koşul:</b> [Bölüm 21](#c21-bölüm-21--kernel-modülü-yazmak) — modül derleme, `insmod`/`rmmod`, `dmesg`.
+
+> [!NOTE]
+> Bu bölüm kursta yok. Kart, [Bölüm 21](#c21-bölüm-21--kernel-modülü-yazmak)'deki gibi kendi kernel'in (5.10.162) ve BusyBox rootfs'inle açılıyor; komutlar kartta root olarak çalıştırılır. Terminal görüntüleri temsilidir.
+
+---
+
+## <a name="c22-221-dev-altındaki-dosyalar"></a>22.1 /dev Altındaki Dosyalar
+
+Önceki bölümlerde `/dev/ttyS0`'a (seri port), `/dev/i2c-2`'ye ([Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)) ve `/dev/mmcblk0`'a (SD kart) eriştik. Bunlar diskte veri tutan dosyalar değildir; <b>aygıt dosyalarıdır</b> (device node). Bir programın bu dosyaya yaptığı her `open`, `read`, `write`, `ioctl` çağrısı kernel'de o aygıtın <b>sürücüsüne</b> gider.
+
+![/dev'deki aygıt dosyaları ve /proc/devices](../images/chardev/01_dev_numbers.png)
+
+```text
+~ # ls -l /dev/ttyS0 /dev/null /dev/i2c-2 /dev/mmcblk0
+~ # head -8 /proc/devices
+```
+
+`ls -l` çıktısının ilk harfi aygıtın türünü, boyut sütunundaki iki sayı <b>major</b> ve <b>minor</b> numaralarını gösterir:
+
+| Tür | Harf | Nasıl erişilir? | Örnek |
+|---|---|---|---|
+| <b>Karakter aygıtı</b> | `c` | Bayt bayt, sırayla (akış gibi) | Seri port, `/dev/null`, `/dev/i2c-*`, `/dev/gpiochip*` |
+| <b>Blok aygıtı</b> | `b` | Sabit boyutlu bloklar halinde, rastgele; arada kernel'in önbelleği var | SD kart, eMMC, USB bellek |
+| Ağ aygıtı | — | `/dev`'de dosyası yok; soketlerle | `eth0`, `usb0` |
+
+| Numara | Anlamı |
+|---|---|
+| <b>Major</b> | Hangi <b>sürücü</b>? Kernel, aygıt dosyası açılınca bu numaraya bakarak sürücüyü bulur. `/proc/devices` hangi major'ın hangi sürücüye ait olduğunu listeler. |
+| <b>Minor</b> | Sürücünün yönettiği aygıtlardan <b>hangisi</b>? Ör. `ttyS0` = 4/64, `ttyS1` = 4/65: aynı sürücü, farklı UART. |
+
+Bu bölümde kendi karakter aygıtımızı yazacağız. Gerçek bir donanım sürmüyor: aygıta yazılan metni kernel belleğinde saklıyor ve okununca geri veriyor. Böylece sürücünün parçalarına donanım ayrıntısı karışmadan bakabiliriz; Sonraki bölümde aynı yapıyı gerçek bir GPIO'ya bağlayacağız.
+
+---
+
+## <a name="c22-222-bir-read-çağrısının-yolculuğu"></a>22.2 Bir read() Çağrısının Yolculuğu
+
+```
+ Kullanıcı alanı      cat /dev/bbbmsg
+                         │  read(fd, buf, 4096)
+ ────────────────────────┼──────────────────────────────── sistem çağrısı
+ Kernel alanı            ▼
+                      VFS (sanal dosya sistemi)
+                         │  /dev/bbbmsg → karakter aygıtı, major 246, minor 0
+                         ▼
+                      cdev tablosu: 246:0 → bbbmsg_fops
+                         │
+                         ▼
+                      bbbmsg_read(file, buf, 4096, &pos)    ← bizim fonksiyonumuz
+                         │  copy_to_user(buf, msg, n)
+                         ▼
+                      n bayt döner → cat ekrana basar
+```
+
+Sürücü, kernel'e bir <b>`struct file_operations`</b> tablosu verir. Tablodaki her alan bir sistem çağrısına karşılık gelir; doldurulmayan alanlar için kernel varsayılan davranışı uygular ya da hata döner:
+
+```c
+static const struct file_operations bbbmsg_fops = {
+	.owner          = THIS_MODULE,
+	.open           = bbbmsg_open,
+	.release        = bbbmsg_release,
+	.read           = bbbmsg_read,
+	.write          = bbbmsg_write,
+	.llseek         = bbbmsg_llseek,
+	.unlocked_ioctl = bbbmsg_ioctl,
+};
+```
+
+| Alan | Hangi çağrıda? |
+|---|---|
+| `open` / `release` | `open()` / son `close()` |
+| `read` / `write` | `read()` / `write()` |
+| `llseek` | `lseek()` |
+| `unlocked_ioctl` | `ioctl()` |
+| `owner = THIS_MODULE` | Aygıt açıkken modülün kullanımda sayılmasını sağlar; aygıt açıkken `rmmod` reddedilir |
+
+Bölümün kodu: [`code/22_char_driver/`](../code/22_char_driver/bbbmsg.c).
+
+---
+
+## <a name="c22-223-aygıtı-kaydetmek-numara-cdev-class"></a>22.3 Aygıtı Kaydetmek: Numara, cdev, class
+
+Sürücü yüklenirken üç şey yapar:
+
+```c
+static int __init bbbmsg_init(void)
+{
+	struct device *dev;
+	int ret;
+
+	/* 1) Boş bir major numara ve 1 minor numara iste. */
+	ret = alloc_chrdev_region(&devno, 0, 1, DEV_NAME);
+	if (ret)
+		return ret;
+
+	/* 2) Bu numarayı file_operations'a bağla. */
+	cdev_init(&bbbmsg_cdev, &bbbmsg_fops);
+	bbbmsg_cdev.owner = THIS_MODULE;
+	ret = cdev_add(&bbbmsg_cdev, devno, 1);
+	if (ret)
+		goto err_region;
+
+	/* 3) /sys/class/bbbmsg/bbbmsg oluştur; devtmpfs/mdev /dev/bbbmsg'yi açar. */
+	bbbmsg_class = class_create(THIS_MODULE, DEV_NAME);
+	...
+	dev = device_create(bbbmsg_class, NULL, devno, NULL, DEV_NAME);
+	...
+	return 0;
+
+err_class:
+	class_destroy(bbbmsg_class);
+err_cdev:
+	cdev_del(&bbbmsg_cdev);
+err_region:
+	unregister_chrdev_region(devno, 1);
+	return ret;
+}
+```
+
+| Adım | Fonksiyon | Ne yapar? |
+|---|---|---|
+| 1 | `alloc_chrdev_region()` | Kernel'den boş bir major ve istenen sayıda minor numara alır. `devno` (`dev_t`) ikisini birlikte tutar: `MAJOR(devno)`, `MINOR(devno)`. Numara sabit yazılmaz; başka bir sürücüyle çakışabilir. |
+| 2 | `cdev_init()` + `cdev_add()` | "Bu numaraya gelen çağrılar şu `file_operations`'a gitsin" kaydını yapar. `cdev_add`'den sonra aygıt <b>canlıdır</b>. |
+| 3 | `class_create()` + `device_create()` | `/sys/class/bbbmsg/bbbmsg/` oluşturur. Kernel bunu bir <b>uevent</b> ile duyurur; `/dev/bbbmsg` düğümünü <b>devtmpfs</b> (kernel'in kendisi) ya da `mdev`/`udev` açar. Bu adım olmasaydı düğümü elle `mknod /dev/bbbmsg c 246 0` ile açmak gerekirdi. |
+
+> [!NOTE]
+> Kernel 6.4'ten itibaren `class_create()` sadece ismi alır: `class_create("bbbmsg")`. Koddaki `#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)` satırı, sürücünün hem 5.10'da hem yeni kernel'lerde derlenmesini sağlar.
+
+<b>Hata yolu:</b> Her adım başarısız olabilir. Bir adım başarısız olursa o ana kadar alınanlar <b>ters sırada</b> bırakılır (`goto err_...` zinciri). Kernel kodunda bu kalıp çok yaygındır; init yarıda kalırsa bırakılmayan bir numara ya da sınıf, modül tekrar yüklenene kadar sistemde kalır. `bbbmsg_exit()` de aynı sırayla temizler.
+
+---
+
+## <a name="c22-224-read-ve-write-kullanıcı-belleğiyle-çalışmak"></a>22.4 read ve write: Kullanıcı Belleğiyle Çalışmak
+
+### <a name="c22-copy_to_user-ve-copy_from_user"></a>copy_to_user ve copy_from_user
+
+`read()`'e verilen `buf` işaretçisi <b>kullanıcı programının</b> belleğini gösterir. Kernel bu adrese doğrudan (`memcpy`) yazmamalıdır:
+
+- Adres geçersiz olabilir (program yanlış adres verdi ya da kötü niyetli). Kernel'in o adrese yazması sistemi çökertir ya da güvenlik açığı olur.
+- O sayfa o an bellekte olmayabilir.
+
+`copy_to_user(hedef, kaynak, n)` ve `copy_from_user(hedef, kaynak, n)` adresi kontrol eder ve kopyalayamadığı bayt sayısını döner (0 = hepsi kopyalandı). Kopyalanamadıysa sürücü `-EFAULT` döner; program `Bad address` hatası alır. Fonksiyon parametrelerindeki <b>`__user`</b> işareti bu adresin kullanıcı alanına ait olduğunu belirtir; statik analiz araçları (`sparse`) onu doğrudan kullanan kodu yakalar.
+
+### <a name="c22-dosya-konumu-ppos"></a>Dosya konumu: *ppos
+
+```c
+static ssize_t bbbmsg_read(struct file *file, char __user *ubuf,
+			   size_t count, loff_t *ppos)
+{
+	ssize_t ret;
+
+	if (mutex_lock_interruptible(&msg_lock))
+		return -ERESTARTSYS;
+
+	if (*ppos >= msg_len) {
+		ret = 0;                        /* dosya sonu (EOF) */
+		goto out;
+	}
+	if (count > msg_len - *ppos)
+		count = msg_len - *ppos;
+
+	if (copy_to_user(ubuf, msg + *ppos, count)) {
+		ret = -EFAULT;
+		goto out;
+	}
+	*ppos += count;
+	ret = count;
+out:
+	mutex_unlock(&msg_lock);
+	return ret;
+}
+```
+
+`*ppos`, açık dosyanın içinde nerede olduğumuzu tutar. `read()`'in dönüş değeri kuralları:
+
+| Dönüş | Program ne anlar? |
+|---|---|
+| `> 0` | Bu kadar bayt okundu; tekrar oku |
+| `0` | <b>Dosya sonu.</b> `cat` burada durur. |
+| `< 0` | Hata (`-EFAULT`, `-EINTR`...); `errno` olarak programa gider |
+
+> [!IMPORTANT]
+> `read` her çağrıda aynı veriyi döner ve hiç `0` dönmezse `cat /dev/bbbmsg` sonsuza kadar aynı metni basar. `*ppos`'u ilerletmek ve sonda `0` dönmek bu yüzden gerekli.
+
+`write` aynı mantıkla çalışır: veriyi `*ppos`'tan itibaren `msg`'ye kopyalar, yazılan yerin sonu mesajın yeni sonu olur. Böylece:
+
+- `echo a > /dev/bbbmsg`: dosya baştan (konum 0) açılır, mesaj değişir.
+- `echo b >> /dev/bbbmsg`: `O_APPEND` ile açılır. Normal dosyalarda sona eklemeyi dosya sistemi yapar; karakter aygıtlarında <b>sürücü</b> yapmalıdır: `if (file->f_flags & O_APPEND) *ppos = msg_len;`
+- Tampon (256 bayt) dolarsa `write` yazabildiği kadarını yazar; yer hiç kalmadıysa `-ENOSPC` döner.
+
+`llseek` için kernel'in hazır yardımcısı kullanılıyor: `generic_file_llseek_size(file, offset, whence, BUF_SIZE, msg_len)`. `SEEK_END` mesajın sonunu, en büyük geçerli konum tampon boyutunu kullanır.
+
+---
+
+## <a name="c22-225-eşzamanlılık-mutex"></a>22.5 Eşzamanlılık: Mutex
+
+Aynı anda iki program aygıta yazabilir; biri yazarken öbürü okuyabilir. `msg` ve `msg_len`'i aynı anda iki yerden değiştirmek veriyi bozar. Bu yüzden onlara her erişim bir <b>mutex</b> ile korunur:
+
+```c
+static DEFINE_MUTEX(msg_lock);
+
+if (mutex_lock_interruptible(&msg_lock))
+	return -ERESTARTSYS;
+/* ... msg ve msg_len'e erişim ... */
+mutex_unlock(&msg_lock);
+```
+
+| Fonksiyon | Fark |
+|---|---|
+| `mutex_lock()` | Kilit boşalana kadar bekler; beklerken Ctrl-C ile bile kesilemez |
+| `mutex_lock_interruptible()` | Beklerken bir sinyal gelirse (Ctrl-C) vazgeçer ve 0 dışı döner. Kullanıcının çağrısıyla gelen uzun beklemelerde bu tercih edilir; sürücü `-ERESTARTSYS` döner, kernel çağrıyı gerekirse yeniden başlatır. |
+
+> [!TIP]
+> AM335x tek çekirdekli ama kernel <b>preemptive</b>: bir süreç `write`'ın ortasında durdurulup başka bir süreç çalıştırılabilir. Tek çekirdekte de kilit gerekir.
+
+---
+
+## <a name="c22-226-ioctl-okumayazma-dışındaki-komutlar"></a>22.6 ioctl: Okuma/Yazma Dışındaki Komutlar
+
+Bazı işler "veri oku/yaz" kalıbına uymaz: baud hızını değiştirmek, I2C adresini seçmek ([Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)'daki `ioctl(fd, I2C_SLAVE, 0x68)`), bir ayarı sormak. Bunlar <b>`ioctl()`</b> ile yapılır. Sürücümüzde iki komut var; komut numaraları sürücü ile programın ortak kullandığı [`bbbmsg.h`](../code/22_char_driver/bbbmsg.h)'de:
+
+```c
+#define BBBMSG_IOC_MAGIC    'b'
+#define BBBMSG_CLEAR        _IO(BBBMSG_IOC_MAGIC, 0)          /* mesajı sil */
+#define BBBMSG_GET_LEN      _IOR(BBBMSG_IOC_MAGIC, 1, int)    /* uzunluğu oku */
+```
+
+| Makro | Anlamı |
+|---|---|
+| `_IO(tip, no)` | Veri taşımayan komut |
+| `_IOR(tip, no, tür)` | Sürücüden programa veri (Read: program okur) |
+| `_IOW(tip, no, tür)` | Programdan sürücüye veri |
+| `_IOWR(tip, no, tür)` | İki yönlü |
+
+Makrolar komut numarasına sihirli harfi (`'b'`), sıra numarasını, veri yönünü ve boyutunu kodlar; böylece başka bir sürücünün komutu yanlışlıkla bizimkine gönderilirse tanınmaz. Sürücü tarafı:
+
+```c
+static long bbbmsg_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	int len;
+
+	switch (cmd) {
+	case BBBMSG_CLEAR:
+		mutex_lock(&msg_lock);
+		msg_len = 0;
+		mutex_unlock(&msg_lock);
+		return 0;
+
+	case BBBMSG_GET_LEN:
+		mutex_lock(&msg_lock);
+		len = msg_len;
+		mutex_unlock(&msg_lock);
+		return put_user(len, (int __user *)arg);
+
+	default:
+		return -ENOTTY;                 /* bu sürücünün komutu değil */
+	}
+}
+```
+
+`put_user()`, tek bir değişken için `copy_to_user()`'ın kısa yoludur. Bilinmeyen komuta `-ENOTTY` dönmek gelenektir (program `Inappropriate ioctl for device` görür).
+
+---
+
+## <a name="c22-227-derle-ve-kabuktan-dene"></a>22.7 Derle ve Kabuktan Dene
+
+[`Makefile`](../code/22_char_driver/Makefile) [Bölüm 21](#c21-214-ağaç-dışında-derlemek-makefile-ve-kbuild)'dekinin aynısı; `make test` ayrıca kullanıcı programını statik derler.
+
+![Sürücüyü derleme, yükleme ve /dev düğümü](../images/chardev/02_build_load.png)
+
+Host'ta:
+
+```bash
+cd ~/code/22_char_driver
+make && make test
+sudo cp bbbmsg.ko bbbmsg_test /srv/nfs/bbb/root/
+```
+
+Kartta:
+
+```text
+~ # insmod bbbmsg.ko
+~ # dmesg | tail -1
+~ # grep bbbmsg /proc/devices
+~ # ls -l /dev/bbbmsg
+~ # cat /sys/class/bbbmsg/bbbmsg/dev
+```
+
+Kernel boş bir major numara verdi (örnekte 246; sende farklı olabilir) ve `/dev/bbbmsg` kendiliğinden oluştu. Artık bu dosya her program için sıradan bir dosya gibi:
+
+![Aygıtı echo, cat ve dd ile deneme](../images/chardev/03_shell_test.png)
+
+```text
+~ # echo "Merhaba BBB" > /dev/bbbmsg
+~ # cat /dev/bbbmsg
+~ # echo "ikinci satir" >> /dev/bbbmsg
+~ # cat /dev/bbbmsg
+~ # dd if=/dev/bbbmsg bs=1 skip=8 count=3 2>/dev/null; echo
+~ # dmesg | tail -4
+```
+
+`dd ... skip=8` önce `lseek` ile 8. bayta gider, sonra 3 bayt okur: "Merhaba BBB" metnindeki `BBB`. `dmesg`'te her `echo`/`cat` için bir `open` ve `release` satırı görürsün: her komut aygıtı açıp kapatıyor.
+
+---
+
+## <a name="c22-228-kullanıcı-programıyla-dene"></a>22.8 Kullanıcı Programıyla Dene
+
+[`bbbmsg_test.c`](../code/22_char_driver/bbbmsg_test.c) aygıtı bir C programından kullanır: yazar, `ioctl` ile uzunluğu sorar, başa dönüp okur, `ioctl` ile siler ve tekrar okur.
+
+```c
+fd = open(DEV_PATH, O_RDWR);
+
+n = write(fd, argv[1], strlen(argv[1]));
+ioctl(fd, BBBMSG_GET_LEN, &len);
+
+lseek(fd, 0, SEEK_SET);                 /* yazdıktan sonra konum sonda */
+n = read(fd, buf, sizeof(buf) - 1);
+
+ioctl(fd, BBBMSG_CLEAR);
+```
+
+![Kullanıcı programıyla deneme ve modülü çıkarma](../images/chardev/04_user_program.png)
+
+```text
+~ # ./bbbmsg_test "C programindan selam"
+~ # rmmod bbbmsg
+~ # ls /dev/bbbmsg          # yok: device_destroy düğümü kaldırdı
+```
+
+Sürücü ile program aynı `bbbmsg.h`'yi kullandığı için komut numaraları iki tarafta da aynıdır. Gerçek sürücülerde bu başlıklar kernel'in `include/uapi/` klasöründe durur ve kullanıcı programlarına `/usr/include/linux/` olarak gelir; [Bölüm 19](#c19-bölüm-19--mpu6050-ile-eğim-ölçmek-i2c)'daki `<linux/i2c-dev.h>` böyle bir başlıktır.
+
+---
+
+## <a name="c22-229-özet"></a>22.9 Özet
+
+- `/dev` altındaki dosyalar aygıt düğümleridir. `c` karakter, `b` blok aygıtı; <b>major</b> sürücüyü, <b>minor</b> sürücünün aygıtını seçer (`/proc/devices`).
+- Karakter sürücüsü: `alloc_chrdev_region()` → `cdev_init()` + `cdev_add()` → `class_create()` + `device_create()` (düğümü devtmpfs/mdev açar). Çıkarken ters sırada bırakılır.
+- `struct file_operations` sistem çağrılarını sürücünün fonksiyonlarına bağlar: `open`, `release`, `read`, `write`, `llseek`, `unlocked_ioctl`.
+- Kullanıcı belleğine sadece `copy_to_user()` / `copy_from_user()` / `put_user()` ile erişilir; başarısızsa `-EFAULT`.
+- `read` konumu (`*ppos`) ilerletir ve sonda `0` döner; yoksa `cat` hiç durmaz. `O_APPEND`'i karakter sürücüsü kendisi uygular.
+- Paylaşılan veri mutex ile korunur (`mutex_lock_interruptible`); tek çekirdekte de gerekir.
+- Okuma/yazma dışındaki komutlar `ioctl` ile: `_IO`, `_IOR`, `_IOW`; bilinmeyen komuta `-ENOTTY`.
+
+## <a name="c22-2210-karşılaşılabilecek-problemler"></a>22.10 Karşılaşılabilecek Problemler
+
+![Sık görülen hatalar (temsili)](../images/chardev/05_errors.png)
+
+| Belirti | Sebep | Çözüm |
+|---|---|---|
+| `/dev/bbbmsg` oluşmuyor | `device_create()` çağrılmadı ya da rootfs'te devtmpfs/mdev yok | `dmesg`'e bak; [12.4](#c12-124-rootfsi-tamamlamak)'teki `CONFIG_DEVTMPFS_MOUNT`'u kontrol et ya da elle `mknod /dev/bbbmsg c <major> 0` |
+| `cat /dev/bbbmsg` aynı metni durmadan basıyor | `read` `*ppos`'u ilerletmiyor ya da sonda `0` dönmüyor | [22.4](#c22-224-read-ve-write-kullanıcı-belleğiyle-çalışmak)'teki gibi |
+| `>>` ile ekleme yapılmıyor, metin baştan yazılıyor | `O_APPEND` sürücüde uygulanmamış | `write`'ta `f_flags & O_APPEND` kontrolü |
+| `write error: No space left on device` | 256 baytlık tampon doldu | Beklenen davranış; mesajı `BBBMSG_CLEAR` ioctl'üyle sil (`./bbbmsg_test`). `echo -n > /dev/bbbmsg` silmez: sıfır baytlık yazma sürücünün `write`'ını hiç çağırmaz. |
+| `Permission denied` | Düğüm `0600` ve root değilsin | Root ol; kalıcı çözüm için `mdev.conf` / `udev` kuralıyla izni değiştir |
+| `rmmod: ... Resource temporarily unavailable` | Aygıt bir süreçte açık (`owner = THIS_MODULE`) | Aygıtı kullanan programı kapat (`fuser /dev/bbbmsg`) |
+| `insmod`'da `-EBUSY` / `-EEXIST`, `dmesg`'te `sysfs: cannot create duplicate filename '/class/bbbmsg'` | Önceki yükleme init'te yarıda kaldı ve sınıfı bırakmadı | Hata yolunu (`goto err_...`) kontrol et; kartı yeniden başlat |
+| Program `Inappropriate ioctl for device` alıyor | Komut numarası sürücüdekiyle aynı değil | Sürücü ve program aynı `bbbmsg.h`'yi kullanmalı; ikisini birlikte yeniden derle |
+| Kernel `Oops`, `Unable to handle kernel paging request` | Kullanıcı adresine `memcpy` ile erişildi ya da tampon taşırıldı | `copy_*_user` kullan, `count`'u tampon boyutuyla sınırla |
+| `implicit declaration of function 'class_create'` / argüman sayısı hatası | Kernel 6.4+ ile derleniyor | Koddaki `LINUX_VERSION_CODE` koşulu ([22.3](#c22-223-aygıtı-kaydetmek-numara-cdev-class)) |
 

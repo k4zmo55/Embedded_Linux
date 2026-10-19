@@ -45,3 +45,8 @@
 - [Bölüm 18 — 4 Haneli 7-Segment Gösterge](18_four_digit_7segment.md)
 - [Bölüm 19 — MPU6050 ile Eğim Ölçmek (I2C)](19_mpu6050.md)
 - [Bölüm 20 — 16x2 Karakter LCD (HD44780)](20_lcd_16x2.md)
+
+**Kısım VII — Kernel Sürücüleri**
+
+- [Bölüm 21 — Kernel Modülü Yazmak](21_kernel_module.md)
+- [Bölüm 22 — Karakter Aygıt Sürücüsü](22_char_driver.md)
