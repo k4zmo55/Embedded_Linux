@@ -23,6 +23,7 @@
 
 #define SEG7_BLANK          10      /* seg7_show(SEG7_BLANK): hepsi sönük */
 
+uint8_t seg7_pattern(uint8_t digit);
 int seg7_init(void);
 void seg7_show(uint8_t digit);
 void seg7_dp(uint8_t on);

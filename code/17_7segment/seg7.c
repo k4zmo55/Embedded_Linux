@@ -73,10 +73,16 @@ int seg7_init(void)
 	return setup_output(DP_GPIO);
 }
 
+/* Rakamın segment deseni (bit 0 = a ... bit 6 = g); 0-9 dışı değerler için 0. */
+uint8_t seg7_pattern(uint8_t digit)
+{
+	return digit_segments[digit <= 9 ? digit : SEG7_BLANK];
+}
+
 /* 0-9 arası rakamı gösterir; başka bir değer göstergeyi söndürür. */
 void seg7_show(uint8_t digit)
 {
-	uint8_t bits = digit_segments[digit <= 9 ? digit : SEG7_BLANK];
+	uint8_t bits = seg7_pattern(digit);
 	int i;
 
 	for (i = 0; i < 7; i++)

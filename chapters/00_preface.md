@@ -52,8 +52,9 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | | [15. AM335x GPIO'ları, Pin Ayarları ve sysfs](15_gpio_sysfs.md) | Pinmux'u çöz, LED'leri ve GPIO'ları komut satırından ve C'den kontrol et |
 | | [16. Harici LED Bağlamak](16_external_led.md) | LED'i dirençle bir GPIO'ya bağla, C ile ve device tree ile sür |
 | | [17. 7-Segment Gösterge](17_seven_segment.md) | Tek haneli göstergeyi sür, sayaç ve butonla sayma programı yaz |
+| | [18. 4 Haneli 7-Segment Gösterge](18_four_digit_7segment.md) | Çoğullama ile dört haneyi sür, sayaç ve dijital saat yaz |
 
-<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: 4 haneli 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 

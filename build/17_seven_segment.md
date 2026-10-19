@@ -208,9 +208,14 @@ static const uint8_t digit_segments[11] = {
 	0x00,   /* SEG7_BLANK: hepsi sönük */
 };
 
+uint8_t seg7_pattern(uint8_t digit)
+{
+	return digit_segments[digit <= 9 ? digit : SEG7_BLANK];
+}
+
 void seg7_show(uint8_t digit)
 {
-	uint8_t bits = digit_segments[digit <= 9 ? digit : SEG7_BLANK];
+	uint8_t bits = seg7_pattern(digit);
 	int i;
 
 	for (i = 0; i < 7; i++)
@@ -234,6 +239,7 @@ void seg7_show(uint8_t digit)
 |---|---|
 | `seg7_init()` | 8 GPIO'yu export eder, çıkış yapar, segmentleri söndürür |
 | `seg7_show(n)` | `0`–`9` arası rakamı gösterir; `SEG7_BLANK` göstergeyi söndürür |
+| `seg7_pattern(n)` | Rakamın segment desenini (bayt) döndürür; [Bölüm 18](18_four_digit_7segment.md)'deki 4 haneli gösterge de bunu kullanır |
 | `seg7_dp(on)` | Noktayı yakar/söndürür |
 | `seg7_release()` | Göstergeyi söndürür ve GPIO'ları bırakır |
 
@@ -474,4 +480,4 @@ Program çalışırken `top`'a bakarsan CPU kullanımının ~%0 olduğunu görü
 
 ---
 
-[← Bölüm 16: Harici LED Bağlamak](16_external_led.md) · [İçindekiler](README.md)
+[← Bölüm 16: Harici LED Bağlamak](16_external_led.md) · [İçindekiler](README.md) · [Bölüm 18: 4 Haneli 7-Segment Gösterge →](18_four_digit_7segment.md)
