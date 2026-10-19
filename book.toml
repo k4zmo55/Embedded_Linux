@@ -36,7 +36,7 @@ chapters = ["12_busybox_rootfs.md", "13_buildroot.md"]
 
 [[book.parts]]
 title = "Uygulama Geliştirme ve Donanım"
-chapters = ["14_eclipse.md", "15_gpio_sysfs.md", "16_external_led.md"]
+chapters = ["14_eclipse.md", "15_gpio_sysfs.md", "16_external_led.md", "17_seven_segment.md"]
 
 # ---------------------------------------------------------------------------
 

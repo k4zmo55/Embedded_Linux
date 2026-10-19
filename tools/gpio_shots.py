@@ -73,7 +73,7 @@ render("03_pinctrl.png", BBB, [
     r("cd /sys/kernel/debug/pinctrl/44e10800.pinmux-pinctrl-single"),
     r("grep -E '44e10854|44e10878' pins", "/sys/kernel/debug/pinctrl/44e10800.pinmux-pinctrl-single"),
     note("pin 21 (PIN21) 21:gpio-32-63 44e10854 00000007 pinctrl-single", ORANGE, "  <-- USR0: mod 7 (GPIO)"),
-    note("pin 30 (PIN30) 30:gpio-32-63 44e10878 00000037 pinctrl-single", ORANGE, "  <-- P9_12: mod 7, giriş, pull-up"),
+    note("pin 30 (PIN30) 28:gpio-32-63 44e10878 00000037 pinctrl-single", ORANGE, "  <-- P9_12: mod 7, giriş, pull-up"),
     r("grep 'pin 21 ' pinmux-pins", "/sys/kernel/debug/pinctrl/44e10800.pinmux-pinctrl-single"),
     note("pin 21 (PIN21): 4a326000.target-module... function user_leds_s0 group user_leds_s0", FG, ""),
 ])

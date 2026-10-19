@@ -33,7 +33,7 @@ render("01_pin_check.png", BBB, [
     r("config-pin -q P9_12"),
     note("P9_12 Mode: gpio Direction: in Value: 0", GREEN, ""),
     r("grep 44e10878 /sys/kernel/debug/pinctrl/44e10800.pinmux*/pins"),
-    note("pin 30 (PIN30) 30:gpio-32-63 44e10878 00000027 pinctrl-single", ORANGE, "  <-- mod 7 = GPIO"),
+    note("pin 30 (PIN30) 28:gpio-32-63 44e10878 00000027 pinctrl-single", ORANGE, "  <-- mod 7 = GPIO"),
 ])
 
 # 2) Komut satırından test

@@ -284,4 +284,4 @@ Açılıştan sonra LED kalp atışı gibi yanıp sönmeye başlar ve `/sys/clas
 
 ---
 
-[← Bölüm 15: AM335x GPIO'ları, Pin Ayarları ve sysfs](15_gpio_sysfs.md) · [İçindekiler](README.md)
+[← Bölüm 15: AM335x GPIO'ları, Pin Ayarları ve sysfs](15_gpio_sysfs.md) · [İçindekiler](README.md) · [Bölüm 17: 7-Segment Gösterge →](17_seven_segment.md)

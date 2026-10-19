@@ -45,6 +45,7 @@ Gömülü Linux'a yeni başlayanlar için adım adım bir rehber: kartı tanıma
 - [Bölüm 14 — Eclipse ile Uygulama Geliştirme](build/14_eclipse.md)
 - [Bölüm 15 — AM335x GPIO'ları, Pin Ayarları ve sysfs](build/15_gpio_sysfs.md)
 - [Bölüm 16 — Harici LED Bağlamak](build/16_external_led.md)
+- [Bölüm 17 — 7-Segment Gösterge](build/17_seven_segment.md)
 
 ## Bu Repo Nasıl Çalışır?
 

@@ -52,8 +52,9 @@ Masaüstü bilgisayarda bu parçaları hiç görmeyiz; hepsi hazır gelir. Göm�
 | <b>VI — Uygulama Geliştirme ve Donanım</b> | [14. Eclipse ile Uygulama Geliştirme](14_eclipse.md) | Eclipse'te ARM için program yaz, tek tıkla kartta çalıştır |
 | | [15. AM335x GPIO'ları, Pin Ayarları ve sysfs](15_gpio_sysfs.md) | Pinmux'u çöz, LED'leri ve GPIO'ları komut satırından ve C'den kontrol et |
 | | [16. Harici LED Bağlamak](16_external_led.md) | LED'i dirençle bir GPIO'ya bağla, C ile ve device tree ile sür |
+| | [17. 7-Segment Gösterge](17_seven_segment.md) | Tek haneli göstergeyi sür, sayaç ve butonla sayma programı yaz |
 
-<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
+<b>Hazırlanan bölümler:</b> Kursun kalan konuları kitaba eklendikçe bu tabloya girecek: 4 haneli 7-segment gösterge, MPU6050 ivmeölçer/jiroskop, 16x2 LCD.
 
 <b>Okuma sırası:</b> Bölümler birbirinin üzerine kurulu. İlk kez okuyorsan sırayla git. Her bölümün başındaki <b>"Ön koşul"</b> satırı, o bölümden önce hangilerini bilmen gerektiğini söyler.
 
