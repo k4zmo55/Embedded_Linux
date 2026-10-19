@@ -2,3 +2,4 @@ build/.cache/
 build/.stamp
 __pycache__/
 sources/
+.~lock.*#
